@@ -16,7 +16,7 @@ export function ReconnectBanner({
       <span>
         {status === 'auth-expired'
           ? 'Gateway authentication expired. Reconnect with fresh credentials.'
-          : 'Gateway connection is unavailable. Retry to restore live agent updates.'}
+          : 'Gateway link is unavailable. Retry to restore live agent updates.'}
       </span>
       <button type="button" onClick={onReconnect}>
         Retry

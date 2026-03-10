@@ -10,7 +10,8 @@ describe('createSettingsStore', () => {
       label: 'Studio Gateway',
       transport: 'ssh',
       host: 'studio.internal',
-      username: 'chenyang'
+      username: 'chenyang',
+      port: 22
     });
     store.getState().bindPetToAgent({
       petId: 'pet-1',

@@ -18,8 +18,7 @@ function applyHabitatEvent(
       ...pets,
       [event.petId]: {
         ...pet,
-        status: 'done',
-        bubbleText: 'Done'
+        status: 'done'
       }
     };
   }

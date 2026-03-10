@@ -8,7 +8,7 @@ export function GatewayProfiles({
 }: {
   profiles: GatewayProfile[];
   activeProfileId: string | null;
-  onConnect: (input: { label: string; baseUrl: string }) => void;
+  onConnect: (input: { label: string; baseUrl: string }) => Promise<void> | void;
 }) {
   const [isOpen, setIsOpen] = useState(false);
   const [baseUrl, setBaseUrl] = useState('http://127.0.0.1:4318');
@@ -27,7 +27,7 @@ export function GatewayProfiles({
           className="gateway-profiles__form"
           onSubmit={(event) => {
             event.preventDefault();
-            onConnect({
+            void onConnect({
               label: 'Remote Gateway',
               baseUrl
             });

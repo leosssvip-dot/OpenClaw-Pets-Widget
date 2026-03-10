@@ -5,7 +5,7 @@ export function QuickComposer({
   onSubmit
 }: {
   petName: string;
-  onSubmit: (value: string) => void;
+  onSubmit: (value: string) => void | Promise<void>;
 }) {
   const [value, setValue] = useState('');
 
@@ -20,7 +20,7 @@ export function QuickComposer({
           return;
         }
 
-        onSubmit(nextValue);
+        void onSubmit(nextValue);
         setValue('');
       }}
     >
