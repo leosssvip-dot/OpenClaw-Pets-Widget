@@ -5,6 +5,7 @@ import { type ConnectionStatus } from './features/connection/ConnectionBadge';
 import { habitatStore, useHabitatStore } from './features/habitat/store';
 import { getRuntimeDeps } from './runtime/runtime-deps';
 import { getHabitatDesktopApi } from './runtime/habitat-api';
+import type { SshConnectionInput } from './features/settings/SshConnectionForm';
 import { settingsStore, useSettingsStore } from './features/settings/settings-store';
 import { DesktopPet } from './features/widget/DesktopPet';
 import { WidgetPanel } from './features/widget/WidgetPanel';
@@ -17,6 +18,20 @@ function toHabitatPets(agents: AgentBindingSeed[]) {
     status: agent.status ?? 'idle',
     name: agent.label
   }));
+}
+
+function toGatewayProfile(input: SshConnectionInput) {
+  return {
+    id: `gateway-${Date.now()}`,
+    label: input.host,
+    transport: 'ssh' as const,
+    host: input.host,
+    username: input.username,
+    sshPort: input.sshPort,
+    identityFile: input.identityFile,
+    remoteGatewayPort: input.remoteGatewayPort,
+    gatewayToken: input.gatewayToken
+  };
 }
 
 export function App() {
@@ -113,17 +128,11 @@ export function App() {
           void connectToProfile(activeProfileId);
         }
       }}
-      onConnect={async ({ label, baseUrl }) => {
-        const profileId = `gateway-${Date.now()}`;
-        settingsStore.getState().saveGatewayProfile({
-          id: profileId,
-          label,
-          transport: 'tailnet',
-          baseUrl,
-          token: import.meta.env.VITE_OPENCLAW_GATEWAY_TOKEN ?? 'dev-token'
-        });
-        settingsStore.getState().selectGatewayProfile(profileId);
-        await connectToProfile(profileId);
+      onConnect={async (input) => {
+        const profile = toGatewayProfile(input);
+        settingsStore.getState().saveGatewayProfile(profile);
+        settingsStore.getState().selectGatewayProfile(profile.id);
+        await connectToProfile(profile.id);
       }}
       onSubmitQuickPrompt={submitQuickPrompt}
     />

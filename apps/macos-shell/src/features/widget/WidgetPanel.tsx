@@ -8,6 +8,7 @@ import type { HabitatPet } from '../habitat/types';
 import { ResultCard } from '../results/ResultCard';
 import { AgentBindings } from '../settings/AgentBindings';
 import { GatewayProfiles } from '../settings/GatewayProfiles';
+import type { SshConnectionInput } from '../settings/SshConnectionForm';
 import type { PetAgentBinding } from '../settings/settings-store';
 
 export function WidgetPanel({
@@ -28,7 +29,7 @@ export function WidgetPanel({
   petCount: number;
   selectedPet: HabitatPet | null;
   onReconnect: () => void;
-  onConnect: (input: { label: string; baseUrl: string }) => Promise<void>;
+  onConnect: (input: SshConnectionInput) => Promise<void>;
   onSubmitQuickPrompt: (value: string) => Promise<void>;
 }) {
   return (
