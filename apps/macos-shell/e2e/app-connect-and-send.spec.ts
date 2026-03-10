@@ -6,9 +6,12 @@ test('connects to a mock gateway and sends a quick message', async ({ page }) =>
 
   try {
     await page.goto('/');
-    await page.getByText('Add Gateway').click();
-    await page.getByLabel('Gateway URL').fill('http://127.0.0.1:4318');
-    await page.getByRole('button', { name: 'Connect' }).click();
+    await page.getByText('Connect Remote').click();
+    await page.getByLabel('Remote Host').fill('studio.internal');
+    await page.getByLabel('SSH User').fill('chenyang');
+    await page.getByLabel('Gateway Port').fill('4318');
+    await page.getByLabel('Gateway Token').fill('dev-token');
+    await page.getByRole('button', { name: 'Connect', exact: true }).click();
     await page.getByRole('button', { name: /Scout/i }).click();
     await page.getByLabel('Message').fill('Prepare a handoff note');
     await page.getByText('Send').click();
