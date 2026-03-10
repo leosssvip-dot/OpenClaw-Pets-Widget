@@ -1,0 +1,33 @@
+import { fileURLToPath } from 'node:url';
+import type { BrowserWindowConstructorOptions } from 'electron';
+
+function resolvePreloadPath() {
+  try {
+    return fileURLToPath(new URL('./preload.js', import.meta.url));
+  } catch {
+    return './preload.js';
+  }
+}
+
+export function buildPetWidgetWindowOptions(): BrowserWindowConstructorOptions {
+  return {
+    width: 140,
+    height: 160,
+    transparent: true,
+    frame: false,
+    alwaysOnTop: true,
+    resizable: false,
+    fullscreenable: false,
+    skipTaskbar: true,
+    hasShadow: false,
+    webPreferences: {
+      preload: resolvePreloadPath(),
+      contextIsolation: true
+    }
+  };
+}
+
+export async function createPetWidgetWindow() {
+  const { BrowserWindow } = await import('electron');
+  return new BrowserWindow(buildPetWidgetWindowOptions());
+}

@@ -5,7 +5,11 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "build": "vite build",
+    "dev:renderer": "vite --host 127.0.0.1 --port 5173",
+    "dev:desktop": "tsx electron/dev-runner.ts",
+    "build": "vite build && pnpm run build:electron",
+    "build:electron": "esbuild electron/main.ts --bundle --platform=node --format=esm --outfile=.electron-build/main.js --external:electron --sourcemap",
+    "start:desktop": "pnpm run build && electron .electron-build/main.js",
     "test": "vitest",
     "lint": "tsc --noEmit -p tsconfig.json"
   },
@@ -25,7 +29,9 @@
     "@types/react-dom": "^19.0.4",
     "@vitejs/plugin-react": "^4.4.1",
     "electron": "^35.0.0",
+    "esbuild": "^0.25.1",
     "jsdom": "^26.0.0",
+    "tsx": "^4.19.3",
     "typescript": "^5.7.3",
     "vite": "^6.1.0",
     "vitest": "^3.0.5",
