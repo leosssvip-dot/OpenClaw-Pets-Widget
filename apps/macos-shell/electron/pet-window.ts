@@ -3,9 +3,9 @@ import type { BrowserWindowConstructorOptions } from 'electron';
 
 function resolvePreloadPath() {
   try {
-    return fileURLToPath(new URL('./preload.js', import.meta.url));
+    return fileURLToPath(new URL('./preload.cjs', import.meta.url));
   } catch {
-    return './preload.js';
+    return './preload.cjs';
   }
 }
 

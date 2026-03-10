@@ -9,8 +9,17 @@ describe('gatewayProfileSchema', () => {
         label: 'My Remote OpenClaw',
         transport: 'ssh',
         host: 'example.internal',
-        username: 'me'
-      }).transport
-    ).toBe('ssh');
+        username: 'me',
+        sshPort: 22,
+        remoteGatewayPort: 18789,
+        gatewayToken: 'secret',
+        identityFile: '~/.ssh/id_ed25519'
+      })
+    ).toMatchObject({
+      transport: 'ssh',
+      sshPort: 22,
+      remoteGatewayPort: 18789,
+      gatewayToken: 'secret'
+    });
   });
 });

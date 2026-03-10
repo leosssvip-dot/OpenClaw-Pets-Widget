@@ -10,6 +10,7 @@ const electronBinary = require('electron') as string;
 const currentDir = dirname(fileURLToPath(import.meta.url));
 const appDir = resolve(currentDir, '..');
 const outputFile = resolve(appDir, '.electron-build/main.js');
+const preloadFile = resolve(appDir, '.electron-build/preload.cjs');
 
 function delay(ms: number) {
   return new Promise((resolveDelay) => setTimeout(resolveDelay, ms));
@@ -59,8 +60,20 @@ const buildContext = await context({
   sourcemap: true
 });
 
+const preloadContext = await context({
+  entryPoints: [resolve(appDir, 'electron/preload.ts')],
+  bundle: true,
+  platform: 'node',
+  format: 'cjs',
+  outfile: preloadFile,
+  external: ['electron'],
+  sourcemap: true
+});
+
 await buildContext.watch();
+await preloadContext.watch();
 await waitForFile(outputFile);
+await waitForFile(preloadFile);
 await waitForRenderer();
 
 const electron = spawn(electronBinary, [outputFile], {
@@ -75,6 +88,7 @@ const electron = spawn(electronBinary, [outputFile], {
 const shutdown = async () => {
   electron.kill('SIGTERM');
   vite.kill('SIGTERM');
+  await preloadContext.dispose();
   await buildContext.dispose();
 };
 
@@ -88,5 +102,7 @@ process.on('SIGTERM', () => {
 
 electron.on('exit', (code) => {
   vite.kill('SIGTERM');
-  void buildContext.dispose().finally(() => process.exit(code ?? 0));
+  void Promise.all([preloadContext.dispose(), buildContext.dispose()]).finally(() =>
+    process.exit(code ?? 0)
+  );
 });

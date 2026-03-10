@@ -11,7 +11,9 @@ describe('createSettingsStore', () => {
       transport: 'ssh',
       host: 'studio.internal',
       username: 'chenyang',
-      port: 22
+      sshPort: 22,
+      remoteGatewayPort: 18789,
+      gatewayToken: 'secret'
     });
     store.getState().bindPetToAgent({
       petId: 'pet-1',

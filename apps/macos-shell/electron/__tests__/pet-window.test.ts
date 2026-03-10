@@ -7,6 +7,7 @@ describe('buildPetWidgetWindowOptions', () => {
 
     expect(options.width).toBe(140);
     expect(options.height).toBe(160);
+    expect(options.webPreferences?.preload).toContain('preload.cjs');
     expect(options.transparent).toBe(true);
     expect(options.alwaysOnTop).toBe(true);
     expect(options.resizable).toBe(false);

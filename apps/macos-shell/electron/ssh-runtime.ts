@@ -1,0 +1,159 @@
+import { spawn, type ChildProcess } from 'node:child_process';
+import { once } from 'node:events';
+import net from 'node:net';
+import {
+  buildSshTunnelCommand,
+  type GatewayProfile,
+  type PreparedGatewayConnection
+} from '@openclaw-habitat/bridge';
+
+type SshGatewayProfile = Extract<GatewayProfile, { transport: 'ssh' }>;
+
+interface ActiveTunnel {
+  child: ChildProcess;
+  localPort: number;
+  profileId: string;
+}
+
+function buildLoopbackUrl(port: number) {
+  return `ws://127.0.0.1:${port}`;
+}
+
+async function findOpenPort() {
+  return new Promise<number>((resolve, reject) => {
+    const server = net.createServer();
+
+    server.once('error', reject);
+    server.listen(0, '127.0.0.1', () => {
+      const address = server.address();
+
+      if (!address || typeof address === 'string') {
+        server.close();
+        reject(new Error('Failed to reserve local SSH port'));
+        return;
+      }
+
+      const { port } = address;
+      server.close((error) => {
+        if (error) {
+          reject(error);
+          return;
+        }
+
+        resolve(port);
+      });
+    });
+  });
+}
+
+async function waitForPort(port: number, timeoutMs = 4_000) {
+  const startedAt = Date.now();
+
+  for (;;) {
+    const isReady = await new Promise<boolean>((resolve) => {
+      const socket = net.connect({ host: '127.0.0.1', port });
+
+      socket.once('connect', () => {
+        socket.end();
+        resolve(true);
+      });
+      socket.once('error', () => {
+        socket.destroy();
+        resolve(false);
+      });
+    });
+
+    if (isReady) {
+      return;
+    }
+
+    if (Date.now() - startedAt > timeoutMs) {
+      throw new Error(`SSH tunnel did not open local port ${port}`);
+    }
+
+    await new Promise((resolve) => setTimeout(resolve, 100));
+  }
+}
+
+export class SshTunnelRuntime {
+  private activeTunnel: ActiveTunnel | null = null;
+
+  constructor(
+    private readonly spawnProcess: typeof spawn = spawn,
+    private readonly reservePort: () => Promise<number> = findOpenPort,
+    private readonly waitForLocalPort: (port: number) => Promise<void> = waitForPort
+  ) {}
+
+  async prepareConnection(profile: SshGatewayProfile): Promise<PreparedGatewayConnection> {
+    if (this.activeTunnel?.profileId === profile.id) {
+      return {
+        url: buildLoopbackUrl(this.activeTunnel.localPort),
+        authToken: profile.gatewayToken
+      };
+    }
+
+    await this.disconnect();
+
+    const localPort = await this.reservePort();
+    const [command, ...args] = buildSshTunnelCommand({
+      host: profile.host,
+      username: profile.username,
+      sshPort: profile.sshPort,
+      identityFile: profile.identityFile,
+      localPort,
+      remotePort: profile.remoteGatewayPort
+    });
+    const child = this.spawnProcess(command, args, {
+      stdio: ['ignore', 'ignore', 'pipe']
+    });
+    let stderrOutput = '';
+
+    child.stderr?.on('data', (chunk) => {
+      stderrOutput += String(chunk);
+    });
+    child.on('exit', () => {
+      if (this.activeTunnel?.child === child) {
+        this.activeTunnel = null;
+      }
+    });
+
+    try {
+      await Promise.race([
+        this.waitForLocalPort(localPort),
+        once(child, 'exit').then(([code, signal]) => {
+          throw new Error(
+            stderrOutput.trim() ||
+              `SSH tunnel exited before it became ready (${code ?? signal ?? 'unknown'})`
+          );
+        })
+      ]);
+    } catch (error) {
+      child.kill('SIGTERM');
+      throw error;
+    }
+
+    this.activeTunnel = {
+      child,
+      localPort,
+      profileId: profile.id
+    };
+
+    return {
+      url: buildLoopbackUrl(localPort),
+      authToken: profile.gatewayToken
+    };
+  }
+
+  async disconnect() {
+    const tunnel = this.activeTunnel;
+    this.activeTunnel = null;
+
+    if (!tunnel) {
+      return;
+    }
+
+    tunnel.child.kill('SIGTERM');
+
+    await once(tunnel.child, 'exit').catch(() => undefined);
+  }
+}

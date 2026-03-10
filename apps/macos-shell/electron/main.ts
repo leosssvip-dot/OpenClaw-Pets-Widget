@@ -1,11 +1,15 @@
 import { app, BrowserWindow, ipcMain, screen } from 'electron';
+import { fileURLToPath } from 'node:url';
+import type { GatewayProfile } from '@openclaw-habitat/bridge';
 import { createHabitatTray } from './tray';
 import { createPanelWindow } from './panel-window';
 import { createPetWidgetWindow } from './pet-window';
 import { resolveRuntimeSurface } from './runtime-info';
+import { SshTunnelRuntime } from './ssh-runtime';
 
 let petWindow: BrowserWindow | null = null;
 let panelWindow: BrowserWindow | null = null;
+const sshTunnelRuntime = new SshTunnelRuntime();
 
 async function loadWindow(window: BrowserWindow, surface: 'pet' | 'panel') {
   const search = `surface=${surface}`;
@@ -15,7 +19,7 @@ async function loadWindow(window: BrowserWindow, surface: 'pet' | 'panel') {
     return;
   }
 
-  await window.loadFile(new URL('../dist/index.html', import.meta.url), {
+  await window.loadFile(fileURLToPath(new URL('../dist/index.html', import.meta.url)), {
     search
   });
 }
@@ -92,6 +96,22 @@ ipcMain.handle('window:snapPet', () => {
   alignPanelWindow();
 
   return { side };
+});
+
+ipcMain.handle('gateway:prepareConnection', async (_event, profile: GatewayProfile) => {
+  if (profile.transport !== 'ssh') {
+    return null;
+  }
+
+  return sshTunnelRuntime.prepareConnection(profile);
+});
+
+ipcMain.handle('gateway:teardownConnection', async () => {
+  await sshTunnelRuntime.disconnect();
+});
+
+app.on('before-quit', () => {
+  void sshTunnelRuntime.disconnect();
 });
 
 void app.whenReady().then(createWindow);

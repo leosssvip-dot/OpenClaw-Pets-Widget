@@ -18,6 +18,11 @@ export interface CreateTaskInput {
   prompt: string;
 }
 
+export interface PreparedGatewayConnection {
+  url: string;
+  authToken?: string;
+}
+
 export type HabitatEvent =
   | {
       kind: 'agent.completed';

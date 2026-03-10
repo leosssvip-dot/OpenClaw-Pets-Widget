@@ -3,6 +3,7 @@ import type {
   BridgeClient,
   CreateTaskInput,
   HabitatEvent,
+  PreparedGatewayConnection,
   SendMessageInput
 } from './contracts';
 import { parseOpenClawEvent } from './openclaw-event-parser';
@@ -44,12 +45,24 @@ function normalizeGatewayUrl(baseUrl: string) {
   return `ws://${baseUrl}`;
 }
 
-function resolveGatewayUrl(profile: GatewayProfile) {
+function resolveGatewayConnection(profile: GatewayProfile): PreparedGatewayConnection {
   if (profile.transport === 'tailnet') {
-    return normalizeGatewayUrl(profile.baseUrl);
+    return {
+      url: normalizeGatewayUrl(profile.baseUrl),
+      authToken: profile.token
+    };
   }
 
-  return 'ws://127.0.0.1:18789';
+  if (profile.transport === 'ssh') {
+    return {
+      url: `ws://127.0.0.1:${profile.remoteGatewayPort}`,
+      authToken: profile.gatewayToken
+    };
+  }
+
+  return {
+    url: 'ws://127.0.0.1:18789'
+  };
 }
 
 function waitForMessage(
@@ -99,11 +112,18 @@ function waitForOpen(socket: WebSocket) {
 
 export class OpenClawClient implements BridgeClient {
   private socket: WebSocket | null = null;
+  private activeProfile: GatewayProfile | null = null;
 
   constructor(
     private readonly resolveProfile: (profileId: string) => GatewayProfile | undefined,
     private readonly socketFactory: (url: string) => WebSocket = (url) =>
-      new WebSocket(url)
+      new WebSocket(url),
+    private readonly prepareConnection: (
+      profile: GatewayProfile
+    ) => Promise<PreparedGatewayConnection | null | undefined> = async () => undefined,
+    private readonly teardownConnection: (
+      profile: GatewayProfile | null
+    ) => Promise<void> = async () => undefined
   ) {}
 
   async connect(profileId: string): Promise<void> {
@@ -115,45 +135,52 @@ export class OpenClawClient implements BridgeClient {
 
     await this.disconnect();
 
-    const socket = this.socketFactory(resolveGatewayUrl(profile));
-    this.socket = socket;
-    await waitForOpen(socket);
+    this.activeProfile = profile;
 
-    const handshake = waitForMessage(socket, (message) => message.type === 'connect.result');
-    socket.send(
-      JSON.stringify({
-        type: 'connect',
-        params: {
-          auth:
-            profile.transport === 'tailnet'
-              ? {
-                  token: profile.token
-                }
-              : undefined
+    try {
+      const connection =
+        (await this.prepareConnection(profile)) ?? resolveGatewayConnection(profile);
+      const socket = this.socketFactory(connection.url);
+      this.socket = socket;
+      await waitForOpen(socket);
+
+      const handshake = waitForMessage(socket, (message) => message.type === 'connect.result');
+      socket.send(
+        JSON.stringify({
+          type: 'connect',
+          params: {
+            auth: connection.authToken ? { token: connection.authToken } : undefined
+          }
+        })
+      );
+
+      const hello = await handshake;
+
+      if (hello.payload && typeof hello.payload === 'object' && 'type' in hello.payload) {
+        const payloadType = String((hello.payload as { type: string }).type);
+
+        if (payloadType === 'hello-ok') {
+          return;
         }
-      })
-    );
 
-    const hello = await handshake;
-
-    if (hello.payload && typeof hello.payload === 'object' && 'type' in hello.payload) {
-      const payloadType = String((hello.payload as { type: string }).type);
-
-      if (payloadType === 'hello-ok') {
-        return;
+        if (payloadType === 'auth-expired') {
+          throw new Error('AUTH_EXPIRED');
+        }
       }
 
-      if (payloadType === 'auth-expired') {
-        throw new Error('AUTH_EXPIRED');
-      }
+      throw new Error('Gateway handshake failed');
+    } catch (error) {
+      await this.disconnect();
+      throw error;
     }
-
-    throw new Error('Gateway handshake failed');
   }
 
   async disconnect(): Promise<void> {
+    const profile = this.activeProfile;
+    this.activeProfile = null;
     this.socket?.close();
     this.socket = null;
+    await this.teardownConnection(profile);
   }
 
   async listAgents(): Promise<AgentBindingSeed[]> {
