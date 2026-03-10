@@ -30,9 +30,34 @@ function applyHabitatEvent(
 export const createHabitatStore = () =>
   createStore<HabitatState>((set) => ({
     pets: {},
+    selectedPetId: null,
     seedPets: (pets) =>
       set({
-        pets: Object.fromEntries(pets.map((pet) => [pet.id, pet]))
+        pets: Object.fromEntries(pets.map((pet) => [pet.id, pet])),
+        selectedPetId: pets[0]?.id ?? null
+      }),
+    selectPet: (petId: string) =>
+      set({
+        selectedPetId: petId
+      }),
+    markPetAsThinking: (petId: string, content: string) =>
+      set((state) => {
+        const pet = state.pets[petId];
+
+        if (!pet) {
+          return state;
+        }
+
+        return {
+          pets: {
+            ...state.pets,
+            [petId]: {
+              ...pet,
+              status: 'thinking',
+              bubbleText: content
+            }
+          }
+        };
       }),
     applyEvent: (event: HabitatEvent) =>
       set((state) => ({

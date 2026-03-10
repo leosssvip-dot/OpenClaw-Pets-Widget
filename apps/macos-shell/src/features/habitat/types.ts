@@ -12,6 +12,9 @@ export interface HabitatPet {
 
 export interface HabitatState {
   pets: Record<string, HabitatPet>;
+  selectedPetId: string | null;
   seedPets: (pets: HabitatPet[]) => void;
+  selectPet: (petId: string) => void;
+  markPetAsThinking: (petId: string, content: string) => void;
   applyEvent: (event: HabitatEvent) => void;
 }

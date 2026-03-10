@@ -36,8 +36,11 @@ body {
   gap: 10px;
   padding: 16px;
   border-radius: 20px;
+  border: 0;
   background: rgba(255, 255, 255, 0.82);
   box-shadow: 0 18px 40px rgba(25, 48, 77, 0.12);
+  text-align: left;
+  cursor: pointer;
 }
 
 .pet-sprite__avatar {
@@ -62,10 +65,78 @@ body {
   color: #47617f;
 }
 
+.pet-sprite--selected {
+  outline: 2px solid #5aa9e6;
+}
+
 .pet-bubble {
   padding: 10px 12px;
   border-radius: 14px;
   background: #e8f2ff;
   color: #244261;
   font-size: 14px;
+}
+
+.app-shell__workspace {
+  display: grid;
+  gap: 20px;
+}
+
+.app-shell__sidepanel {
+  display: grid;
+  gap: 16px;
+  max-width: 420px;
+}
+
+.quick-composer {
+  display: grid;
+  gap: 12px;
+  padding: 18px;
+  border-radius: 20px;
+  background: rgba(255, 255, 255, 0.82);
+  box-shadow: 0 18px 40px rgba(25, 48, 77, 0.12);
+}
+
+.quick-composer label {
+  display: grid;
+  gap: 8px;
+  font-weight: 600;
+}
+
+.quick-composer input {
+  border: 1px solid #c4d6eb;
+  border-radius: 12px;
+  padding: 12px;
+  font: inherit;
+}
+
+.quick-composer button {
+  width: fit-content;
+  border: 0;
+  border-radius: 999px;
+  padding: 10px 18px;
+  background: #274c77;
+  color: #fff;
+  font: inherit;
+  cursor: pointer;
+}
+
+.result-card {
+  display: grid;
+  gap: 12px;
+  padding: 18px;
+  border-radius: 20px;
+  background: rgba(39, 76, 119, 0.92);
+  color: #fff;
+}
+
+.result-card p {
+  margin: 0;
+  color: rgba(255, 255, 255, 0.82);
+}
+
+.result-card__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
 }
