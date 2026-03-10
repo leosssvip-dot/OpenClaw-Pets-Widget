@@ -10,6 +10,8 @@ macOS-first desktop habitat for OpenClaw agents. The current workspace contains 
 - `pnpm test`
 - `pnpm --filter @openclaw-habitat/macos-shell exec playwright test`
 
+Detailed testing steps: [docs/testing-guide.md](./docs/testing-guide.md)
+
 ## OpenClaw prerequisites
 
 - A reachable OpenClaw Gateway speaking the current Gateway WebSocket protocol: [Gateway Protocol](https://docs.openclaw.ai/gateway/protocol)
