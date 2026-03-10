@@ -48,6 +48,15 @@ importers:
         specifier: ^3.0.5
         version: 3.2.4(@types/node@22.19.15)(jsdom@26.1.0)
 
+  packages/domain:
+    devDependencies:
+      typescript:
+        specifier: ^5.7.3
+        version: 5.9.3
+      vitest:
+        specifier: ^3.0.5
+        version: 3.2.4(@types/node@22.19.15)(jsdom@26.1.0)
+
 packages:
 
   '@adobe/css-tools@4.4.4':
