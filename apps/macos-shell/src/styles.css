@@ -1,0 +1,259 @@
+body {
+  margin: 0;
+  font-family: 'Avenir Next', 'Segoe UI', sans-serif;
+  background:
+    radial-gradient(circle at top, rgba(77, 160, 255, 0.18), transparent 35%),
+    linear-gradient(180deg, #f3f8ff 0%, #ecf3ff 100%);
+  color: #19304d;
+}
+
+.app-shell {
+  min-height: 100vh;
+  padding: 24px;
+}
+
+.app-shell__header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  margin-bottom: 24px;
+}
+
+.app-shell__header h1 {
+  margin: 0 0 8px;
+}
+
+.app-shell__header p {
+  margin: 0;
+  color: #47617f;
+}
+
+.pet-canvas {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 16px;
+}
+
+.pet-sprite {
+  display: grid;
+  gap: 10px;
+  padding: 16px;
+  border-radius: 20px;
+  border: 0;
+  background: rgba(255, 255, 255, 0.82);
+  box-shadow: 0 18px 40px rgba(25, 48, 77, 0.12);
+  text-align: left;
+  cursor: pointer;
+}
+
+.pet-sprite__avatar {
+  display: grid;
+  place-items: center;
+  width: 56px;
+  height: 56px;
+  border-radius: 18px;
+  background: linear-gradient(135deg, #274c77, #5aa9e6);
+  color: #fff;
+  font-size: 24px;
+  font-weight: 700;
+}
+
+.pet-sprite__meta {
+  display: grid;
+  gap: 4px;
+}
+
+.pet-sprite__meta span {
+  text-transform: capitalize;
+  color: #47617f;
+}
+
+.pet-sprite--selected {
+  outline: 2px solid #5aa9e6;
+}
+
+.pet-bubble {
+  padding: 10px 12px;
+  border-radius: 14px;
+  background: #e8f2ff;
+  color: #244261;
+  font-size: 14px;
+}
+
+.app-shell__workspace {
+  display: grid;
+  gap: 20px;
+}
+
+.app-shell__dashboard {
+  display: grid;
+  gap: 20px;
+  margin-bottom: 24px;
+}
+
+.app-shell__sidepanel {
+  display: grid;
+  gap: 16px;
+  max-width: 420px;
+}
+
+.section-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.connection-badge {
+  display: inline-flex;
+  align-items: center;
+  border-radius: 999px;
+  padding: 8px 12px;
+  font-size: 14px;
+  font-weight: 700;
+}
+
+.connection-badge--connected {
+  background: #dff7e9;
+  color: #146c43;
+}
+
+.connection-badge--connecting,
+.connection-badge--reconnecting {
+  background: #fff3d6;
+  color: #8a6116;
+}
+
+.connection-badge--offline,
+.connection-badge--auth-expired {
+  background: #ffe1e1;
+  color: #8d1f28;
+}
+
+.reconnect-banner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 20px;
+  padding: 14px 16px;
+  border-radius: 18px;
+  background: #fff4da;
+  color: #6d5015;
+}
+
+.gateway-profiles,
+.agent-bindings {
+  display: grid;
+  gap: 16px;
+  padding: 18px;
+  border-radius: 20px;
+  background: rgba(255, 255, 255, 0.82);
+  box-shadow: 0 18px 40px rgba(25, 48, 77, 0.12);
+}
+
+.gateway-profiles__form {
+  display: grid;
+  gap: 12px;
+}
+
+.gateway-profiles__form label {
+  display: grid;
+  gap: 8px;
+  font-weight: 600;
+}
+
+.gateway-profiles__form input {
+  border: 1px solid #c4d6eb;
+  border-radius: 12px;
+  padding: 12px;
+  font: inherit;
+}
+
+.gateway-profiles__form button,
+.reconnect-banner button,
+.section-heading button {
+  width: fit-content;
+  border: 0;
+  border-radius: 999px;
+  padding: 10px 18px;
+  background: #274c77;
+  color: #fff;
+  font: inherit;
+  cursor: pointer;
+}
+
+.gateway-profiles__list,
+.agent-bindings__list {
+  display: grid;
+  gap: 12px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.gateway-profiles__item,
+.agent-bindings__item {
+  display: grid;
+  gap: 4px;
+  padding: 12px;
+  border-radius: 14px;
+  background: #eef4ff;
+}
+
+.gateway-profiles__item--active {
+  outline: 2px solid #5aa9e6;
+}
+
+.quick-composer {
+  display: grid;
+  gap: 12px;
+  padding: 18px;
+  border-radius: 20px;
+  background: rgba(255, 255, 255, 0.82);
+  box-shadow: 0 18px 40px rgba(25, 48, 77, 0.12);
+}
+
+.quick-composer label {
+  display: grid;
+  gap: 8px;
+  font-weight: 600;
+}
+
+.quick-composer input {
+  border: 1px solid #c4d6eb;
+  border-radius: 12px;
+  padding: 12px;
+  font: inherit;
+}
+
+.quick-composer button {
+  width: fit-content;
+  border: 0;
+  border-radius: 999px;
+  padding: 10px 18px;
+  background: #274c77;
+  color: #fff;
+  font: inherit;
+  cursor: pointer;
+}
+
+.result-card {
+  display: grid;
+  gap: 12px;
+  padding: 18px;
+  border-radius: 20px;
+  background: rgba(39, 76, 119, 0.92);
+  color: #fff;
+}
+
+.result-card p {
+  margin: 0;
+  color: rgba(255, 255, 255, 0.82);
+}
+
+.result-card__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
