@@ -11,6 +11,8 @@ describe('createHabitatStore', () => {
 
     store.getState().applyEvent({
       kind: 'agent.completed',
+      agentId: 'researcher',
+      gatewayId: 'remote-1',
       petId: 'pet-1'
     });
 
