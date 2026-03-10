@@ -1,19 +1,13 @@
 import { useEffect, useEffectEvent, useRef, useState } from 'react';
 import type { AgentBindingSeed, HabitatEvent } from '@openclaw-habitat/bridge';
-import { QuickComposer } from './features/composer/QuickComposer';
 import { useQuickComposer } from './features/composer/useQuickComposer';
-import {
-  ConnectionBadge,
-  type ConnectionStatus
-} from './features/connection/ConnectionBadge';
-import { ReconnectBanner } from './features/connection/ReconnectBanner';
-import { PetCanvas } from './features/habitat/PetCanvas';
+import { type ConnectionStatus } from './features/connection/ConnectionBadge';
 import { habitatStore, useHabitatStore } from './features/habitat/store';
-import { ResultCard } from './features/results/ResultCard';
 import { getRuntimeDeps } from './runtime/runtime-deps';
-import { AgentBindings } from './features/settings/AgentBindings';
-import { GatewayProfiles } from './features/settings/GatewayProfiles';
+import { getHabitatDesktopApi } from './runtime/habitat-api';
 import { settingsStore, useSettingsStore } from './features/settings/settings-store';
+import { DesktopPet } from './features/widget/DesktopPet';
+import { WidgetPanel } from './features/widget/WidgetPanel';
 
 function toHabitatPets(agents: AgentBindingSeed[]) {
   return agents.map((agent) => ({
@@ -26,6 +20,11 @@ function toHabitatPets(agents: AgentBindingSeed[]) {
 }
 
 export function App() {
+  const [surface, setSurface] = useState<'pet' | 'panel'>(() => {
+    return new URLSearchParams(window.location.search).get('surface') === 'pet'
+      ? 'pet'
+      : 'panel';
+  });
   const [connectionStatus, setConnectionStatus] = useState<ConnectionStatus>('offline');
   const bridgeUnsubscribeRef = useRef<(() => void) | null>(null);
   const petsById = useHabitatStore((state) => state.pets);
@@ -78,70 +77,55 @@ export function App() {
   });
 
   useEffect(() => {
+    void getHabitatDesktopApi()
+      ?.getRuntimeInfo()
+      .then((info) => {
+        if (info.surface) {
+          setSurface(info.surface);
+        }
+      });
+
     return () => {
       bridgeUnsubscribeRef.current?.();
       void getRuntimeDeps().bridge.disconnect();
     };
   }, []);
 
-  return (
-    <main className="app-shell">
-      <header className="app-shell__header">
-        <div>
-          <h1>Agent Habitat</h1>
-          <p>Desktop companions for your OpenClaw agents.</p>
-        </div>
-        <ConnectionBadge status={connectionStatus} />
-      </header>
-      <ReconnectBanner
-        status={connectionStatus}
-        onReconnect={() => {
-          if (activeProfileId) {
-            void connectToProfile(activeProfileId);
-          }
-        }}
+  if (surface === 'pet') {
+    return (
+      <DesktopPet
+        petName={selectedPet?.name ?? 'OpenClaw'}
+        connectionStatus={connectionStatus}
       />
-      <div className="app-shell__dashboard">
-        <GatewayProfiles
-          profiles={gatewayProfiles}
-          activeProfileId={activeProfileId}
-          onConnect={async ({ label, baseUrl }) => {
-            const profileId = `gateway-${Date.now()}`;
-            settingsStore.getState().saveGatewayProfile({
-              id: profileId,
-              label,
-              transport: 'tailnet',
-              baseUrl,
-              token: import.meta.env.VITE_OPENCLAW_GATEWAY_TOKEN ?? 'dev-token'
-            });
-            settingsStore.getState().selectGatewayProfile(profileId);
-            await connectToProfile(profileId);
-          }}
-        />
-        <AgentBindings bindings={bindings} />
-      </div>
-      {petCount === 0 ? (
-        <p>No pets connected</p>
-      ) : (
-        <div className="app-shell__workspace">
-          <PetCanvas />
-          {selectedPet ? (
-            <aside className="app-shell__sidepanel">
-              <QuickComposer
-                petName={selectedPet.name ?? selectedPet.agentId}
-                onSubmit={submitQuickPrompt}
-              />
-              {selectedPet.bubbleText ? (
-                <ResultCard
-                  title={selectedPet.name ?? selectedPet.agentId}
-                  body={selectedPet.bubbleText}
-                  status={selectedPet.status === 'done' ? 'Done' : 'Working'}
-                />
-              ) : null}
-            </aside>
-          ) : null}
-        </div>
-      )}
-    </main>
+    );
+  }
+
+  return (
+    <WidgetPanel
+      connectionStatus={connectionStatus}
+      activeProfileId={activeProfileId}
+      gatewayProfiles={gatewayProfiles}
+      bindings={bindings}
+      petCount={petCount}
+      selectedPet={selectedPet}
+      onReconnect={() => {
+        if (activeProfileId) {
+          void connectToProfile(activeProfileId);
+        }
+      }}
+      onConnect={async ({ label, baseUrl }) => {
+        const profileId = `gateway-${Date.now()}`;
+        settingsStore.getState().saveGatewayProfile({
+          id: profileId,
+          label,
+          transport: 'tailnet',
+          baseUrl,
+          token: import.meta.env.VITE_OPENCLAW_GATEWAY_TOKEN ?? 'dev-token'
+        });
+        settingsStore.getState().selectGatewayProfile(profileId);
+        await connectToProfile(profileId);
+      }}
+      onSubmitQuickPrompt={submitQuickPrompt}
+    />
   );
 }

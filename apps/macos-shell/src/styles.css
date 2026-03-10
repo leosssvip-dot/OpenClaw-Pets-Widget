@@ -12,6 +12,10 @@ body {
   padding: 24px;
 }
 
+.app-shell--panel {
+  min-width: 320px;
+}
+
 .app-shell__header {
   display: flex;
   align-items: flex-start;
@@ -256,4 +260,85 @@ body {
   display: flex;
   align-items: center;
   justify-content: space-between;
+}
+
+.desktop-pet-shell {
+  display: grid;
+  place-items: center;
+  min-height: 100vh;
+  padding: 10px;
+  background: transparent;
+}
+
+.desktop-pet {
+  position: relative;
+  display: grid;
+  justify-items: center;
+  gap: 10px;
+  width: 120px;
+  padding: 22px 12px 14px;
+  border: 0;
+  border-radius: 32px;
+  background: linear-gradient(180deg, #fff7d9 0%, #ffd48d 100%);
+  box-shadow: 0 18px 30px rgba(91, 63, 17, 0.24);
+  cursor: grab;
+  user-select: none;
+}
+
+.desktop-pet--active {
+  outline: 3px solid rgba(90, 169, 230, 0.55);
+}
+
+.desktop-pet__ear {
+  position: absolute;
+  top: -10px;
+  width: 24px;
+  height: 34px;
+  border-radius: 20px 20px 6px 6px;
+  background: #f9b76d;
+}
+
+.desktop-pet__ear--left {
+  left: 18px;
+  transform: rotate(-18deg);
+}
+
+.desktop-pet__ear--right {
+  right: 18px;
+  transform: rotate(18deg);
+}
+
+.desktop-pet__face {
+  display: grid;
+  grid-template-columns: repeat(2, 10px);
+  align-items: center;
+  justify-content: center;
+  gap: 12px 18px;
+  width: 84px;
+  min-height: 84px;
+  padding: 18px 12px;
+  border-radius: 999px;
+  background: rgba(255, 248, 233, 0.92);
+}
+
+.desktop-pet__eye {
+  width: 10px;
+  height: 14px;
+  border-radius: 999px;
+  background: #2c2b2a;
+}
+
+.desktop-pet__nose {
+  grid-column: 1 / -1;
+  justify-self: center;
+  width: 18px;
+  height: 10px;
+  border-radius: 999px 999px 12px 12px;
+  background: #e0827a;
+}
+
+.desktop-pet__label {
+  font-size: 13px;
+  font-weight: 700;
+  color: #6e4d1f;
 }

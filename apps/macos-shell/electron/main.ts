@@ -1,7 +1,8 @@
-import { app, BrowserWindow, ipcMain } from 'electron';
+import { app, BrowserWindow, ipcMain, screen } from 'electron';
 import { createHabitatTray } from './tray';
 import { createPanelWindow } from './panel-window';
 import { createPetWidgetWindow } from './pet-window';
+import { resolveRuntimeSurface } from './runtime-info';
 
 let petWindow: BrowserWindow | null = null;
 let panelWindow: BrowserWindow | null = null;
@@ -42,9 +43,12 @@ async function createWindow() {
   alignPanelWindow();
 }
 
-ipcMain.handle('runtime:getInfo', () => ({
+ipcMain.handle('runtime:getInfo', (event) => ({
   platform: process.platform,
-  surface: 'panel'
+  surface: resolveRuntimeSurface(event.sender.id, {
+    petWindowId: petWindow?.webContents.id ?? null,
+    panelWindowId: panelWindow?.webContents.id ?? null
+  })
 }));
 
 ipcMain.handle('window:movePet', (_event, payload: { x: number; y: number }) => {
@@ -66,6 +70,28 @@ ipcMain.handle('window:togglePanel', () => {
   panelWindow.show();
   panelWindow.focus();
   return { isOpen: true };
+});
+
+ipcMain.handle('window:snapPet', () => {
+  if (!petWindow) {
+    return null;
+  }
+
+  const petBounds = petWindow.getBounds();
+  const display = screen.getDisplayMatching(petBounds);
+  const side =
+    petBounds.x + petBounds.width / 2 < display.workArea.x + display.workArea.width / 2
+      ? 'left'
+      : 'right';
+  const snappedX =
+    side === 'left'
+      ? display.workArea.x
+      : display.workArea.x + display.workArea.width - petBounds.width;
+
+  petWindow.setPosition(snappedX, petBounds.y);
+  alignPanelWindow();
+
+  return { side };
 });
 
 void app.whenReady().then(createWindow);
