@@ -10,8 +10,12 @@
     "lint": "tsc --noEmit -p tsconfig.json"
   },
   "dependencies": {
+    "@openclaw-habitat/bridge": "workspace:*",
+    "@openclaw-habitat/domain": "workspace:*",
     "react": "^19.0.0",
-    "react-dom": "^19.0.0"
+    "react-dom": "^19.0.0",
+    "xstate": "^5.19.2",
+    "zustand": "^5.0.3"
   },
   "devDependencies": {
     "@testing-library/jest-dom": "^6.6.3",

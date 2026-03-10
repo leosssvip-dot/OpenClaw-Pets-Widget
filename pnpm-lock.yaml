@@ -14,12 +14,24 @@ importers:
 
   apps/macos-shell:
     dependencies:
+      '@openclaw-habitat/bridge':
+        specifier: workspace:*
+        version: link:../../packages/bridge
+      '@openclaw-habitat/domain':
+        specifier: workspace:*
+        version: link:../../packages/domain
       react:
         specifier: ^19.0.0
         version: 19.2.4
       react-dom:
         specifier: ^19.0.0
         version: 19.2.4(react@19.2.4)
+      xstate:
+        specifier: ^5.19.2
+        version: 5.28.0
+      zustand:
+        specifier: ^5.0.3
+        version: 5.0.11(@types/react@19.2.14)(react@19.2.4)
     devDependencies:
       '@testing-library/jest-dom':
         specifier: ^6.6.3
@@ -1306,6 +1318,9 @@ packages:
   xmlchars@2.2.0:
     resolution: {integrity: sha512-JZnDKK8B0RCDw84FNdDAIpZK+JuJw+s7Lz8nksI7SIuU3UXJJslUthsi+uWBUYOwPFwW7W7PRLRfUKpxjtjFCw==}
 
+  xstate@5.28.0:
+    resolution: {integrity: sha512-Iaqq6ZrUzqeUtA3hC5LQKZfR8ZLzEFTImMHJM3jWEdVvXWdKvvVLXZEiNQWm3SCA9ZbEou/n5rcsna1wb9t28A==}
+
   yallist@3.1.1:
     resolution: {integrity: sha512-a4UGQaWPH59mOXUYnAG2ewncQS4i4F43Tv3JoAM+s2VDAmS9NsK8GpDMLrCHPksFT7h3K6TOoUNn2pb7RoXx4g==}
 
@@ -1314,6 +1329,24 @@ packages:
 
   zod@3.25.76:
     resolution: {integrity: sha512-gzUt/qt81nXsFGKIFcC3YnfEAx5NkunCfnDlvuBSSFS02bcXu4Lmea0AFIUwbLWxWPx3d9p8S5QoaujKcNQxcQ==}
+
+  zustand@5.0.11:
+    resolution: {integrity: sha512-fdZY+dk7zn/vbWNCYmzZULHRrss0jx5pPFiOuMZ/5HJN6Yv3u+1Wswy/4MpZEkEGhtNH+pwxZB8OKgUBPzYAGg==}
+    engines: {node: '>=12.20.0'}
+    peerDependencies:
+      '@types/react': '>=18.0.0'
+      immer: '>=9.0.6'
+      react: '>=18.0.0'
+      use-sync-external-store: '>=1.2.0'
+    peerDependenciesMeta:
+      '@types/react':
+        optional: true
+      immer:
+        optional: true
+      react:
+        optional: true
+      use-sync-external-store:
+        optional: true
 
 snapshots:
 
@@ -2485,6 +2518,8 @@ snapshots:
 
   xmlchars@2.2.0: {}
 
+  xstate@5.28.0: {}
+
   yallist@3.1.1: {}
 
   yauzl@2.10.0:
@@ -2493,3 +2528,8 @@ snapshots:
       fd-slicer: 1.1.0
 
   zod@3.25.76: {}
+
+  zustand@5.0.11(@types/react@19.2.14)(react@19.2.4):
+    optionalDependencies:
+      '@types/react': 19.2.14
+      react: 19.2.4
