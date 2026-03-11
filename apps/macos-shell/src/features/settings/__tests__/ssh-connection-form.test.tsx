@@ -14,6 +14,9 @@ describe('SshConnectionForm', () => {
     fireEvent.change(screen.getByLabelText('SSH User'), {
       target: { value: 'chenyang' }
     });
+    fireEvent.change(screen.getByLabelText('SSH Password'), {
+      target: { value: 'hunter2' }
+    });
     fireEvent.change(screen.getByLabelText('Gateway Token'), {
       target: { value: 'secret-token' }
     });
@@ -26,7 +29,8 @@ describe('SshConnectionForm', () => {
         sshPort: 22,
         remoteGatewayPort: 18789,
         gatewayToken: 'secret-token',
-        identityFile: undefined
+        identityFile: undefined,
+        password: 'hunter2'
       })
     );
   });

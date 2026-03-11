@@ -15,10 +15,16 @@ describe('buildSshTunnelCommand', () => {
     ).toEqual([
       'ssh',
       '-N',
+      '-o',
+      'ExitOnForwardFailure=yes',
+      '-o',
+      'StrictHostKeyChecking=accept-new',
+      '-o',
+      'ServerAliveInterval=15',
       '-p',
       '22',
       '-L',
-      '18789:127.0.0.1:18789',
+      '127.0.0.1:18789:127.0.0.1:18789',
       '-i',
       '~/.ssh/id_ed25519',
       'chenyang@studio.internal'
@@ -37,10 +43,16 @@ describe('buildSshTunnelCommand', () => {
     ).toEqual([
       'ssh',
       '-N',
+      '-o',
+      'ExitOnForwardFailure=yes',
+      '-o',
+      'StrictHostKeyChecking=accept-new',
+      '-o',
+      'ServerAliveInterval=15',
       '-p',
       '2222',
       '-L',
-      '19001:127.0.0.1:18789',
+      '127.0.0.1:19001:127.0.0.1:18789',
       'chenyang@studio.internal'
     ]);
   });

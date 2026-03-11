@@ -98,7 +98,7 @@ pnpm dev
 2. 再跑 `pnpm test`
 3. 再跑 `pnpm --filter @openclaw-habitat/macos-shell exec playwright test`
 4. 启动 `pnpm dev:desktop`
-5. 点击桌宠，确认面板会展开
+5. 双击桌宠，确认面板会展开
 6. 拖动桌宠，确认松手后会吸附到屏幕边缘
 7. 填远程 SSH 信息连接真实 OpenClaw
 8. 发一条消息，确认结果卡片更新

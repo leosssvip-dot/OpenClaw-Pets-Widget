@@ -5,21 +5,33 @@ export interface SshConnectionInput {
   username: string;
   sshPort: number;
   identityFile?: string;
+  password?: string;
   remoteGatewayPort: number;
   gatewayToken: string;
 }
 
+export type SshConnectionDraft = Omit<SshConnectionInput, 'password'>;
+
 export function SshConnectionForm({
-  onSubmit
+  onSubmit,
+  initialValues,
+  submitLabel = 'Connect',
+  disabled
 }: {
   onSubmit: (input: SshConnectionInput) => Promise<void> | void;
+  initialValues?: Partial<SshConnectionDraft>;
+  submitLabel?: string;
+  disabled?: boolean;
 }) {
-  const [host, setHost] = useState('');
-  const [username, setUsername] = useState('');
-  const [sshPort, setSshPort] = useState('22');
-  const [identityFile, setIdentityFile] = useState('');
-  const [remoteGatewayPort, setRemoteGatewayPort] = useState('18789');
-  const [gatewayToken, setGatewayToken] = useState('');
+  const [host, setHost] = useState(initialValues?.host ?? '');
+  const [username, setUsername] = useState(initialValues?.username ?? '');
+  const [sshPort, setSshPort] = useState(String(initialValues?.sshPort ?? 22));
+  const [identityFile, setIdentityFile] = useState(initialValues?.identityFile ?? '');
+  const [password, setPassword] = useState('');
+  const [remoteGatewayPort, setRemoteGatewayPort] = useState(
+    String(initialValues?.remoteGatewayPort ?? 18789)
+  );
+  const [gatewayToken, setGatewayToken] = useState(initialValues?.gatewayToken ?? '');
 
   return (
     <form
@@ -31,6 +43,7 @@ export function SshConnectionForm({
           username,
           sshPort: Number(sshPort || '22'),
           identityFile: identityFile.trim() || undefined,
+          password: password || undefined,
           remoteGatewayPort: Number(remoteGatewayPort || '18789'),
           gatewayToken
         });
@@ -76,6 +89,16 @@ export function SshConnectionForm({
         />
       </label>
       <label>
+        SSH Password
+        <input
+          aria-label="SSH Password"
+          type="password"
+          value={password}
+          onChange={(event) => setPassword(event.target.value)}
+          placeholder="Optional if your SSH key already works"
+        />
+      </label>
+      <label>
         Gateway Port
         <input
           aria-label="Gateway Port"
@@ -97,8 +120,11 @@ export function SshConnectionForm({
       </label>
       <p className="gateway-profiles__hint">
         Leave Identity File blank to reuse your system SSH config and loaded keys.
+        SSH Password is session-only and is not persisted.
       </p>
-      <button type="submit">Connect</button>
+      <button type="submit" disabled={disabled}>
+        {disabled ? 'Connecting...' : submitLabel}
+      </button>
     </form>
   );
 }

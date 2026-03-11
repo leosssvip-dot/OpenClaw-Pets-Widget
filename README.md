@@ -22,7 +22,7 @@ Detailed testing steps: [docs/testing-guide.md](./docs/testing-guide.md)
 ## Connect from the widget
 
 1. Run `pnpm dev:desktop`.
-2. Click the desktop pet to open the panel.
+2. Double-click the desktop pet to open the panel. Dragging only moves the pet.
 3. Click `Connect Remote`.
 4. Fill in:
    - `Remote Host`
@@ -34,6 +34,18 @@ Detailed testing steps: [docs/testing-guide.md](./docs/testing-guide.md)
 5. Click `Connect`.
 
 If SSH works and the remote Gateway is healthy, the panel status changes to `Connected` and the pet list appears.
+
+## Custom pet art
+
+- Open the panel and use the `Avatar URL` field for each agent row.
+- Supported sources:
+  - `https://...`
+  - `file:///absolute/path/to/your-image.png`
+  - `data:image/...`
+- Supported image formats: `PNG`, `JPG`, `WEBP`, `GIF`, `SVG`
+- If you only have a local macOS path like `/Users/chenyang/Pictures/lobster.png`, convert it to `file:///Users/chenyang/Pictures/lobster.png`.
+
+The panel now shows each connected agent with its current status, so you can see which pets are actually bound and live.
 
 ## Current non-goals
 

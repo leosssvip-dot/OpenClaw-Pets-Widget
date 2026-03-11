@@ -5,7 +5,7 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "dev:renderer": "vite --host 127.0.0.1 --port 5173",
+    "dev:renderer": "vite --host 127.0.0.1 --port 5173 --strictPort",
     "dev:desktop": "tsx electron/dev-runner.ts",
     "build": "vite build && pnpm run build:electron",
     "build:electron": "esbuild electron/main.ts --bundle --platform=node --format=esm --outfile=.electron-build/main.js --external:electron --sourcemap && esbuild electron/preload.ts --bundle --platform=node --format=cjs --outfile=.electron-build/preload.cjs --external:electron --sourcemap",
