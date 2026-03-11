@@ -135,6 +135,13 @@ export function WidgetPanel({
             <div className="app-shell__empty-state">
               <strong>No companion connected</strong>
               <p>Open settings and connect a gateway to bring a character on stage.</p>
+              <button
+                type="button"
+                className="app-shell__empty-state-action"
+                onClick={() => setIsSettingsOpen(true)}
+              >
+                Connect gateway
+              </button>
             </div>
           )}
 

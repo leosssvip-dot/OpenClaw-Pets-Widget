@@ -185,6 +185,18 @@ describe('hydrateAndReconnectActiveProfile', () => {
     expect(screen.getByLabelText('Pinned agent')).toHaveValue('ad-expert');
   });
 
+  it('shows a direct gateway connection action when no companion is connected', async () => {
+    render(<App />);
+
+    expect(await screen.findByText('No companion connected')).toBeInTheDocument();
+    const connectButton = screen.getByRole('button', { name: 'Connect gateway' });
+
+    fireEvent.click(connectButton);
+
+    expect(screen.getByRole('heading', { name: 'Connection' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Connect Remote' })).toBeInTheDocument();
+  });
+
   it('marks the pet surface as transparent chrome', async () => {
     window.history.replaceState({}, '', '/?surface=pet');
 

@@ -263,6 +263,24 @@ body[data-surface='pet'] {
   color: #4d6988;
 }
 
+.app-shell__empty-state-action {
+  justify-self: start;
+  border: 0;
+  border-radius: 999px;
+  padding: 10px 16px;
+  font: inherit;
+  font-weight: 800;
+  color: #fff;
+  background: linear-gradient(180deg, #ff8f6b, #f3633d);
+  box-shadow: 0 12px 22px rgba(243, 99, 61, 0.22);
+  cursor: pointer;
+}
+
+.app-shell__empty-state-action:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 14px 24px rgba(243, 99, 61, 0.28);
+}
+
 .app-shell__settings-drawer {
   display: grid;
   gap: 20px;
