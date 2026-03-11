@@ -4,6 +4,7 @@ import { getHabitatDesktopApi } from '../../runtime/habitat-api';
 import { useWidgetStore, widgetStore } from './widget-store';
 import { resolvePetAppearance, type PetAppearanceConfig } from './pet-appearance';
 import { resolvePetAnimationState } from './pet-animation-state';
+import { MonkPetSvg } from './MonkPetSvg';
 
 function renderBuiltInPet(rolePack: 'lobster' | 'cat' | 'robot' | 'monk') {
   switch (rolePack) {
@@ -50,30 +51,7 @@ function renderBuiltInPet(rolePack: 'lobster' | 'cat' | 'robot' | 'monk') {
         </span>
       );
     case 'monk':
-      return (
-        <span className="desktop-pet__monk">
-          <span className="desktop-pet__monk-cushion" />
-          <span className="desktop-pet__woodfish">
-            <span className="desktop-pet__woodfish-slot" />
-            <span className="desktop-pet__woodfish-impact" />
-          </span>
-          <span className="desktop-pet__monk-body">
-            <span className="desktop-pet__monk-head">
-              <span className="desktop-pet__monk-brow" />
-              <span className="desktop-pet__monk-eye desktop-pet__monk-eye--left" />
-              <span className="desktop-pet__monk-eye desktop-pet__monk-eye--right" />
-              <span className="desktop-pet__monk-mouth" />
-            </span>
-            <span className="desktop-pet__monk-robe" />
-            <span className="desktop-pet__monk-beads" />
-            <span className="desktop-pet__monk-arm desktop-pet__monk-arm--left" />
-            <span className="desktop-pet__monk-arm desktop-pet__monk-arm--right">
-              <span className="desktop-pet__monk-sleeve" />
-              <span className="desktop-pet__mallet" />
-            </span>
-          </span>
-        </span>
-      );
+      return <MonkPetSvg />;
     case 'lobster':
     default:
       return (

@@ -1172,181 +1172,90 @@ body[data-surface='pet'] {
 }
 
 .desktop-pet__monk-cushion {
-  left: 34px;
-  bottom: 18px;
-  width: 60px;
-  height: 18px;
-  border-radius: 999px;
-  background: linear-gradient(180deg, #cf7140 0%, #a74d28 100%);
-  box-shadow:
-    inset 0 -3px 0 rgba(115, 49, 24, 0.32),
-    0 8px 14px rgba(113, 55, 24, 0.14);
+  filter: drop-shadow(0 7px 10px rgba(116, 56, 22, 0.16));
+}
+
+.desktop-pet__monk-svg {
+  width: 100%;
+  height: 100%;
+  overflow: visible;
 }
 
 .desktop-pet__woodfish {
-  left: 76px;
-  top: 64px;
-  width: 34px;
-  height: 24px;
-  border-radius: 18px;
-  background:
-    radial-gradient(circle at 35% 36%, #f0ca8b 0 14%, transparent 15%),
-    linear-gradient(180deg, #cb8a47 0%, #955221 100%);
-  box-shadow:
-    inset 0 -4px 0 rgba(106, 56, 18, 0.34),
-    0 10px 14px rgba(101, 53, 20, 0.16);
+  filter: drop-shadow(0 6px 10px rgba(111, 57, 20, 0.16));
   transform-origin: center bottom;
+  transform-box: fill-box;
 }
 
 .desktop-pet__woodfish-slot {
-  left: 11px;
-  top: 9px;
-  width: 12px;
-  height: 5px;
-  border-radius: 999px;
-  background: rgba(113, 55, 18, 0.78);
+  transform-box: fill-box;
+  transform-origin: center;
 }
 
 .desktop-pet__woodfish-impact {
-  left: 4px;
-  top: -4px;
-  width: 26px;
-  height: 26px;
-  border: 2px solid rgba(251, 221, 162, 0.78);
-  border-radius: 999px;
   opacity: 0;
   transform: scale(0.35);
+  transform-box: fill-box;
+  transform-origin: center;
 }
 
+.desktop-pet__monk-rig,
 .desktop-pet__monk-body {
-  left: 18px;
-  top: 16px;
-  width: 78px;
-  height: 84px;
+  transform-box: fill-box;
   transform-origin: center bottom;
 }
 
+.desktop-pet__monk-rig {
+  filter: drop-shadow(0 10px 16px rgba(101, 58, 24, 0.14));
+}
+
+.desktop-pet__monk-head,
+.desktop-pet__monk-brow,
+.desktop-pet__monk-eye,
+.desktop-pet__monk-mouth,
+.desktop-pet__monk-robe,
+.desktop-pet__monk-beads,
+.desktop-pet__monk-arm,
+.desktop-pet__monk-sleeve,
+.desktop-pet__mallet {
+  transform-box: fill-box;
+  transform-origin: center;
+}
+
 .desktop-pet__monk-head {
-  left: 20px;
-  top: 0;
-  width: 34px;
-  height: 34px;
-  border-radius: 999px;
-  background:
-    radial-gradient(circle at 50% 24%, rgba(255, 243, 220, 0.88), transparent 26%),
-    linear-gradient(180deg, #efc790 0%, #d6a26b 100%);
-  box-shadow: inset 0 -3px 0 rgba(164, 121, 76, 0.2);
+  transform-origin: center center;
 }
 
 .desktop-pet__monk-brow {
-  left: 9px;
-  top: 10px;
-  width: 16px;
-  height: 4px;
-  border-radius: 999px;
-  background: rgba(119, 76, 43, 0.2);
+  transform-origin: center center;
 }
 
 .desktop-pet__monk-eye {
-  top: 16px;
-  width: 8px;
-  height: 4px;
-  border-radius: 999px;
-  background: #5b432e;
-}
-
-.desktop-pet__monk-eye--left {
-  left: 8px;
-}
-
-.desktop-pet__monk-eye--right {
-  right: 8px;
+  transform-origin: center center;
 }
 
 .desktop-pet__monk-mouth {
-  left: 12px;
-  bottom: 7px;
-  width: 10px;
-  height: 5px;
-  border-bottom: 2px solid rgba(101, 64, 39, 0.8);
-  border-radius: 0 0 10px 10px;
+  transform-origin: center center;
 }
 
 .desktop-pet__monk-robe {
-  left: 8px;
-  top: 24px;
-  width: 58px;
-  height: 50px;
-  border-radius: 22px 22px 16px 16px;
-  background:
-    linear-gradient(120deg, rgba(255, 219, 160, 0.7) 0 18%, transparent 18% 100%),
-    linear-gradient(180deg, #d88942 0%, #b05e29 100%);
-  box-shadow:
-    inset 0 -6px 0 rgba(124, 69, 32, 0.26),
-    0 10px 16px rgba(106, 63, 27, 0.18);
-}
-
-.desktop-pet__monk-beads {
-  left: 18px;
-  top: 38px;
-  width: 24px;
-  height: 24px;
-  border-radius: 999px;
-  border: 3px dotted rgba(115, 66, 28, 0.5);
+  filter: drop-shadow(0 7px 12px rgba(106, 63, 27, 0.12));
 }
 
 .desktop-pet__monk-arm {
-  top: 36px;
-  width: 14px;
-  height: 34px;
-  border-radius: 999px;
-  background: linear-gradient(180deg, #ebbb85 0%, #d39763 100%);
   transform-origin: top center;
 }
 
-.desktop-pet__monk-arm--left {
-  left: 4px;
-  transform: rotate(30deg);
-}
-
 .desktop-pet__monk-arm--right {
-  right: -4px;
-  transform: rotate(52deg);
+  transform-origin: 79px 54px;
 }
 
 .desktop-pet__monk-sleeve {
-  left: -3px;
-  top: 4px;
-  width: 20px;
-  height: 22px;
-  border-radius: 14px;
-  background:
-    linear-gradient(180deg, rgba(255, 214, 152, 0.58), transparent 28%),
-    linear-gradient(180deg, #d6853f 0%, #b2602b 100%);
-  box-shadow: inset 0 -3px 0 rgba(118, 63, 29, 0.24);
+  transform-origin: center center;
 }
 
 .desktop-pet__mallet {
-  right: -10px;
-  top: 10px;
-  width: 36px;
-  height: 8px;
-  border-radius: 999px;
-  background: linear-gradient(180deg, #f0d3a0 0%, #b67537 100%);
-  transform: rotate(-28deg);
-  transform-origin: 4px center;
-}
-
-.desktop-pet__mallet::after {
-  content: '';
-  position: absolute;
-  right: -8px;
-  top: -4px;
-  width: 14px;
-  height: 18px;
-  border-radius: 10px;
-  background: linear-gradient(180deg, #d8a45c 0%, #9d5f25 100%);
-  box-shadow: inset 0 -2px 0 rgba(96, 54, 21, 0.22);
+  transform-origin: 83px 69px;
 }
 
 .desktop-pet__label {
