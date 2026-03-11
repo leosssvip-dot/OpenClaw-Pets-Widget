@@ -11,8 +11,8 @@ describe('pet window position persistence', () => {
       getBounds: vi.fn(() => ({
         x: 500,
         y: 120,
-        width: 140,
-        height: 160
+        width: 196,
+        height: 220
       })),
       setPosition: vi.fn()
     } as unknown as BrowserWindow;
@@ -59,8 +59,8 @@ describe('pet window position persistence', () => {
           getAllDisplays: () => [display],
           getDisplayMatching: () => display
         },
-        { width: 140, height: 160 }
+        { width: 196, height: 220 }
       )
-    ).toEqual({ x: 300, y: 160, displayId: '9' });
+    ).toEqual({ x: 244, y: 100, displayId: '9' });
   });
 });

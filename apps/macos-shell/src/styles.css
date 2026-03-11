@@ -639,9 +639,9 @@ body[data-surface='pet'] {
   justify-items: center;
   align-content: end;
   gap: 0;
-  width: 164px;
-  min-height: 154px;
-  padding: 0 0 2px;
+  width: 184px;
+  min-height: 192px;
+  padding: 0 0 4px;
   border: 0;
   border-radius: 0;
   background: transparent;
@@ -663,16 +663,26 @@ body[data-surface='pet'] {
 .desktop-pet__stage {
   position: absolute;
   top: 0;
-  width: 128px;
-  height: 122px;
+  left: 0;
+  right: 0;
+  width: 138px;
+  height: 132px;
+  margin: 0 auto;
+}
+
+.desktop-pet__stage--roomy {
+  width: 154px;
+  height: 150px;
 }
 
 .desktop-pet__glow {
   position: absolute;
-  left: 22px;
-  bottom: 18px;
-  width: 84px;
-  height: 34px;
+  left: 0;
+  right: 0;
+  bottom: 22px;
+  width: 94px;
+  height: 36px;
+  margin: 0 auto;
   border-radius: 999px;
   background: radial-gradient(circle, rgba(255, 255, 255, 0.52), rgba(255, 255, 255, 0));
   filter: blur(5px);
@@ -680,10 +690,12 @@ body[data-surface='pet'] {
 
 .desktop-pet__ground {
   position: absolute;
-  left: 28px;
-  bottom: 14px;
-  width: 72px;
-  height: 14px;
+  left: 0;
+  right: 0;
+  bottom: 16px;
+  width: 80px;
+  height: 15px;
+  margin: 0 auto;
   border-radius: 999px;
   background: linear-gradient(180deg, rgba(58, 115, 158, 0.22), rgba(58, 115, 158, 0.08));
 }
@@ -1290,16 +1302,20 @@ body[data-surface='pet'] {
 }
 
 .desktop-pet__label {
-  max-width: 144px;
+  max-width: 160px;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
-  margin-top: 130px;
+  margin-top: 146px;
   font-size: 15px;
   font-weight: 800;
   letter-spacing: 0.01em;
   color: #1d4565;
   text-shadow: 0 1px 10px rgba(255, 255, 255, 0.9);
+}
+
+.desktop-pet--role-monk .desktop-pet__label {
+  margin-top: 164px;
 }
 
 .desktop-pet--interaction-hovered .desktop-pet__stage {
@@ -1649,36 +1665,57 @@ body[data-surface='pet'] {
   animation: monk-breath-halo 3.2s ease-in-out infinite;
 }
 
+.desktop-pet--role-monk {
+  animation: none;
+}
+
 .desktop-pet--role-monk .desktop-pet__monk-robe-fold {
   animation: monk-robe-fold-idle 3.2s ease-in-out infinite;
 }
 
-.desktop-pet--role-monk.desktop-pet--activity-idle .desktop-pet__monk-arm--right {
-  animation: monk-idle-tap 2.6s ease-in-out infinite;
+.desktop-pet--role-monk.desktop-pet--activity-idle .desktop-pet__stage,
+.desktop-pet--role-monk.desktop-pet--activity-waiting .desktop-pet__stage {
+  animation: monk-stage-idle 2.1s cubic-bezier(0.38, 0, 0.24, 1) infinite;
 }
 
-.desktop-pet--role-monk.desktop-pet--activity-idle .desktop-pet__mallet {
-  animation: monk-idle-mallet 2.6s ease-in-out infinite;
+.desktop-pet--role-monk.desktop-pet--activity-idle .desktop-pet__monk-arm--right,
+.desktop-pet--role-monk.desktop-pet--activity-waiting .desktop-pet__monk-arm--right {
+  animation: monk-idle-tap 2.1s cubic-bezier(0.38, 0, 0.24, 1) infinite;
 }
 
-.desktop-pet--role-monk.desktop-pet--activity-idle .desktop-pet__woodfish {
-  animation: monk-idle-woodfish 2.6s ease-in-out infinite;
+.desktop-pet--role-monk.desktop-pet--activity-idle .desktop-pet__mallet,
+.desktop-pet--role-monk.desktop-pet--activity-waiting .desktop-pet__mallet {
+  animation: monk-idle-mallet 2.1s cubic-bezier(0.38, 0, 0.24, 1) infinite;
 }
 
-.desktop-pet--role-monk.desktop-pet--activity-idle .desktop-pet__woodfish-impact {
-  animation: monk-idle-impact 2.6s ease-in-out infinite;
+.desktop-pet--role-monk.desktop-pet--activity-idle .desktop-pet__mallet-trail,
+.desktop-pet--role-monk.desktop-pet--activity-waiting .desktop-pet__mallet-trail {
+  animation: monk-idle-trail 2.1s cubic-bezier(0.38, 0, 0.24, 1) infinite;
 }
 
-.desktop-pet--role-monk.desktop-pet--activity-idle .desktop-pet__woodfish-echo {
-  animation: monk-idle-echo 2.6s ease-in-out infinite;
+.desktop-pet--role-monk.desktop-pet--activity-idle .desktop-pet__woodfish,
+.desktop-pet--role-monk.desktop-pet--activity-waiting .desktop-pet__woodfish {
+  animation: monk-idle-woodfish 2.1s cubic-bezier(0.38, 0, 0.24, 1) infinite;
 }
 
-.desktop-pet--role-monk.desktop-pet--activity-idle .desktop-pet__monk-head {
-  animation: monk-idle-head-nod 2.6s ease-in-out infinite;
+.desktop-pet--role-monk.desktop-pet--activity-idle .desktop-pet__woodfish-impact,
+.desktop-pet--role-monk.desktop-pet--activity-waiting .desktop-pet__woodfish-impact {
+  animation: monk-idle-impact 2.1s cubic-bezier(0.38, 0, 0.24, 1) infinite;
 }
 
-.desktop-pet--role-monk.desktop-pet--activity-idle .desktop-pet__monk-beads {
-  animation: monk-idle-beads 2.6s ease-in-out infinite;
+.desktop-pet--role-monk.desktop-pet--activity-idle .desktop-pet__woodfish-echo,
+.desktop-pet--role-monk.desktop-pet--activity-waiting .desktop-pet__woodfish-echo {
+  animation: monk-idle-echo 2.1s cubic-bezier(0.38, 0, 0.24, 1) infinite;
+}
+
+.desktop-pet--role-monk.desktop-pet--activity-idle .desktop-pet__monk-head,
+.desktop-pet--role-monk.desktop-pet--activity-waiting .desktop-pet__monk-head {
+  animation: monk-idle-head-nod 2.1s cubic-bezier(0.38, 0, 0.24, 1) infinite;
+}
+
+.desktop-pet--role-monk.desktop-pet--activity-idle .desktop-pet__monk-beads,
+.desktop-pet--role-monk.desktop-pet--activity-waiting .desktop-pet__monk-beads {
+  animation: monk-idle-beads 2.1s cubic-bezier(0.38, 0, 0.24, 1) infinite;
 }
 
 .desktop-pet--role-monk.desktop-pet--interaction-hovered .desktop-pet__monk-eye,
@@ -1839,40 +1876,71 @@ body[data-surface='pet'] {
   50% { transform: translateY(-2px) scaleY(1.02); }
 }
 
+@keyframes monk-stage-idle {
+  0%, 100% { transform: translateY(0) scale(1); }
+  18% { transform: translateY(-1px) scale(1.01, 0.99); }
+  30% { transform: translateY(1px) scale(0.985, 1.015); }
+  38% { transform: translateY(0) scale(1); }
+}
+
 @keyframes monk-idle-tap {
-  0%, 100% { transform: rotate(8deg) translate(0, 0); }
-  18% { transform: rotate(-12deg) translate(-2px, -4px); }
-  30% { transform: rotate(18deg) translate(2px, 2px); }
-  42% { transform: rotate(10deg) translate(0, 0); }
-  100% { transform: rotate(8deg) translate(0, 0); }
+  0%, 10%, 100% { transform: rotate(10deg) translate(0, 0); }
+  19% { transform: rotate(-24deg) translate(-4px, -8px); }
+  29% { transform: rotate(32deg) translate(4px, 5px); }
+  37% { transform: rotate(14deg) translate(1px, 1px); }
+  54% { transform: rotate(10deg) translate(0, 0); }
 }
 
 @keyframes monk-idle-mallet {
-  0%, 100% { transform: rotate(-8deg) translate(0, 0); }
-  18% { transform: rotate(-32deg) translate(-2px, -3px); }
-  30% { transform: rotate(8deg) translate(3px, 3px); }
-  42% { transform: rotate(-10deg) translate(0, 0); }
+  0%, 10%, 100% { transform: rotate(-10deg) translate(0, 0); }
+  19% { transform: rotate(-40deg) translate(-4px, -5px); }
+  29% { transform: rotate(14deg) translate(5px, 4px); }
+  37% { transform: rotate(-12deg) translate(1px, 1px); }
+  54% { transform: rotate(-10deg) translate(0, 0); }
+}
+
+@keyframes monk-idle-trail {
+  0%, 14%, 100% {
+    opacity: 0;
+    transform: scaleX(0.78) translate(-2px, -1px);
+  }
+  20% {
+    opacity: 0.18;
+    transform: scaleX(0.92) translate(0, -4px);
+  }
+  29% {
+    opacity: 0.62;
+    transform: scaleX(1.04) translate(2px, 0);
+  }
+  36% {
+    opacity: 0.16;
+    transform: scaleX(0.96) translate(1px, 1px);
+  }
 }
 
 @keyframes monk-idle-woodfish {
-  0%, 100% { transform: translateY(0) scale(1); }
-  18% { transform: translateY(0) scale(1); }
-  30% { transform: translateY(2px) scale(0.95, 0.92); }
-  38% { transform: translateY(-1px) scale(1.02, 1.01); }
+  0%, 20%, 100% { transform: translateY(0) scale(1); }
+  29% { transform: translateY(3px) scale(0.91, 0.87); }
+  38% { transform: translateY(-0.5px) scale(1.03, 1.01); }
+  50% { transform: translateY(0) scale(1); }
 }
 
 @keyframes monk-idle-impact {
-  0%, 22%, 100% {
+  0%, 20%, 100% {
     opacity: 0;
     transform: scale(0.35);
   }
-  30% {
-    opacity: 0.75;
-    transform: scale(0.7);
+  27% {
+    opacity: 0.18;
+    transform: scale(0.82);
+  }
+  31% {
+    opacity: 0.92;
+    transform: scale(1.22);
   }
   40% {
-    opacity: 0.18;
-    transform: scale(1.08);
+    opacity: 0;
+    transform: scale(1.5);
   }
 }
 
@@ -1881,26 +1949,28 @@ body[data-surface='pet'] {
     opacity: 0;
     transform: scale(0.7);
   }
-  34% {
-    opacity: 0.28;
-    transform: scale(1);
+  30% {
+    opacity: 0.56;
+    transform: scale(1.08);
   }
-  46% {
+  44% {
     opacity: 0;
-    transform: scale(1.28);
+    transform: scale(1.56);
   }
 }
 
 @keyframes monk-idle-head-nod {
-  0%, 100% { transform: translateY(0) rotate(0deg); }
-  20% { transform: translateY(-1px) rotate(-2deg); }
-  32% { transform: translateY(1px) rotate(2deg); }
+  0%, 10%, 100% { transform: rotate(0deg); }
+  19% { transform: rotate(-7deg) translate(-1px, -2px); }
+  32% { transform: rotate(4deg) translate(0.5px, 0.8px); }
+  48% { transform: rotate(0deg); }
 }
 
 @keyframes monk-idle-beads {
-  0%, 100% { transform: rotate(0deg); }
-  18% { transform: rotate(-5deg); }
-  34% { transform: rotate(4deg); }
+  0%, 18%, 100% { transform: rotate(0deg); }
+  29% { transform: rotate(14deg) translate(3px, 2px); }
+  40% { transform: rotate(-4deg) translate(0, -1px); }
+  50% { transform: rotate(0deg); }
 }
 
 @keyframes monk-stage-work {

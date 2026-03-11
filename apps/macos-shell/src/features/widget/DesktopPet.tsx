@@ -112,6 +112,7 @@ export function DesktopPet({
     petStatus,
     connectionStatus
   });
+  const stageClassName = `desktop-pet__stage${resolvedAppearance.rolePack === 'monk' ? ' desktop-pet__stage--roomy' : ''}`;
 
   useEffect(() => {
     return () => {
@@ -266,7 +267,7 @@ export function DesktopPet({
           };
         }}
       >
-        <span className="desktop-pet__stage" aria-hidden="true">
+        <span className={stageClassName} aria-hidden="true">
           <span className="desktop-pet__glow" />
           <span className="desktop-pet__ground" />
           {resolvedAppearance.avatar ? (

@@ -11,8 +11,8 @@ function resolvePreloadPath() {
 
 export function buildPetWidgetWindowOptions(): BrowserWindowConstructorOptions {
   return {
-    width: 140,
-    height: 160,
+    width: 196,
+    height: 220,
     transparent: true,
     frame: false,
     alwaysOnTop: true,

@@ -3,29 +3,30 @@ export function MonkPetSvg() {
     <span className="desktop-pet__monk">
       <svg
         className="desktop-pet__monk-svg"
-        viewBox="0 0 128 122"
+        viewBox="0 0 144 138"
         aria-hidden="true"
       >
-        <ellipse
-          className="desktop-pet__monk-breath-halo"
-          cx="67"
-          cy="71"
-          rx="30"
-          ry="22"
-          fill="#f5d59b"
-          opacity="0.22"
-        />
-        <ellipse
-          className="desktop-pet__monk-cushion"
-          cx="63"
-          cy="103"
-          rx="30"
-          ry="9"
-          fill="#c96d3a"
-          stroke="#9d4f28"
-          strokeWidth="2"
-        />
-        <g className="desktop-pet__woodfish">
+        <g transform="translate(7 7)">
+          <ellipse
+            className="desktop-pet__monk-breath-halo"
+            cx="67"
+            cy="71"
+            rx="30"
+            ry="22"
+            fill="#f5d59b"
+            opacity="0.22"
+          />
+          <ellipse
+            className="desktop-pet__monk-cushion"
+            cx="63"
+            cy="103"
+            rx="30"
+            ry="9"
+            fill="#c96d3a"
+            stroke="#9d4f28"
+            strokeWidth="2"
+          />
+          <g className="desktop-pet__woodfish">
           <ellipse
             cx="93"
             cy="78"
@@ -70,8 +71,8 @@ export function MonkPetSvg() {
             stroke="#f6d8a0"
             strokeWidth="1.6"
           />
-        </g>
-        <g className="desktop-pet__monk-rig">
+          </g>
+          <g className="desktop-pet__monk-rig">
           <g className="desktop-pet__monk-body">
             <g className="desktop-pet__monk-head">
               <circle
@@ -179,6 +180,7 @@ export function MonkPetSvg() {
                 />
               </g>
             </g>
+          </g>
           </g>
         </g>
       </svg>
