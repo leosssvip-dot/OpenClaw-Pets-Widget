@@ -1220,7 +1220,7 @@ body[data-surface='pet'] {
 
 .desktop-pet__woodfish {
   filter: drop-shadow(0 6px 10px rgba(111, 57, 20, 0.16));
-  transform-origin: center bottom;
+  transform-origin: center center;
   transform-box: fill-box;
 }
 
@@ -1262,7 +1262,9 @@ body[data-surface='pet'] {
 .desktop-pet__monk-robe-fold,
 .desktop-pet__monk-beads,
 .desktop-pet__monk-arm,
+.desktop-pet__monk-hand,
 .desktop-pet__monk-sleeve,
+.desktop-pet__woodfish-shell,
 .desktop-pet__mallet,
 .desktop-pet__mallet-trail {
   transform-box: fill-box;
@@ -1904,131 +1906,131 @@ body[data-surface='pet'] {
 }
 
 @keyframes monk-stage-idle {
-  0%, 100% { transform: translateY(0) scale(1); }
-  18% { transform: translateY(-1px) scale(1.01, 0.99); }
-  30% { transform: translateY(1px) scale(0.985, 1.015); }
-  38% { transform: translateY(0) scale(1); }
+  0%, 100% { transform: translateY(0); }
+  22% { transform: translateY(-0.5px); }
+  34% { transform: translateY(0.6px); }
+  46% { transform: translateY(0); }
 }
 
 @keyframes monk-idle-tap {
-  0%, 10%, 100% { transform: rotate(10deg) translate(0, 0); }
-  19% { transform: rotate(-24deg) translate(-4px, -8px); }
-  29% { transform: rotate(32deg) translate(4px, 5px); }
-  37% { transform: rotate(14deg) translate(1px, 1px); }
-  54% { transform: rotate(10deg) translate(0, 0); }
+  0%, 12%, 100% { transform: rotate(12deg) translate(0, 0); }
+  22% { transform: rotate(-6deg) translate(-1px, -3px); }
+  33% { transform: rotate(21deg) translate(1px, 1.5px); }
+  43% { transform: rotate(13deg) translate(0, 0); }
+  56% { transform: rotate(12deg) translate(0, 0); }
 }
 
 @keyframes monk-idle-mallet {
-  0%, 10%, 100% { transform: rotate(-10deg) translate(0, 0); }
-  19% { transform: rotate(-40deg) translate(-4px, -5px); }
-  29% { transform: rotate(14deg) translate(5px, 4px); }
-  37% { transform: rotate(-12deg) translate(1px, 1px); }
-  54% { transform: rotate(-10deg) translate(0, 0); }
+  0%, 12%, 100% { transform: rotate(-8deg) translate(0, 0); }
+  22% { transform: rotate(-24deg) translate(-1px, -2px); }
+  33% { transform: rotate(6deg) translate(1px, 1px); }
+  43% { transform: rotate(-6deg) translate(0, 0); }
+  56% { transform: rotate(-8deg) translate(0, 0); }
 }
 
 @keyframes monk-idle-trail {
-  0%, 14%, 100% {
+  0%, 16%, 100% {
     opacity: 0;
-    transform: scaleX(0.78) translate(-2px, -1px);
+    transform: scaleX(0.82) translate(-1px, -1px);
   }
-  20% {
-    opacity: 0.18;
-    transform: scaleX(0.92) translate(0, -4px);
+  24% {
+    opacity: 0.08;
+    transform: scaleX(0.9) translate(0, -2px);
   }
-  29% {
-    opacity: 0.62;
-    transform: scaleX(1.04) translate(2px, 0);
+  33% {
+    opacity: 0.28;
+    transform: scaleX(0.98) translate(1px, 0);
   }
-  36% {
-    opacity: 0.16;
-    transform: scaleX(0.96) translate(1px, 1px);
+  40% {
+    opacity: 0.06;
+    transform: scaleX(0.94) translate(0, 1px);
   }
 }
 
 @keyframes monk-idle-woodfish {
-  0%, 20%, 100% { transform: translateY(0) scale(1); }
-  29% { transform: translateY(3px) scale(0.91, 0.87); }
-  38% { transform: translateY(-0.5px) scale(1.03, 1.01); }
-  50% { transform: translateY(0) scale(1); }
+  0%, 22%, 100% { transform: translateY(0) scale(1); }
+  33% { transform: translateY(1.6px) scale(0.96, 0.93); }
+  42% { transform: translateY(-0.2px) scale(1.01); }
+  52% { transform: translateY(0) scale(1); }
 }
 
 @keyframes monk-idle-impact {
-  0%, 20%, 100% {
+  0%, 22%, 100% {
     opacity: 0;
     transform: scale(0.35);
   }
-  27% {
+  30% {
     opacity: 0.18;
-    transform: scale(0.82);
+    transform: scale(0.72);
   }
-  31% {
-    opacity: 0.92;
-    transform: scale(1.22);
+  34% {
+    opacity: 0.66;
+    transform: scale(1.02);
   }
-  40% {
+  42% {
     opacity: 0;
-    transform: scale(1.5);
+    transform: scale(1.24);
   }
 }
 
 @keyframes monk-idle-echo {
-  0%, 24%, 100% {
+  0%, 26%, 100% {
     opacity: 0;
-    transform: scale(0.7);
+    transform: scale(0.82);
   }
-  30% {
-    opacity: 0.56;
-    transform: scale(1.08);
+  34% {
+    opacity: 0.24;
+    transform: scale(1);
   }
-  44% {
+  48% {
     opacity: 0;
-    transform: scale(1.56);
+    transform: scale(1.26);
   }
 }
 
 @keyframes monk-idle-head-nod {
-  0%, 10%, 100% { transform: rotate(0deg); }
-  19% { transform: rotate(-7deg) translate(-1px, -2px); }
-  32% { transform: rotate(4deg) translate(0.5px, 0.8px); }
+  0%, 12%, 100% { transform: rotate(0deg); }
+  22% { transform: rotate(-3deg) translate(-0.4px, -1px); }
+  35% { transform: rotate(2deg) translate(0.3px, 0.4px); }
   48% { transform: rotate(0deg); }
 }
 
 @keyframes monk-idle-beads {
-  0%, 18%, 100% { transform: rotate(0deg); }
-  29% { transform: rotate(14deg) translate(3px, 2px); }
-  40% { transform: rotate(-4deg) translate(0, -1px); }
-  50% { transform: rotate(0deg); }
+  0%, 20%, 100% { transform: rotate(0deg); }
+  34% { transform: rotate(8deg) translate(1px, 1px); }
+  44% { transform: rotate(-2deg) translate(0, -0.5px); }
+  54% { transform: rotate(0deg); }
 }
 
 @keyframes monk-stage-work {
   0%, 100% { transform: translateY(0); }
-  24% { transform: translateY(-1px); }
-  38% { transform: translateY(1px); }
-  52% { transform: translateY(-2px); }
-  66% { transform: translateY(2px); }
+  22% { transform: translateY(-0.5px); }
+  40% { transform: translateY(0.8px); }
+  56% { transform: translateY(-1px); }
+  72% { transform: translateY(0.6px); }
 }
 
 @keyframes monk-mallet-strike {
-  0%, 100% { transform: rotate(52deg) translate(0, 0); }
-  18% { transform: rotate(18deg) translate(-5px, -8px); }
-  42% { transform: rotate(76deg) translate(4px, 3px); }
-  58% { transform: rotate(40deg) translate(-1px, -1px); }
-  78% { transform: rotate(58deg) translate(1px, 1px); }
+  0%, 100% { transform: rotate(18deg) translate(0, 0); }
+  18% { transform: rotate(2deg) translate(-1px, -4px); }
+  40% { transform: rotate(30deg) translate(1px, 2px); }
+  56% { transform: rotate(16deg) translate(0, 0); }
+  76% { transform: rotate(20deg) translate(0.2px, 0.4px); }
 }
 
 @keyframes monk-mallet-follow {
-  0%, 100% { transform: rotate(-28deg) translate(0, 0); }
-  18% { transform: rotate(-52deg) translate(-3px, -6px); }
-  42% { transform: rotate(2deg) translate(5px, 5px); }
-  58% { transform: rotate(-16deg) translate(1px, 1px); }
-  78% { transform: rotate(-30deg) translate(0, 0); }
+  0%, 100% { transform: rotate(-16deg) translate(0, 0); }
+  18% { transform: rotate(-32deg) translate(-1px, -4px); }
+  40% { transform: rotate(8deg) translate(1px, 2px); }
+  56% { transform: rotate(-12deg) translate(0, 0); }
+  76% { transform: rotate(-16deg) translate(0, 0); }
 }
 
 @keyframes monk-sleeve-swing {
   0%, 100% { transform: rotate(0deg) scale(1); }
-  18% { transform: rotate(-8deg) scale(1.02); }
-  42% { transform: rotate(12deg) scale(0.96, 1.04); }
-  58% { transform: rotate(4deg) scale(1); }
+  18% { transform: rotate(-4deg) scale(1.01); }
+  40% { transform: rotate(6deg) scale(0.98, 1.02); }
+  56% { transform: rotate(2deg) scale(1); }
 }
 
 @keyframes monk-robe-fold-strike {
@@ -2041,9 +2043,9 @@ body[data-surface='pet'] {
 @keyframes monk-woodfish-hit {
   0%, 100% { transform: translateY(0) scale(1); }
   18% { transform: translateY(0) scale(1); }
-  42% { transform: translateY(3px) scale(0.9, 0.82); }
-  55% { transform: translateY(-1px) scale(1.06, 1.04); }
-  72% { transform: translateY(1px) scale(0.98, 0.96); }
+  40% { transform: translateY(1.8px) scale(0.95, 0.92); }
+  54% { transform: translateY(-0.3px) scale(1.02); }
+  70% { transform: translateY(0.4px) scale(0.99, 0.98); }
 }
 
 @keyframes monk-woodfish-impact {
@@ -2052,12 +2054,12 @@ body[data-surface='pet'] {
     transform: scale(0.35);
   }
   41% {
-    opacity: 0.95;
-    transform: scale(0.72);
+    opacity: 0.74;
+    transform: scale(0.64);
   }
   56% {
-    opacity: 0.3;
-    transform: scale(1.3);
+    opacity: 0.14;
+    transform: scale(1.05);
   }
 }
 
@@ -2067,54 +2069,54 @@ body[data-surface='pet'] {
     transform: scale(0.72);
   }
   42% {
-    opacity: 0.32;
-    transform: scale(1.02);
+    opacity: 0.22;
+    transform: scale(0.96);
   }
   58% {
     opacity: 0;
-    transform: scale(1.42);
+    transform: scale(1.18);
   }
 }
 
 @keyframes monk-mallet-trail {
-  0%, 12%, 100% {
+  0%, 14%, 100% {
     opacity: 0;
-    transform: scaleX(0.85) translateX(0);
+    transform: scaleX(0.82) translateX(0);
   }
   18% {
-    opacity: 0.18;
-    transform: scaleX(1) translateX(-1px);
+    opacity: 0.08;
+    transform: scaleX(0.92) translateX(-0.5px);
   }
   40% {
-    opacity: 0.52;
-    transform: scaleX(1.08) translateX(2px);
+    opacity: 0.24;
+    transform: scaleX(0.98) translateX(1px);
   }
   56% {
-    opacity: 0.08;
-    transform: scaleX(1.02) translateX(1px);
+    opacity: 0.04;
+    transform: scaleX(0.94) translateX(0.4px);
   }
 }
 
 @keyframes monk-body-rock {
   0%, 100% { transform: translateY(0) rotate(0deg); }
-  18% { transform: translateY(-1px) rotate(-2deg); }
-  42% { transform: translateY(1px) rotate(3deg); }
-  58% { transform: translateY(0) rotate(-1deg); }
-  78% { transform: translateY(0) rotate(1deg); }
+  18% { transform: translateY(-0.5px) rotate(-1deg); }
+  40% { transform: translateY(0.8px) rotate(1.3deg); }
+  56% { transform: translateY(0) rotate(-0.4deg); }
+  74% { transform: translateY(0) rotate(0.6deg); }
 }
 
 @keyframes monk-head-nod-work {
   0%, 100% { transform: translateY(0) rotate(0deg); }
-  22% { transform: translateY(-1px) rotate(-3deg); }
-  42% { transform: translateY(1px) rotate(4deg); }
-  60% { transform: translateY(0) rotate(-1deg); }
+  22% { transform: translateY(-0.6px) rotate(-2deg); }
+  40% { transform: translateY(0.6px) rotate(2.6deg); }
+  58% { transform: translateY(0) rotate(-0.6deg); }
 }
 
 @keyframes monk-beads-work {
   0%, 100% { transform: rotate(0deg); }
-  24% { transform: rotate(-7deg); }
-  42% { transform: rotate(6deg); }
-  60% { transform: rotate(-2deg); }
+  24% { transform: rotate(-4deg); }
+  40% { transform: rotate(4deg); }
+  58% { transform: rotate(-1deg); }
 }
 
 @keyframes monk-bow {

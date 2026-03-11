@@ -184,11 +184,13 @@ describe('DesktopPet', () => {
     expect(container.querySelector('.desktop-pet__monk-breath-halo')).toBeInTheDocument();
     expect(container.querySelector('.desktop-pet__monk-cheek')).toBeInTheDocument();
     expect(container.querySelector('.desktop-pet__woodfish')).toBeInTheDocument();
+    expect(container.querySelector('.desktop-pet__woodfish-shell')).toBeInTheDocument();
     expect(container.querySelector('.desktop-pet__mallet')).toBeInTheDocument();
     expect(container.querySelector('.desktop-pet__mallet-trail')).toBeInTheDocument();
     expect(container.querySelector('.desktop-pet__woodfish-impact')).toBeInTheDocument();
     expect(container.querySelector('.desktop-pet__woodfish-echo')).toBeInTheDocument();
     expect(container.querySelector('.desktop-pet__monk-sleeve')).toBeInTheDocument();
+    expect(container.querySelector('.desktop-pet__monk-hand--left')).toBeInTheDocument();
     expect(container.querySelector('.desktop-pet__monk-robe-fold')).toBeInTheDocument();
   });
 
