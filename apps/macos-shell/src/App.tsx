@@ -110,12 +110,15 @@ export function App() {
   const [connectionError, setConnectionError] = useState<string | null>(null);
   const bridgeUnsubscribeRef = useRef<(() => void) | null>(null);
   const petsById = useHabitatStore((state) => state.pets);
+  const agentSnapshotsById = useHabitatStore((state) => state.agentSnapshots);
   const petCount = useHabitatStore((state) => Object.keys(state.pets).length);
   const selectedPetId = useHabitatStore((state) => state.selectedPetId);
   const selectedPet = selectedPetId ? petsById[selectedPetId] : null;
   const submitQuickPrompt = useQuickComposer(selectedPet?.id ?? '');
   const gatewayProfilesById = useSettingsStore((state) => state.gatewayProfiles);
   const activeProfileId = useSettingsStore((state) => state.activeProfileId);
+  const displayMode = useSettingsStore((state) => state.displayMode);
+  const pinnedAgentId = useSettingsStore((state) => state.pinnedAgentId);
   const bindingsByPetId = useSettingsStore((state) => state.bindings);
   const appearancesByPetId = useSettingsStore((state) => state.appearances);
   const gatewayProfiles = Object.values(gatewayProfilesById);
@@ -136,7 +139,7 @@ export function App() {
         petName: undefined,
         agentId: binding.agentId,
         gatewayId: binding.gatewayId,
-        status: 'disconnected',
+        status: agentSnapshotsById[binding.agentId]?.runtimeStatus ?? 'disconnected',
         isSelected: false,
         appearance: appearancesByPetId[binding.petId]
       }))
@@ -187,6 +190,14 @@ export function App() {
   });
 
   useEffect(() => {
+    document.body.dataset.surface = surface;
+
+    return () => {
+      delete document.body.dataset.surface;
+    };
+  }, [surface]);
+
+  useEffect(() => {
     const api = getHabitatDesktopApi();
     let isActive = true;
 
@@ -226,7 +237,6 @@ export function App() {
         petName={selectedPet?.name ?? 'OpenClaw'}
         connectionStatus={connectionStatus}
         appearance={selectedPetAppearance}
-        petStatus={selectedPet?.status ?? 'idle'}
       />
     );
   }
@@ -236,6 +246,8 @@ export function App() {
       connectionStatus={connectionStatus}
       connectionError={connectionError}
       activeProfileId={activeProfileId}
+      displayMode={displayMode}
+      pinnedAgentId={pinnedAgentId}
       gatewayProfiles={gatewayProfiles}
       agentRows={agentRows}
       petCount={petCount}
@@ -261,6 +273,12 @@ export function App() {
         clearGatewaySessionAuth(profileId);
         settingsStore.getState().deleteGatewayProfile(profileId);
         void deleteProfileToken(profileId);
+      }}
+      onDisplayModeChange={(mode) => {
+        settingsStore.getState().setDisplayMode(mode);
+      }}
+      onPinnedAgentChange={(agentId) => {
+        settingsStore.getState().setPinnedAgentId(agentId);
       }}
       onUpdateAppearance={(petId, appearance) => {
         settingsStore.getState().setPetAppearance(petId, appearance);

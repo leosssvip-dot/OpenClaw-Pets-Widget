@@ -16,6 +16,8 @@ export function WidgetPanel({
   connectionStatus,
   connectionError,
   activeProfileId,
+  displayMode,
+  pinnedAgentId,
   gatewayProfiles,
   agentRows,
   petCount,
@@ -23,12 +25,16 @@ export function WidgetPanel({
   onReconnect,
   onSaveProfile,
   onDeleteProfile,
+  onDisplayModeChange,
+  onPinnedAgentChange,
   onUpdateAppearance,
   onSubmitQuickPrompt
 }: {
   connectionStatus: ConnectionStatus;
   connectionError: string | null;
   activeProfileId: string | null;
+  displayMode: 'pinned' | 'group';
+  pinnedAgentId: string | null;
   gatewayProfiles: GatewayProfile[];
   agentRows: Array<{
     petId: string;
@@ -44,6 +50,8 @@ export function WidgetPanel({
   onReconnect: () => void;
   onSaveProfile: (input: SshConnectionInput, profileId?: string) => Promise<void>;
   onDeleteProfile: (profileId: string) => void;
+  onDisplayModeChange: (mode: 'pinned' | 'group') => void;
+  onPinnedAgentChange: (agentId: string | null) => void;
   onUpdateAppearance: (petId: string, appearance: PetAppearanceConfig) => void;
   onSubmitQuickPrompt: (value: string) => Promise<void>;
 }) {
@@ -79,7 +87,14 @@ export function WidgetPanel({
           onSaveProfile={onSaveProfile}
           onDeleteProfile={onDeleteProfile}
         />
-        <AgentBindings rows={agentRows} onUpdateAppearance={onUpdateAppearance} />
+        <AgentBindings
+          rows={agentRows}
+          displayMode={displayMode}
+          pinnedAgentId={pinnedAgentId}
+          onDisplayModeChange={onDisplayModeChange}
+          onPinnedAgentChange={onPinnedAgentChange}
+          onUpdateAppearance={onUpdateAppearance}
+        />
       </div>
       {petCount === 0 ? (
         <p>No pets connected</p>

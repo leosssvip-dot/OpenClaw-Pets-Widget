@@ -7,20 +7,20 @@ import { resolvePetAppearance, type PetAppearanceConfig } from './pet-appearance
 export function DesktopPet({
   petName,
   connectionStatus,
-  appearance,
-  petStatus
+  appearance
 }: {
   petName: string;
   connectionStatus: ConnectionStatus;
   appearance?: PetAppearanceConfig;
-  petStatus?: string;
 }) {
   const isPanelOpen = useWidgetStore((state) => state.isPanelOpen);
   const dragStateRef = useRef({
     pointerId: null as number | null,
     startX: 0,
     startY: 0,
-    isDragging: false
+    isDragging: false,
+    lastWindowX: 0,
+    lastWindowY: 0
   });
   const resolvedAppearance = resolvePetAppearance(appearance);
 
@@ -39,7 +39,7 @@ export function DesktopPet({
     <main className="desktop-pet-shell">
       <button
         type="button"
-        className={`desktop-pet desktop-pet--${connectionStatus}${isPanelOpen ? ' desktop-pet--active' : ''}`}
+        className={`desktop-pet desktop-pet--frameless desktop-pet--${connectionStatus}${isPanelOpen ? ' desktop-pet--active' : ''}`}
         aria-label={`${petName} desktop pet`}
         title="Drag to move. Double-click to open settings."
         onDoubleClick={() => {
@@ -56,7 +56,9 @@ export function DesktopPet({
             pointerId: event.pointerId,
             startX: event.clientX,
             startY: event.clientY,
-            isDragging: false
+            isDragging: false,
+            lastWindowX: 0,
+            lastWindowY: 0
           };
           event.currentTarget.setPointerCapture?.(event.pointerId);
         }}
@@ -74,10 +76,16 @@ export function DesktopPet({
           }
 
           dragStateRef.current.isDragging = true;
+          dragStateRef.current.lastWindowX = Math.round(
+            event.screenX - dragStateRef.current.startX
+          );
+          dragStateRef.current.lastWindowY = Math.round(
+            event.screenY - dragStateRef.current.startY
+          );
 
           void getHabitatDesktopApi()?.movePetWindow({
-            x: Math.round(event.screenX - dragStateRef.current.startX),
-            y: Math.round(event.screenY - dragStateRef.current.startY)
+            x: dragStateRef.current.lastWindowX,
+            y: dragStateRef.current.lastWindowY
           });
         }}
         onPointerUp={(event) => {
@@ -90,14 +98,19 @@ export function DesktopPet({
           }
 
           if (dragStateRef.current.isDragging) {
-            void getHabitatDesktopApi()?.snapPetWindow();
+            void getHabitatDesktopApi()?.persistPetWindowPosition({
+              x: dragStateRef.current.lastWindowX,
+              y: dragStateRef.current.lastWindowY
+            });
           }
 
           dragStateRef.current = {
             pointerId: null,
             startX: 0,
             startY: 0,
-            isDragging: false
+            isDragging: false,
+            lastWindowX: 0,
+            lastWindowY: 0
           };
         }}
         onPointerCancel={(event) => {
@@ -113,12 +126,13 @@ export function DesktopPet({
             pointerId: null,
             startX: 0,
             startY: 0,
-            isDragging: false
+            isDragging: false,
+            lastWindowX: 0,
+            lastWindowY: 0
           };
         }}
       >
         <span className="desktop-pet__stage" aria-hidden="true">
-          <span className="desktop-pet__bubble" />
           <span className="desktop-pet__antenna desktop-pet__antenna--left" />
           <span className="desktop-pet__antenna desktop-pet__antenna--right" />
           <span className="desktop-pet__claw desktop-pet__claw--left" />
@@ -144,7 +158,6 @@ export function DesktopPet({
           </span>
           <span className="desktop-pet__tail" />
         </span>
-        <span className="desktop-pet__status">{petStatus ?? connectionStatus}</span>
         <span className="desktop-pet__label">{petName}</span>
       </button>
     </main>

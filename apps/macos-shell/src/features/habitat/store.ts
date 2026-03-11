@@ -1,6 +1,7 @@
 import type { HabitatEvent } from '@openclaw-habitat/bridge';
 import { createStore } from 'zustand/vanilla';
 import { useStore } from 'zustand';
+import { reduceAgentSnapshots } from './agent-snapshots';
 import type { HabitatPet, HabitatState } from './types';
 
 function updatePet(
@@ -60,6 +61,7 @@ function applyHabitatEvent(
 export const createHabitatStore = () =>
   createStore<HabitatState>((set) => ({
     pets: {},
+    agentSnapshots: {},
     selectedPetId: null,
     seedPets: (pets) =>
       set((state) => ({
@@ -93,7 +95,8 @@ export const createHabitatStore = () =>
       }),
     applyEvent: (event: HabitatEvent) =>
       set((state) => ({
-        pets: applyHabitatEvent(state.pets, event)
+        pets: applyHabitatEvent(state.pets, event),
+        agentSnapshots: reduceAgentSnapshots(state.agentSnapshots, event)
       }))
   }));
 

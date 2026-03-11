@@ -16,8 +16,8 @@ export interface HabitatDesktopApi {
   ) => Promise<PreparedGatewayConnection | null>;
   teardownGatewayConnection: () => Promise<void>;
   movePetWindow: (payload: { x: number; y: number }) => Promise<void>;
+  persistPetWindowPosition: (payload: { x: number; y: number }) => Promise<void>;
   togglePanel: () => Promise<{ isOpen: boolean }>;
-  snapPetWindow: () => Promise<{ side: 'left' | 'right' } | null>;
   storeSecret: (key: string, value: string) => Promise<void>;
   retrieveSecret: (key: string) => Promise<string | null>;
   deleteSecret: (key: string) => Promise<void>;

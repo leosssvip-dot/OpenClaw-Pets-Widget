@@ -10,17 +10,29 @@ export interface PetAgentBinding {
   agentId: string;
 }
 
+export interface PetWindowPlacement {
+  x: number;
+  y: number;
+  displayId?: string;
+}
+
 interface SettingsState {
   gatewayProfiles: Record<string, GatewayProfile>;
   bindings: Record<string, PetAgentBinding>;
   appearances: Record<string, PetAppearanceConfig>;
   activeProfileId: string | null;
+  displayMode: 'pinned' | 'group';
+  pinnedAgentId: string | null;
+  petWindowPlacement: PetWindowPlacement | null;
   saveGatewayProfile: (profile: GatewayProfile) => void;
   deleteGatewayProfile: (profileId: string) => void;
   bindPetToAgent: (binding: PetAgentBinding) => void;
   setPetAppearance: (petId: string, appearance: PetAppearanceConfig) => void;
   selectGatewayProfile: (profileId: string) => void;
   updateProfileToken: (profileId: string, token: string) => void;
+  setDisplayMode: (mode: 'pinned' | 'group') => void;
+  setPinnedAgentId: (agentId: string | null) => void;
+  setPetWindowPlacement: (placement: PetWindowPlacement | null) => void;
 }
 
 function stripProfileTokens(profiles: Record<string, GatewayProfile>): Record<string, GatewayProfile> {
@@ -47,6 +59,9 @@ export const createSettingsStore = () =>
         bindings: {},
         appearances: {},
         activeProfileId: null,
+        displayMode: 'pinned',
+        pinnedAgentId: null,
+        petWindowPlacement: null,
         saveGatewayProfile: (profile) =>
           set((state) => ({
             gatewayProfiles: {
@@ -101,6 +116,18 @@ export const createSettingsStore = () =>
           set({
             activeProfileId: profileId
           }),
+        setDisplayMode: (displayMode) =>
+          set({
+            displayMode
+          }),
+        setPinnedAgentId: (pinnedAgentId) =>
+          set({
+            pinnedAgentId
+          }),
+        setPetWindowPlacement: (placement) =>
+          set({
+            petWindowPlacement: placement
+          }),
         updateProfileToken: (profileId, token) =>
           set((state) => {
             const profile = state.gatewayProfiles[profileId];
@@ -137,7 +164,10 @@ export const createSettingsStore = () =>
           gatewayProfiles: stripProfileTokens(state.gatewayProfiles),
           bindings: state.bindings,
           appearances: state.appearances,
-          activeProfileId: state.activeProfileId
+          activeProfileId: state.activeProfileId,
+          displayMode: state.displayMode,
+          pinnedAgentId: state.pinnedAgentId,
+          petWindowPlacement: state.petWindowPlacement
         })
       }
     )

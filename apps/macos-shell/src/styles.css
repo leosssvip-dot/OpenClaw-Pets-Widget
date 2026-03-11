@@ -1,10 +1,23 @@
+html,
+body,
+#root {
+  background: transparent;
+}
+
 body {
   margin: 0;
   font-family: 'Avenir Next', 'Segoe UI', sans-serif;
+  color: #19304d;
+}
+
+body[data-surface='panel'] {
   background:
     radial-gradient(circle at top, rgba(77, 160, 255, 0.18), transparent 35%),
     linear-gradient(180deg, #f3f8ff 0%, #ecf3ff 100%);
-  color: #19304d;
+}
+
+body[data-surface='pet'] {
+  overflow: hidden;
 }
 
 .app-shell {
@@ -233,6 +246,42 @@ body {
   line-height: 1.5;
 }
 
+.agent-bindings__display-mode,
+.agent-bindings__pinned-agent {
+  display: grid;
+  gap: 8px;
+}
+
+.agent-bindings__display-mode {
+  margin: 0;
+  border: 1px solid #d6e3f4;
+  border-radius: 14px;
+  padding: 12px;
+}
+
+.agent-bindings__display-mode legend,
+.agent-bindings__pinned-agent span {
+  font-size: 12px;
+  font-weight: 700;
+  color: #4b6989;
+}
+
+.agent-bindings__display-mode label {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.agent-bindings__pinned-agent select {
+  width: 100%;
+  border: 1px solid #c7d8eb;
+  border-radius: 10px;
+  padding: 10px 12px;
+  font: inherit;
+  color: #274c77;
+  background: rgba(255, 255, 255, 0.88);
+}
+
 .gateway-profiles__item,
 .agent-bindings__item {
   display: grid;
@@ -379,17 +428,15 @@ body {
   position: relative;
   display: grid;
   justify-items: center;
-  gap: 8px;
+  align-content: end;
+  gap: 0;
   width: 148px;
-  padding: 18px 14px 16px;
+  min-height: 142px;
+  padding: 0 0 2px;
   border: 0;
-  border-radius: 40px;
-  background:
-    radial-gradient(circle at top, rgba(255, 255, 255, 0.58), transparent 48%),
-    linear-gradient(180deg, rgba(225, 248, 255, 0.96) 0%, rgba(167, 223, 243, 0.96) 100%);
-  box-shadow:
-    0 20px 36px rgba(34, 71, 104, 0.22),
-    inset 0 1px 0 rgba(255, 255, 255, 0.85);
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
   cursor: grab;
   user-select: none;
   animation: pet-bounce 3s ease-in-out infinite;
@@ -400,22 +447,15 @@ body {
   50% { transform: translateY(-6px); }
 }
 
-.desktop-pet--active {
-  outline: 3px solid rgba(90, 169, 230, 0.55);
+.desktop-pet--active .desktop-pet__stage {
+  filter: drop-shadow(0 0 10px rgba(90, 169, 230, 0.42));
 }
 
 .desktop-pet__stage {
   position: absolute;
-  top: 8px;
+  top: 0;
   width: 116px;
   height: 104px;
-}
-
-.desktop-pet__bubble {
-  position: absolute;
-  inset: 10px 6px 2px;
-  border-radius: 36px;
-  background: linear-gradient(180deg, rgba(255, 255, 255, 0.7), rgba(255, 255, 255, 0.14));
 }
 
 .desktop-pet__antenna {
@@ -613,22 +653,17 @@ body {
   clip-path: polygon(0 0, 100% 0, 84% 100%, 16% 100%);
 }
 
-.desktop-pet__status {
-  margin-top: 98px;
-  border-radius: 999px;
-  padding: 4px 10px;
-  background: rgba(255, 255, 255, 0.72);
-  color: #37607c;
-  font-size: 11px;
-  font-weight: 700;
-  letter-spacing: 0.04em;
-  text-transform: uppercase;
-}
-
 .desktop-pet__label {
-  font-size: 13px;
-  font-weight: 700;
-  color: #244764;
+  max-width: 132px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  margin-top: 112px;
+  font-size: 15px;
+  font-weight: 800;
+  letter-spacing: 0.01em;
+  color: #1d4565;
+  text-shadow: 0 1px 10px rgba(255, 255, 255, 0.9);
 }
 
 .error-boundary {

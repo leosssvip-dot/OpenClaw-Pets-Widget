@@ -11,8 +11,9 @@ contextBridge.exposeInMainWorld('habitat', {
   teardownGatewayConnection: () => ipcRenderer.invoke('gateway:teardownConnection'),
   movePetWindow: (payload: { x: number; y: number }) =>
     ipcRenderer.invoke('window:movePet', payload),
+  persistPetWindowPosition: (payload: { x: number; y: number }) =>
+    ipcRenderer.invoke('window:persistPetPosition', payload),
   togglePanel: () => ipcRenderer.invoke('window:togglePanel'),
-  snapPetWindow: () => ipcRenderer.invoke('window:snapPet'),
   storeSecret: (key: string, value: string) =>
     ipcRenderer.invoke('secrets:store', { key, value }),
   retrieveSecret: (key: string) =>

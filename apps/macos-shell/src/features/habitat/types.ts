@@ -1,5 +1,6 @@
 import type { HabitatEvent } from '@openclaw-habitat/bridge';
 import type { PetStatus } from '@openclaw-habitat/domain';
+import type { AgentSnapshot } from './agent-snapshots';
 
 export interface HabitatPet {
   id: string;
@@ -12,6 +13,7 @@ export interface HabitatPet {
 
 export interface HabitatState {
   pets: Record<string, HabitatPet>;
+  agentSnapshots: Record<string, AgentSnapshot>;
   selectedPetId: string | null;
   seedPets: (pets: HabitatPet[]) => void;
   selectPet: (petId: string) => void;

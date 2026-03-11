@@ -55,6 +55,11 @@ describe('createHabitatStore', () => {
     });
 
     expect(store.getState().pets['pet-1'].status).toBe('thinking');
+    expect(store.getState().agentSnapshots.researcher).toMatchObject({
+      agentId: 'researcher',
+      gatewayId: 'remote-1',
+      runtimeStatus: 'thinking'
+    });
   });
 
   it('preserves selected pet on seedPets if still present', () => {

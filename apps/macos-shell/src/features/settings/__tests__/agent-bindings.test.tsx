@@ -29,14 +29,18 @@ describe('AgentBindings', () => {
             isSelected: false
           }
         ]}
+        displayMode="pinned"
+        pinnedAgentId="researcher"
+        onDisplayModeChange={vi.fn()}
+        onPinnedAgentChange={vi.fn()}
         onUpdateAppearance={onUpdateAppearance}
       />
     );
 
-    expect(screen.getByText('Ruby')).toBeInTheDocument();
+    expect(screen.getAllByText('Ruby')).toHaveLength(2);
     expect(screen.getByText('Agent: researcher')).toBeInTheDocument();
     expect(screen.getByText('Status: thinking')).toBeInTheDocument();
-    expect(screen.getByText('Clawdia')).toBeInTheDocument();
+    expect(screen.getAllByText('Clawdia')).toHaveLength(2);
     expect(screen.getByText('Status: waiting')).toBeInTheDocument();
     expect(screen.getAllByLabelText(/Avatar URL/i)).toHaveLength(2);
     expect(
