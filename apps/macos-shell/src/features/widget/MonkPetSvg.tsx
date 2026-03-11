@@ -103,6 +103,15 @@ export function MonkPetSvg() {
               stroke="#a65d2b"
               strokeWidth="2"
             />
+            <path
+              className="desktop-pet__monk-robe-fold"
+              d="M63 45 C67 57 69 69 66 83"
+              fill="none"
+              stroke="#e4ad6a"
+              strokeWidth="2.4"
+              strokeLinecap="round"
+              opacity="0.74"
+            />
             <circle
               className="desktop-pet__monk-beads"
               cx="62"
@@ -141,6 +150,15 @@ export function MonkPetSvg() {
                 fill="#e6b37d"
               />
               <g className="desktop-pet__mallet">
+                <path
+                  className="desktop-pet__mallet-trail"
+                  d="M84 67 Q96 60 108 64"
+                  fill="none"
+                  stroke="#f5d8ab"
+                  strokeWidth="4"
+                  strokeLinecap="round"
+                  opacity="0"
+                />
                 <rect
                   x="83"
                   y="67"
