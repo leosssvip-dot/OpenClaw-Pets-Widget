@@ -4,6 +4,96 @@ import { getHabitatDesktopApi } from '../../runtime/habitat-api';
 import { useWidgetStore, widgetStore } from './widget-store';
 import { resolvePetAppearance, type PetAppearanceConfig } from './pet-appearance';
 
+function renderBuiltInPet(rolePack: 'lobster' | 'cat' | 'robot' | 'monk') {
+  switch (rolePack) {
+    case 'cat':
+      return (
+        <span className="desktop-pet__cat">
+          <span className="desktop-pet__cat-tail" />
+          <span className="desktop-pet__cat-body">
+            <span className="desktop-pet__cat-ears">
+              <span className="desktop-pet__cat-ear desktop-pet__cat-ear--left" />
+              <span className="desktop-pet__cat-ear desktop-pet__cat-ear--right" />
+            </span>
+            <span className="desktop-pet__cat-face">
+              <span className="desktop-pet__cat-eye desktop-pet__cat-eye--left" />
+              <span className="desktop-pet__cat-eye desktop-pet__cat-eye--right" />
+              <span className="desktop-pet__cat-nose" />
+              <span className="desktop-pet__cat-mouth" />
+              <span className="desktop-pet__cat-whiskers desktop-pet__cat-whiskers--left" />
+              <span className="desktop-pet__cat-whiskers desktop-pet__cat-whiskers--right" />
+            </span>
+          </span>
+          <span className="desktop-pet__cat-paw desktop-pet__cat-paw--left" />
+          <span className="desktop-pet__cat-paw desktop-pet__cat-paw--right" />
+        </span>
+      );
+    case 'robot':
+      return (
+        <span className="desktop-pet__robot">
+          <span className="desktop-pet__robot-antenna" />
+          <span className="desktop-pet__robot-head">
+            <span className="desktop-pet__robot-visor">
+              <span className="desktop-pet__robot-eye desktop-pet__robot-eye--left" />
+              <span className="desktop-pet__robot-eye desktop-pet__robot-eye--right" />
+            </span>
+            <span className="desktop-pet__robot-mouth" />
+          </span>
+          <span className="desktop-pet__robot-body">
+            <span className="desktop-pet__robot-panel" />
+            <span className="desktop-pet__robot-arm desktop-pet__robot-arm--left" />
+            <span className="desktop-pet__robot-arm desktop-pet__robot-arm--right" />
+            <span className="desktop-pet__robot-leg desktop-pet__robot-leg--left" />
+            <span className="desktop-pet__robot-leg desktop-pet__robot-leg--right" />
+          </span>
+        </span>
+      );
+    case 'monk':
+      return (
+        <span className="desktop-pet__monk">
+          <span className="desktop-pet__monk-cushion" />
+          <span className="desktop-pet__woodfish">
+            <span className="desktop-pet__woodfish-slot" />
+            <span className="desktop-pet__woodfish-impact" />
+          </span>
+          <span className="desktop-pet__monk-body">
+            <span className="desktop-pet__monk-head">
+              <span className="desktop-pet__monk-brow" />
+              <span className="desktop-pet__monk-eye desktop-pet__monk-eye--left" />
+              <span className="desktop-pet__monk-eye desktop-pet__monk-eye--right" />
+              <span className="desktop-pet__monk-mouth" />
+            </span>
+            <span className="desktop-pet__monk-robe" />
+            <span className="desktop-pet__monk-beads" />
+            <span className="desktop-pet__monk-arm desktop-pet__monk-arm--left" />
+            <span className="desktop-pet__monk-arm desktop-pet__monk-arm--right">
+              <span className="desktop-pet__monk-sleeve" />
+              <span className="desktop-pet__mallet" />
+            </span>
+          </span>
+        </span>
+      );
+    case 'lobster':
+    default:
+      return (
+        <span className="desktop-pet__lobster">
+          <span className="desktop-pet__lobster-antenna desktop-pet__lobster-antenna--left" />
+          <span className="desktop-pet__lobster-antenna desktop-pet__lobster-antenna--right" />
+          <span className="desktop-pet__lobster-claw desktop-pet__lobster-claw--left" />
+          <span className="desktop-pet__lobster-claw desktop-pet__lobster-claw--right" />
+          <span className="desktop-pet__lobster-body">
+            <span className="desktop-pet__lobster-eye desktop-pet__lobster-eye--left" />
+            <span className="desktop-pet__lobster-eye desktop-pet__lobster-eye--right" />
+            <span className="desktop-pet__lobster-cheek desktop-pet__lobster-cheek--left" />
+            <span className="desktop-pet__lobster-cheek desktop-pet__lobster-cheek--right" />
+            <span className="desktop-pet__lobster-mouth" />
+          </span>
+          <span className="desktop-pet__lobster-tail" />
+        </span>
+      );
+  }
+}
+
 export function DesktopPet({
   petName,
   connectionStatus,
@@ -149,32 +239,15 @@ export function DesktopPet({
         }}
       >
         <span className="desktop-pet__stage" aria-hidden="true">
-          <span className="desktop-pet__antenna desktop-pet__antenna--left" />
-          <span className="desktop-pet__antenna desktop-pet__antenna--right" />
-          <span className="desktop-pet__claw desktop-pet__claw--left" />
-          <span className="desktop-pet__claw desktop-pet__claw--right" />
-          <span
-            className={`desktop-pet__body desktop-pet__body--role-${resolvedAppearance.rolePack}${resolvedAppearance.variant === 'custom' ? ' desktop-pet__body--custom' : ''}`}
-          >
-            {resolvedAppearance.avatar ? (
+          <span className="desktop-pet__glow" />
+          <span className="desktop-pet__ground" />
+          {resolvedAppearance.avatar ? (
+            <span className="desktop-pet__custom-art">
               <img className="desktop-pet__avatar" src={resolvedAppearance.avatar} alt="" />
-            ) : (
-              <>
-                <span className="desktop-pet__eye-stalk desktop-pet__eye-stalk--left">
-                  <span className="desktop-pet__eye" />
-                </span>
-                <span className="desktop-pet__eye-stalk desktop-pet__eye-stalk--right">
-                  <span className="desktop-pet__eye" />
-                </span>
-                <span className="desktop-pet__shell-mark desktop-pet__shell-mark--left" />
-                <span className="desktop-pet__shell-mark desktop-pet__shell-mark--right" />
-                <span className="desktop-pet__mouth" />
-                <span className="desktop-pet__role-accent desktop-pet__role-accent--left" />
-                <span className="desktop-pet__role-accent desktop-pet__role-accent--right" />
-              </>
-            )}
-          </span>
-          <span className="desktop-pet__tail" />
+            </span>
+          ) : (
+            renderBuiltInPet(resolvedAppearance.rolePack)
+          )}
         </span>
         <span className="desktop-pet__label">{petName}</span>
       </button>

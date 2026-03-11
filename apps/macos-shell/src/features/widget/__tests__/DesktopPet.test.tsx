@@ -23,8 +23,8 @@ function mockHabitatDesktopApi(api: Record<string, unknown>) {
 
 if (!globalThis.PointerEvent) {
   (globalThis as typeof globalThis & {
-    PointerEvent: typeof MouseEvent;
-  }).PointerEvent = MouseEvent;
+    PointerEvent?: typeof PointerEvent;
+  }).PointerEvent = MouseEvent as unknown as typeof PointerEvent;
 }
 
 function installPointerCaptureMocks(element: HTMLElement) {
@@ -149,5 +149,71 @@ describe('DesktopPet', () => {
     expect(screen.getByRole('button', { name: 'Zen desktop pet' })).toHaveClass(
       'desktop-pet--role-monk'
     );
+  });
+
+  it('renders dedicated monk anatomy with a wooden-fish rig', () => {
+    widgetStore.getState().setPanelOpen(false);
+    mockHabitatDesktopApi({
+      togglePanel: vi.fn().mockResolvedValue({ isOpen: false })
+    });
+
+    const { container } = render(
+      <DesktopPet
+        petName="Zen"
+        connectionStatus="connected"
+        appearance={{
+          rolePack: 'monk'
+        }}
+        petStatus="working"
+      />
+    );
+
+    expect(container.querySelector('.desktop-pet__monk')).toBeInTheDocument();
+    expect(container.querySelector('.desktop-pet__monk-head')).toBeInTheDocument();
+    expect(container.querySelector('.desktop-pet__woodfish')).toBeInTheDocument();
+    expect(container.querySelector('.desktop-pet__mallet')).toBeInTheDocument();
+    expect(container.querySelector('.desktop-pet__woodfish-impact')).toBeInTheDocument();
+    expect(container.querySelector('.desktop-pet__monk-sleeve')).toBeInTheDocument();
+  });
+
+  it('uses distinct markup for each built-in role pack instead of one shared body', () => {
+    widgetStore.getState().setPanelOpen(false);
+    mockHabitatDesktopApi({
+      togglePanel: vi.fn().mockResolvedValue({ isOpen: false })
+    });
+
+    const { container, rerender } = render(
+      <DesktopPet
+        petName="Ruby"
+        connectionStatus="connected"
+        appearance={{
+          rolePack: 'lobster'
+        }}
+      />
+    );
+
+    expect(container.querySelector('.desktop-pet__lobster')).toBeInTheDocument();
+
+    rerender(
+      <DesktopPet
+        petName="Miso"
+        connectionStatus="connected"
+        appearance={{
+          rolePack: 'cat'
+        }}
+      />
+    );
+    expect(container.querySelector('.desktop-pet__cat')).toBeInTheDocument();
+
+    rerender(
+      <DesktopPet
+        petName="Unit-7"
+        connectionStatus="connected"
+        appearance={{
+          rolePack: 'robot'
+        }}
+      />
+    );
+    expect(container.querySelector('.desktop-pet__robot')).toBeInTheDocument();
   });
 });
