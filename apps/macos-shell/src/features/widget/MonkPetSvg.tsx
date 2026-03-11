@@ -52,6 +52,15 @@ export function MonkPetSvg() {
             stroke="#f8dca2"
             strokeWidth="2"
           />
+          <circle
+            className="desktop-pet__woodfish-echo"
+            cx="93"
+            cy="77"
+            r="16"
+            fill="none"
+            stroke="#f6d8a0"
+            strokeWidth="1.6"
+          />
         </g>
         <g className="desktop-pet__monk-rig">
           <g className="desktop-pet__monk-body">

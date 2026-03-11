@@ -178,6 +178,7 @@ describe('DesktopPet', () => {
     expect(container.querySelector('.desktop-pet__woodfish')).toBeInTheDocument();
     expect(container.querySelector('.desktop-pet__mallet')).toBeInTheDocument();
     expect(container.querySelector('.desktop-pet__woodfish-impact')).toBeInTheDocument();
+    expect(container.querySelector('.desktop-pet__woodfish-echo')).toBeInTheDocument();
     expect(container.querySelector('.desktop-pet__monk-sleeve')).toBeInTheDocument();
   });
 
