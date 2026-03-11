@@ -4,6 +4,8 @@ import { createStore } from 'zustand/vanilla';
 import { useStore } from 'zustand';
 import type { PetAppearanceConfig } from '../widget/pet-appearance';
 
+const SETTINGS_STORAGE_KEY = 'openclaw-habitat-settings';
+
 export interface PetAgentBinding {
   petId: string;
   gatewayId: string;
@@ -160,7 +162,7 @@ export const createSettingsStore = () =>
           })
       }),
       {
-        name: 'openclaw-habitat-settings',
+        name: SETTINGS_STORAGE_KEY,
         storage: createJSONStorage(() => localStorage),
         partialize: (state) => ({
           gatewayProfiles: stripProfileTokens(state.gatewayProfiles),
@@ -176,6 +178,22 @@ export const createSettingsStore = () =>
   );
 
 export const settingsStore = createSettingsStore();
+
+if (typeof window !== 'undefined') {
+  window.addEventListener('storage', (event) => {
+    if (event.storageArea !== window.localStorage || event.key !== SETTINGS_STORAGE_KEY) {
+      return;
+    }
+
+    void (
+      settingsStore as typeof settingsStore & {
+        persist?: {
+          rehydrate: () => Promise<void> | void;
+        };
+      }
+    ).persist?.rehydrate();
+  });
+}
 
 export function useSettingsStore<T>(selector: (state: SettingsState) => T) {
   return useStore(settingsStore, selector);

@@ -1,5 +1,6 @@
+import { waitFor } from '@testing-library/react';
 import { describe, expect, it } from 'vitest';
-import { createSettingsStore } from '../settings-store';
+import { createSettingsStore, settingsStore } from '../settings-store';
 
 describe('createSettingsStore', () => {
   it('persists the selected gateway profile and pet binding', () => {
@@ -62,5 +63,51 @@ describe('createSettingsStore', () => {
 
     expect(store.getState().gatewayProfiles['remote-2']).toBeUndefined();
     expect(store.getState().activeProfileId).toBe('remote-1');
+  });
+
+  it('rehydrates persisted appearance changes when another window updates storage', async () => {
+    settingsStore.setState({
+      gatewayProfiles: {},
+      bindings: {},
+      appearances: {},
+      activeProfileId: null,
+      displayMode: 'pinned',
+      pinnedAgentId: null,
+      petWindowPlacement: null
+    });
+
+    localStorage.setItem(
+      'openclaw-habitat-settings',
+      JSON.stringify({
+        state: {
+          gatewayProfiles: {},
+          bindings: {},
+          appearances: {
+            'pet-1': {
+              rolePack: 'monk'
+            }
+          },
+          activeProfileId: null,
+          displayMode: 'pinned',
+          pinnedAgentId: null,
+          petWindowPlacement: null
+        },
+        version: 0
+      })
+    );
+
+    window.dispatchEvent(
+      new StorageEvent('storage', {
+        key: 'openclaw-habitat-settings',
+        newValue: localStorage.getItem('openclaw-habitat-settings'),
+        storageArea: localStorage
+      })
+    );
+
+    await waitFor(() => {
+      expect(settingsStore.getState().appearances['pet-1']).toEqual({
+        rolePack: 'monk'
+      });
+    });
   });
 });
