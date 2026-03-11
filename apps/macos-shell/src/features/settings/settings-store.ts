@@ -93,8 +93,9 @@ export const createSettingsStore = () =>
         setPetAppearance: (petId, appearance) =>
           set((state) => {
             const avatar = appearance.avatar?.trim();
+            const rolePack = appearance.rolePack;
 
-            if (!avatar) {
+            if (!avatar && !rolePack) {
               const { [petId]: _removedAppearance, ...remainingAppearances } =
                 state.appearances;
 
@@ -107,7 +108,8 @@ export const createSettingsStore = () =>
               appearances: {
                 ...state.appearances,
                 [petId]: {
-                  avatar
+                  ...(rolePack ? { rolePack } : {}),
+                  ...(avatar ? { avatar } : {})
                 }
               }
             };

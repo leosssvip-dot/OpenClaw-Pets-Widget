@@ -24,6 +24,16 @@ describe('createSettingsStore', () => {
     expect(store.getState().bindings['pet-1'].agentId).toBe('researcher');
   });
 
+  it('persists a role-pack appearance without requiring a custom image', () => {
+    const store = createSettingsStore();
+
+    store.getState().setPetAppearance('pet-1', { rolePack: 'robot' } as never);
+
+    expect(store.getState().appearances['pet-1']).toEqual({
+      rolePack: 'robot'
+    });
+  });
+
   it('promotes another profile when deleting the active gateway', () => {
     const store = createSettingsStore();
 

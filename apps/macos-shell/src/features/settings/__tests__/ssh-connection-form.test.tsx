@@ -33,5 +33,8 @@ describe('SshConnectionForm', () => {
         password: 'hunter2'
       })
     );
+    expect(
+      screen.getByText(/SSH Password is securely cached for reconnects/i)
+    ).toBeInTheDocument();
   });
 });

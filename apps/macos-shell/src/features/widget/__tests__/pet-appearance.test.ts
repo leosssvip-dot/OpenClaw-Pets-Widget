@@ -5,6 +5,18 @@ import {
 } from '../pet-appearance';
 
 describe('pet appearance helpers', () => {
+  it('resolves built-in role packs into semantic variants', () => {
+    expect(
+      resolvePetAppearance({ rolePack: 'monk' } as never)
+    ).toEqual(
+      expect.objectContaining({
+        variant: 'monk',
+        rolePack: 'monk',
+        avatar: null
+      })
+    );
+  });
+
   it('accepts https, file, data, and absolute local image sources', () => {
     expect(
       normalizePetAvatarSource('https://cdn.example.com/pets/ruby-lobster.svg')
@@ -23,7 +35,8 @@ describe('pet appearance helpers', () => {
   it('falls back to the default lobster shell for unsupported avatar values', () => {
     expect(resolvePetAppearance({ avatar: 'ruby-lobster.png' })).toEqual(
       expect.objectContaining({
-        variant: 'default',
+        variant: 'lobster',
+        rolePack: 'lobster',
         avatar: null
       })
     );

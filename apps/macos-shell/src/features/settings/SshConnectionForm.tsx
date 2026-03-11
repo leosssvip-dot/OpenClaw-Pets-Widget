@@ -120,7 +120,7 @@ export function SshConnectionForm({
       </label>
       <p className="gateway-profiles__hint">
         Leave Identity File blank to reuse your system SSH config and loaded keys.
-        SSH Password is session-only and is not persisted.
+        SSH Password is securely cached for reconnects.
       </p>
       <button type="submit" disabled={disabled}>
         {disabled ? 'Connecting...' : submitLabel}

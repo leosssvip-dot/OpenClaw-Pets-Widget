@@ -1,5 +1,14 @@
-import type { PetAppearanceConfig } from '../widget/pet-appearance';
-import { PET_AVATAR_FORMAT_HELP as petAvatarFormatHelp } from '../widget/pet-appearance';
+import {
+  DEFAULT_PET_ROLE_PACK,
+  PET_ROLE_PACKS,
+  normalizePetRolePack,
+  type PetAppearanceConfig,
+  type PetRolePackId
+} from '../widget/pet-appearance';
+
+function statusLabel(status: string) {
+  return status.replace(/-/g, ' ');
+}
 
 export function AgentBindings({
   rows,
@@ -28,80 +37,123 @@ export function AgentBindings({
 
   return (
     <section className="agent-bindings">
-      <div className="section-heading">
-        <h2>Agents</h2>
-      </div>
-      <fieldset className="agent-bindings__display-mode">
-        <legend>Display Mode</legend>
-        <label>
-          <input
-            type="radio"
-            name="display-mode"
-            value="pinned"
-            checked={displayMode === 'pinned'}
-            onChange={() => onDisplayModeChange('pinned')}
-          />
-          Pinned Agent
+      <section className="agent-bindings__group">
+        <div className="section-heading">
+          <h2>Display</h2>
+        </div>
+        <fieldset className="agent-bindings__display-mode">
+          <legend>Display mode</legend>
+          <label>
+            <input
+              type="radio"
+              name="display-mode"
+              value="pinned"
+              checked={displayMode === 'pinned'}
+              onChange={() => onDisplayModeChange('pinned')}
+            />
+            Single agent
+          </label>
+          <label>
+            <input
+              type="radio"
+              name="display-mode"
+              value="group"
+              checked={displayMode === 'group'}
+              onChange={() => onDisplayModeChange('group')}
+            />
+            Group
+          </label>
+        </fieldset>
+        <label className="agent-bindings__pinned-agent">
+          <span>Pinned agent</span>
+          <select
+            aria-label="Pinned agent"
+            value={resolvedPinnedAgentId}
+            onChange={(event) => onPinnedAgentChange(event.currentTarget.value || null)}
+          >
+            {rows.length === 0 ? <option value="">No agents available</option> : null}
+            {rows.map((row) => (
+              <option key={row.agentId} value={row.agentId}>
+                {row.petName ?? row.agentId}
+              </option>
+            ))}
+          </select>
         </label>
-        <label>
-          <input
-            type="radio"
-            name="display-mode"
-            value="group"
-            checked={displayMode === 'group'}
-            onChange={() => onDisplayModeChange('group')}
-          />
-          Group Stage
-        </label>
-      </fieldset>
-      <label className="agent-bindings__pinned-agent">
-        <span>Pinned agent</span>
-        <select
-          aria-label="Pinned agent"
-          value={resolvedPinnedAgentId}
-          onChange={(event) => onPinnedAgentChange(event.currentTarget.value || null)}
-        >
-          {rows.length === 0 ? <option value="">No agents available</option> : null}
-          {rows.map((row) => (
-            <option key={row.agentId} value={row.agentId}>
-              {row.petName ?? row.agentId}
-            </option>
-          ))}
-        </select>
-      </label>
-      <p className="agent-bindings__hint">{petAvatarFormatHelp}</p>
-      {rows.length === 0 ? (
-        <p>No agent bindings yet.</p>
-      ) : (
-        <ul className="agent-bindings__list">
-          {rows.map((row) => (
-            <li key={row.petId} className="agent-bindings__item">
-              <div className="agent-bindings__header">
-                <strong>{row.petName ?? row.agentId}</strong>
-                {row.isSelected ? (
-                  <span className="agent-bindings__selected">Selected</span>
-                ) : null}
-              </div>
-              <span>Agent: {row.agentId}</span>
-              <span>Gateway: {row.gatewayId}</span>
-              <span>Status: {row.status}</span>
-              <label className="agent-bindings__appearance">
-                <span>Avatar URL</span>
-                <input
-                  aria-label={`Avatar URL for ${row.petName ?? row.agentId}`}
-                  placeholder="https://...png or file:///Users/.../lobster.svg"
-                  value={row.appearance?.avatar ?? ''}
-                  onChange={(event) =>
-                    onUpdateAppearance(row.petId, {
-                      avatar: event.currentTarget.value
-                    })
-                  }
-                />
-              </label>
-            </li>
-          ))}
-        </ul>
-      )}
+      </section>
+
+      <section className="agent-bindings__group">
+        <div className="section-heading">
+          <h2>Characters</h2>
+        </div>
+        <p className="agent-bindings__hint">
+          Pick an animated role pack for each agent. Every pack responds to the same
+          status signals in its own way.
+        </p>
+        {rows.length === 0 ? (
+          <p>No agent bindings yet.</p>
+        ) : (
+          <ul className="agent-bindings__list">
+            {rows.map((row) => {
+              const rolePack = normalizePetRolePack(
+                row.appearance?.rolePack ?? DEFAULT_PET_ROLE_PACK
+              );
+              const rolePackMeta =
+                PET_ROLE_PACKS.find((pack) => pack.id === rolePack) ?? PET_ROLE_PACKS[0];
+              const label = row.petName ?? row.agentId;
+
+              return (
+                <li key={row.petId} className="agent-bindings__item">
+                  <div className="agent-bindings__header">
+                    <div>
+                      <strong>{label}</strong>
+                      <div className="agent-bindings__meta">
+                        <span>Agent: {row.agentId}</span>
+                        <span>Gateway: {row.gatewayId}</span>
+                      </div>
+                    </div>
+                    <div className="agent-bindings__status-stack">
+                      {row.isSelected ? (
+                        <span className="agent-bindings__selected">Selected</span>
+                      ) : null}
+                      <span className="agent-bindings__status">
+                        Status: {statusLabel(row.status)}
+                      </span>
+                    </div>
+                  </div>
+                  <div className="agent-bindings__character-card">
+                    <span
+                      className={`agent-bindings__character-preview agent-bindings__character-preview--${rolePack}`}
+                      aria-hidden="true"
+                    />
+                    <div className="agent-bindings__character-copy">
+                      <strong>{rolePackMeta.label}</strong>
+                      <span>{rolePackMeta.tagline}</span>
+                    </div>
+                    <label className="agent-bindings__character-field">
+                      <span>Character</span>
+                      <select
+                        aria-label={`Character for ${label}`}
+                        value={rolePack}
+                        onChange={(event) =>
+                          onUpdateAppearance(row.petId, {
+                            rolePack: event.currentTarget.value as PetRolePackId
+                          })
+                        }
+                      >
+                        {PET_ROLE_PACKS.map((pack) => (
+                          <option key={pack.id} value={pack.id}>
+                            {pack.label}
+                          </option>
+                        ))}
+                      </select>
+                    </label>
+                  </div>
+                </li>
+              );
+            })}
+          </ul>
+        )}
+      </section>
     </section>
   );
 }

@@ -1,9 +1,13 @@
 import { fireEvent, render, screen } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { hydrateAndReconnectActiveProfile } from './App';
+import { hydrateAndReconnectActiveProfile, hydrateProfileSecrets } from './App';
 import { App } from './App';
 import { habitatStore } from './features/habitat/store';
 import { settingsStore } from './features/settings/settings-store';
+import {
+  clearGatewaySessionAuth,
+  getGatewaySessionAuth
+} from './runtime/gateway-session-auth';
 
 vi.mock('./runtime/runtime-deps', () => ({
   getRuntimeDeps: () => ({
@@ -48,6 +52,7 @@ beforeEach(() => {
     retrieveSecret: vi.fn(),
     deleteSecret: vi.fn()
   };
+  clearGatewaySessionAuth('remote-1');
 });
 
 describe('hydrateAndReconnectActiveProfile', () => {
@@ -132,7 +137,7 @@ describe('hydrateAndReconnectActiveProfile', () => {
     expect(reconnectProfile).not.toHaveBeenCalled();
   });
 
-  it('lets the user switch between pinned and group modes and choose a pinned agent', async () => {
+  it('shows the companion stage and reveals grouped settings controls', async () => {
     habitatStore.getState().seedPets([
       {
         id: 'pet-1',
@@ -162,12 +167,21 @@ describe('hydrateAndReconnectActiveProfile', () => {
 
     render(<App />);
 
-    fireEvent.click(await screen.findByRole('radio', { name: 'Group Stage' }));
+    expect(await screen.findByRole('heading', { name: 'Current companion' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Switch agent' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Switch character' })).toBeInTheDocument();
+    fireEvent.click(screen.getByRole('button', { name: 'More settings' }));
+
+    expect(screen.getByRole('heading', { name: 'Display' })).toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: 'Characters' })).toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: 'Connection' })).toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole('radio', { name: 'Group' }));
     fireEvent.change(screen.getByLabelText('Pinned agent'), {
       target: { value: 'ad-expert' }
     });
 
-    expect(screen.getByRole('radio', { name: 'Group Stage' })).toBeChecked();
+    expect(screen.getByRole('radio', { name: 'Group' })).toBeChecked();
     expect(screen.getByLabelText('Pinned agent')).toHaveValue('ad-expert');
   });
 
@@ -180,5 +194,75 @@ describe('hydrateAndReconnectActiveProfile', () => {
       await screen.findByRole('button', { name: 'OpenClaw desktop pet' })
     ).toBeInTheDocument();
     expect(document.body.dataset.surface).toBe('pet');
+  });
+
+  it('shows the pinned agent name on the pet surface', async () => {
+    window.history.replaceState({}, '', '/?surface=pet');
+    habitatStore.getState().seedPets([
+      {
+        id: 'pet-1',
+        agentId: 'main',
+        gatewayId: 'remote-1',
+        status: 'idle',
+        name: 'Main'
+      },
+      {
+        id: 'pet-2',
+        agentId: 'ad-expert',
+        gatewayId: 'remote-1',
+        status: 'working',
+        name: 'Ads'
+      }
+    ]);
+    settingsStore.getState().setDisplayMode('pinned');
+    settingsStore.getState().setPinnedAgentId('ad-expert');
+
+    render(<App />);
+
+    expect(
+      await screen.findByRole('button', { name: 'Ads desktop pet' })
+    ).toBeInTheDocument();
+    expect(screen.getByText('Ads')).toBeInTheDocument();
+  });
+
+  it('hydrates stored gateway tokens and ssh passwords from secure storage', async () => {
+    settingsStore.getState().saveGatewayProfile({
+      id: 'remote-1',
+      label: 'Studio Gateway',
+      transport: 'ssh',
+      host: 'studio.internal',
+      username: 'chenyang',
+      sshPort: 22,
+      remoteGatewayPort: 18789,
+      gatewayToken: ''
+    });
+
+    const retrieveSecret = vi
+      .fn()
+      .mockImplementation(async (key: string) =>
+        key === 'gateway-token:remote-1'
+          ? 'secret-token'
+          : key === 'gateway-password:remote-1'
+            ? 'hunter2'
+            : null
+      );
+
+    (globalThis as typeof globalThis & {
+      habitat?: Record<string, unknown>;
+    }).habitat = {
+      ...(globalThis as typeof globalThis & { habitat?: Record<string, unknown> }).habitat,
+      retrieveSecret
+    };
+
+    await hydrateProfileSecrets();
+
+    expect(retrieveSecret).toHaveBeenCalledWith('gateway-token:remote-1');
+    expect(retrieveSecret).toHaveBeenCalledWith('gateway-password:remote-1');
+    expect(settingsStore.getState().gatewayProfiles['remote-1'].gatewayToken).toBe(
+      'secret-token'
+    );
+    expect(getGatewaySessionAuth('remote-1')).toEqual({
+      password: 'hunter2'
+    });
   });
 });

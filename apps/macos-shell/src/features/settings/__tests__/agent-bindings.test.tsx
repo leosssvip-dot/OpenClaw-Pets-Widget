@@ -3,7 +3,7 @@ import { vi } from 'vitest';
 import { AgentBindings } from '../AgentBindings';
 
 describe('AgentBindings', () => {
-  it('renders live agent rows and forwards avatar updates', () => {
+  it('renders display and character controls and forwards role-pack updates', () => {
     const onUpdateAppearance = vi.fn();
 
     render(
@@ -17,7 +17,7 @@ describe('AgentBindings', () => {
             status: 'thinking',
             isSelected: true,
             appearance: {
-              avatar: 'https://cdn.example.com/ruby.png'
+              rolePack: 'robot'
             }
           },
           {
@@ -37,24 +37,22 @@ describe('AgentBindings', () => {
       />
     );
 
-    expect(screen.getAllByText('Ruby')).toHaveLength(2);
+    expect(screen.getByRole('heading', { name: 'Display' })).toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: 'Characters' })).toBeInTheDocument();
     expect(screen.getByText('Agent: researcher')).toBeInTheDocument();
     expect(screen.getByText('Status: thinking')).toBeInTheDocument();
-    expect(screen.getAllByText('Clawdia')).toHaveLength(2);
     expect(screen.getByText('Status: waiting')).toBeInTheDocument();
-    expect(screen.getAllByLabelText(/Avatar URL/i)).toHaveLength(2);
-    expect(
-      screen.getByText(/https:\/\/.*file:\/\/\/.*data:image\//i)
-    ).toBeInTheDocument();
+    expect(screen.getAllByLabelText(/Character for/i)).toHaveLength(2);
+    expect(screen.queryByLabelText(/Avatar URL/i)).toBeNull();
 
-    fireEvent.change(screen.getByLabelText('Avatar URL for Clawdia'), {
+    fireEvent.change(screen.getByLabelText('Character for Clawdia'), {
       target: {
-        value: 'file:///Users/chenyang/Pictures/clawdia.svg'
+        value: 'monk'
       }
     });
 
     expect(onUpdateAppearance).toHaveBeenCalledWith('pet-reviewer', {
-      avatar: 'file:///Users/chenyang/Pictures/clawdia.svg'
+      rolePack: 'monk'
     });
   });
 });

@@ -110,4 +110,44 @@ describe('DesktopPet', () => {
       expect(togglePanel).toHaveBeenCalledTimes(1);
     });
   });
+
+  it('applies a visual state class for richer pet animation states', () => {
+    widgetStore.getState().setPanelOpen(false);
+    mockHabitatDesktopApi({
+      togglePanel: vi.fn().mockResolvedValue({ isOpen: false })
+    });
+
+    render(
+      <DesktopPet
+        petName="Ruby"
+        connectionStatus="connected"
+        petStatus="working"
+      />
+    );
+
+    expect(screen.getByRole('button', { name: 'Ruby desktop pet' })).toHaveClass(
+      'desktop-pet--state-working'
+    );
+  });
+
+  it('applies a role-pack class for non-default character rendering', () => {
+    widgetStore.getState().setPanelOpen(false);
+    mockHabitatDesktopApi({
+      togglePanel: vi.fn().mockResolvedValue({ isOpen: false })
+    });
+
+    render(
+      <DesktopPet
+        petName="Zen"
+        connectionStatus="connected"
+        appearance={{
+          rolePack: 'monk'
+        }}
+      />
+    );
+
+    expect(screen.getByRole('button', { name: 'Zen desktop pet' })).toHaveClass(
+      'desktop-pet--role-monk'
+    );
+  });
 });

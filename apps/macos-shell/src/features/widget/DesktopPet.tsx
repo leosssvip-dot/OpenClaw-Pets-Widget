@@ -7,11 +7,21 @@ import { resolvePetAppearance, type PetAppearanceConfig } from './pet-appearance
 export function DesktopPet({
   petName,
   connectionStatus,
-  appearance
+  appearance,
+  petStatus
 }: {
   petName: string;
   connectionStatus: ConnectionStatus;
   appearance?: PetAppearanceConfig;
+  petStatus?:
+    | 'idle'
+    | 'thinking'
+    | 'working'
+    | 'waiting'
+    | 'collaborating'
+    | 'done'
+    | 'blocked'
+    | 'disconnected';
 }) {
   const isPanelOpen = useWidgetStore((state) => state.isPanelOpen);
   const dragStateRef = useRef({
@@ -23,6 +33,12 @@ export function DesktopPet({
     lastWindowY: 0
   });
   const resolvedAppearance = resolvePetAppearance(appearance);
+  const visualState =
+    petStatus === 'collaborating'
+      ? 'working'
+      : petStatus === 'disconnected'
+        ? 'blocked'
+        : petStatus ?? 'idle';
 
   async function togglePanel() {
     const result = await getHabitatDesktopApi()?.togglePanel();
@@ -39,7 +55,7 @@ export function DesktopPet({
     <main className="desktop-pet-shell">
       <button
         type="button"
-        className={`desktop-pet desktop-pet--frameless desktop-pet--${connectionStatus}${isPanelOpen ? ' desktop-pet--active' : ''}`}
+        className={`desktop-pet desktop-pet--frameless desktop-pet--${connectionStatus} desktop-pet--state-${visualState} desktop-pet--role-${resolvedAppearance.rolePack}${isPanelOpen ? ' desktop-pet--active' : ''}`}
         aria-label={`${petName} desktop pet`}
         title="Drag to move. Double-click to open settings."
         onDoubleClick={() => {
@@ -138,7 +154,7 @@ export function DesktopPet({
           <span className="desktop-pet__claw desktop-pet__claw--left" />
           <span className="desktop-pet__claw desktop-pet__claw--right" />
           <span
-            className={`desktop-pet__body${resolvedAppearance.variant === 'custom' ? ' desktop-pet__body--custom' : ''}`}
+            className={`desktop-pet__body desktop-pet__body--role-${resolvedAppearance.rolePack}${resolvedAppearance.variant === 'custom' ? ' desktop-pet__body--custom' : ''}`}
           >
             {resolvedAppearance.avatar ? (
               <img className="desktop-pet__avatar" src={resolvedAppearance.avatar} alt="" />
@@ -153,6 +169,8 @@ export function DesktopPet({
                 <span className="desktop-pet__shell-mark desktop-pet__shell-mark--left" />
                 <span className="desktop-pet__shell-mark desktop-pet__shell-mark--right" />
                 <span className="desktop-pet__mouth" />
+                <span className="desktop-pet__role-accent desktop-pet__role-accent--left" />
+                <span className="desktop-pet__role-accent desktop-pet__role-accent--right" />
               </>
             )}
           </span>
