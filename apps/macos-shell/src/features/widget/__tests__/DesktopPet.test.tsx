@@ -1,4 +1,7 @@
 import { createEvent, fireEvent, render, screen, waitFor } from '@testing-library/react';
+import { readFileSync } from 'node:fs';
+import { dirname, resolve } from 'node:path';
+import { fileURLToPath } from 'node:url';
 import { vi } from 'vitest';
 import { DesktopPet } from '../DesktopPet';
 import { widgetStore } from '../widget-store';
@@ -284,5 +287,20 @@ describe('DesktopPet', () => {
     fireEvent.pointerLeave(pet);
     expect(pet).not.toHaveClass('desktop-pet--interaction-hovered');
     expect(pet).not.toHaveClass('desktop-pet--interaction-focused');
+  });
+
+  it('keeps monk tapping rules active even when offline maps to blocked activity', () => {
+    const testDir = dirname(fileURLToPath(import.meta.url));
+    const styles = readFileSync(
+      resolve(testDir, '../../../styles.css'),
+      'utf8'
+    );
+
+    expect(styles).toContain(
+      '.desktop-pet--role-monk.desktop-pet--activity-blocked .desktop-pet__monk-arm--right'
+    );
+    expect(styles).toContain(
+      '.desktop-pet--role-monk.desktop-pet--activity-blocked .desktop-pet__woodfish-impact'
+    );
   });
 });
