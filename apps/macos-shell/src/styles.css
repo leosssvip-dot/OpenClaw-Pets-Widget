@@ -1362,31 +1362,86 @@ body[data-surface='pet'] {
   text-shadow: 0 1px 10px rgba(255, 255, 255, 0.9);
 }
 
-.desktop-pet--state-idle {
+.desktop-pet--interaction-hovered .desktop-pet__stage {
+  filter: drop-shadow(0 8px 16px rgba(64, 138, 198, 0.22));
+}
+
+.desktop-pet--interaction-hovered .desktop-pet__label,
+.desktop-pet--interaction-focused .desktop-pet__label {
+  color: #173f63;
+  transform: translateY(-1px);
+}
+
+.desktop-pet--interaction-pressed .desktop-pet__stage {
+  transform: translateY(4px) scale(0.97);
+}
+
+.desktop-pet--interaction-dragging {
+  animation-play-state: paused;
+}
+
+.desktop-pet--interaction-dragging .desktop-pet__stage {
+  filter: drop-shadow(0 10px 20px rgba(65, 116, 158, 0.28));
+}
+
+.desktop-pet--interaction-greeting .desktop-pet__glow,
+.desktop-pet--interaction-panel-open .desktop-pet__glow {
+  animation: pet-owner-greeting 0.9s ease-in-out;
+}
+
+.desktop-pet--interaction-focused .desktop-pet__ground,
+.desktop-pet--interaction-panel-open .desktop-pet__ground {
+  background: linear-gradient(180deg, rgba(75, 144, 192, 0.28), rgba(75, 144, 192, 0.12));
+}
+
+.desktop-pet--mood-calm .desktop-pet__glow {
+  opacity: 0.8;
+}
+
+.desktop-pet--mood-focused .desktop-pet__glow {
+  opacity: 0.95;
+}
+
+.desktop-pet--mood-proud .desktop-pet__glow {
+  opacity: 1;
+}
+
+.desktop-pet--mood-concerned .desktop-pet__glow {
+  opacity: 0.65;
+}
+
+.desktop-pet--state-idle,
+.desktop-pet--activity-idle {
   animation-duration: 3.4s;
 }
 
-.desktop-pet--state-thinking {
+.desktop-pet--state-thinking,
+.desktop-pet--activity-thinking {
   animation-duration: 2.1s;
 }
 
-.desktop-pet--state-thinking .desktop-pet__stage {
+.desktop-pet--state-thinking .desktop-pet__stage,
+.desktop-pet--activity-thinking .desktop-pet__stage {
   animation: pet-think 1.8s ease-in-out infinite;
 }
 
-.desktop-pet--state-working .desktop-pet__stage {
+.desktop-pet--state-working .desktop-pet__stage,
+.desktop-pet--activity-working .desktop-pet__stage {
   animation: pet-work 0.95s ease-in-out infinite;
 }
 
-.desktop-pet--state-waiting .desktop-pet__stage {
+.desktop-pet--state-waiting .desktop-pet__stage,
+.desktop-pet--activity-waiting .desktop-pet__stage {
   animation: pet-wait 2.6s ease-in-out infinite;
 }
 
-.desktop-pet--state-done {
+.desktop-pet--state-done,
+.desktop-pet--activity-done {
   animation: pet-celebrate 0.85s ease-in-out 3;
 }
 
-.desktop-pet--state-blocked .desktop-pet__stage {
+.desktop-pet--state-blocked .desktop-pet__stage,
+.desktop-pet--activity-blocked .desktop-pet__stage {
   animation: pet-blocked 0.18s linear 6;
 }
 
@@ -1423,6 +1478,11 @@ body[data-surface='pet'] {
   75% { transform: translateX(3px); }
 }
 
+@keyframes pet-owner-greeting {
+  0%, 100% { opacity: 0.8; transform: scale(1); }
+  50% { opacity: 1; transform: scale(1.18); }
+}
+
 @keyframes pet-eye-blink {
   0%, 42%, 46%, 100% { transform: scaleY(1); }
   44% { transform: scaleY(0.12); }
@@ -1453,19 +1513,33 @@ body[data-surface='pet'] {
   50% { opacity: 1; }
 }
 
-.desktop-pet--role-lobster.desktop-pet--state-working .desktop-pet__lobster-claw--left {
+.desktop-pet--role-lobster.desktop-pet--interaction-hovered .desktop-pet__lobster-claw--left,
+.desktop-pet--role-lobster.desktop-pet--interaction-panel-open .desktop-pet__lobster-claw--left {
+  animation: lobster-claw-greet-left 0.55s ease-in-out infinite alternate;
+}
+
+.desktop-pet--role-lobster.desktop-pet--interaction-hovered .desktop-pet__lobster-claw--right,
+.desktop-pet--role-lobster.desktop-pet--interaction-panel-open .desktop-pet__lobster-claw--right {
+  animation: lobster-claw-greet-right 0.55s ease-in-out infinite alternate;
+}
+
+.desktop-pet--role-lobster.desktop-pet--state-working .desktop-pet__lobster-claw--left,
+.desktop-pet--role-lobster.desktop-pet--activity-working .desktop-pet__lobster-claw--left {
   animation: lobster-claw-left-work 0.55s ease-in-out infinite alternate;
 }
 
-.desktop-pet--role-lobster.desktop-pet--state-working .desktop-pet__lobster-claw--right {
+.desktop-pet--role-lobster.desktop-pet--state-working .desktop-pet__lobster-claw--right,
+.desktop-pet--role-lobster.desktop-pet--activity-working .desktop-pet__lobster-claw--right {
   animation: lobster-claw-right-work 0.55s ease-in-out infinite alternate;
 }
 
-.desktop-pet--role-lobster.desktop-pet--state-working .desktop-pet__lobster-tail {
+.desktop-pet--role-lobster.desktop-pet--state-working .desktop-pet__lobster-tail,
+.desktop-pet--role-lobster.desktop-pet--activity-working .desktop-pet__lobster-tail {
   animation: lobster-tail-swish 0.75s ease-in-out infinite alternate;
 }
 
-.desktop-pet--role-lobster.desktop-pet--state-blocked .desktop-pet__lobster-eye {
+.desktop-pet--role-lobster.desktop-pet--state-blocked .desktop-pet__lobster-eye,
+.desktop-pet--role-lobster.desktop-pet--activity-blocked .desktop-pet__lobster-eye {
   background: #5a1f1a;
   transform: scaleY(0.6);
 }
@@ -1485,27 +1559,57 @@ body[data-surface='pet'] {
   100% { transform: rotate(3deg); }
 }
 
-.desktop-pet--role-cat.desktop-pet--state-working .desktop-pet__cat-paw--left {
+@keyframes lobster-claw-greet-left {
+  0% { transform: rotate(26deg) translateY(0); }
+  100% { transform: rotate(50deg) translate(-2px, -3px); }
+}
+
+@keyframes lobster-claw-greet-right {
+  0% { transform: rotate(-26deg) translateY(0); }
+  100% { transform: rotate(-10deg) translate(2px, -3px); }
+}
+
+.desktop-pet--role-cat.desktop-pet--interaction-hovered .desktop-pet__cat-ear--left,
+.desktop-pet--role-cat.desktop-pet--interaction-focused .desktop-pet__cat-ear--left {
+  animation: cat-ear-left-alert 0.5s ease-out forwards;
+}
+
+.desktop-pet--role-cat.desktop-pet--interaction-hovered .desktop-pet__cat-ear--right,
+.desktop-pet--role-cat.desktop-pet--interaction-focused .desktop-pet__cat-ear--right {
+  animation: cat-ear-right-alert 0.5s ease-out forwards;
+}
+
+.desktop-pet--role-cat.desktop-pet--interaction-pressed .desktop-pet__cat-body {
+  transform: translateY(4px) scale(0.97, 0.95);
+}
+
+.desktop-pet--role-cat.desktop-pet--state-working .desktop-pet__cat-paw--left,
+.desktop-pet--role-cat.desktop-pet--activity-working .desktop-pet__cat-paw--left {
   animation: cat-paw-left-work 0.6s ease-in-out infinite alternate;
 }
 
-.desktop-pet--role-cat.desktop-pet--state-working .desktop-pet__cat-paw--right {
+.desktop-pet--role-cat.desktop-pet--state-working .desktop-pet__cat-paw--right,
+.desktop-pet--role-cat.desktop-pet--activity-working .desktop-pet__cat-paw--right {
   animation: cat-paw-right-work 0.6s ease-in-out infinite alternate;
 }
 
-.desktop-pet--role-cat.desktop-pet--state-thinking .desktop-pet__cat-ear--left {
+.desktop-pet--role-cat.desktop-pet--state-thinking .desktop-pet__cat-ear--left,
+.desktop-pet--role-cat.desktop-pet--activity-thinking .desktop-pet__cat-ear--left {
   animation: cat-ear-left-think 1.4s ease-in-out infinite alternate;
 }
 
-.desktop-pet--role-cat.desktop-pet--state-thinking .desktop-pet__cat-ear--right {
+.desktop-pet--role-cat.desktop-pet--state-thinking .desktop-pet__cat-ear--right,
+.desktop-pet--role-cat.desktop-pet--activity-thinking .desktop-pet__cat-ear--right {
   animation: cat-ear-right-think 1.4s ease-in-out infinite alternate;
 }
 
-.desktop-pet--role-cat.desktop-pet--state-done .desktop-pet__cat-tail {
+.desktop-pet--role-cat.desktop-pet--state-done .desktop-pet__cat-tail,
+.desktop-pet--role-cat.desktop-pet--activity-done .desktop-pet__cat-tail {
   animation-duration: 0.7s;
 }
 
-.desktop-pet--role-cat.desktop-pet--state-blocked .desktop-pet__cat-eye {
+.desktop-pet--role-cat.desktop-pet--state-blocked .desktop-pet__cat-eye,
+.desktop-pet--role-cat.desktop-pet--activity-blocked .desktop-pet__cat-eye {
   transform: scaleY(0.35);
 }
 
@@ -1529,23 +1633,45 @@ body[data-surface='pet'] {
   100% { transform: rotate(18deg); }
 }
 
+@keyframes cat-ear-left-alert {
+  to { transform: rotate(-18deg); }
+}
+
+@keyframes cat-ear-right-alert {
+  to { transform: rotate(18deg); }
+}
+
 .desktop-pet--role-robot .desktop-pet__robot-visor {
   animation: robot-visor-pulse 2.2s ease-in-out infinite;
 }
 
-.desktop-pet--role-robot.desktop-pet--state-working .desktop-pet__robot-arm--left {
-  animation: robot-arm-left-work 0.45s ease-in-out infinite alternate;
+.desktop-pet--role-robot.desktop-pet--interaction-hovered .desktop-pet__robot-eye,
+.desktop-pet--role-robot.desktop-pet--interaction-focused .desktop-pet__robot-eye {
+  animation: robot-eye-scan 0.9s ease-in-out infinite alternate;
 }
 
-.desktop-pet--role-robot.desktop-pet--state-working .desktop-pet__robot-arm--right {
-  animation: robot-arm-right-work 0.45s ease-in-out infinite alternate;
-}
-
-.desktop-pet--role-robot.desktop-pet--state-done .desktop-pet__robot-panel {
+.desktop-pet--role-robot.desktop-pet--interaction-panel-open .desktop-pet__robot-panel,
+.desktop-pet--role-robot.desktop-pet--interaction-greeting .desktop-pet__robot-panel {
   animation: robot-panel-flash 0.35s ease-in-out 6 alternate;
 }
 
-.desktop-pet--role-robot.desktop-pet--state-blocked .desktop-pet__robot-eye {
+.desktop-pet--role-robot.desktop-pet--state-working .desktop-pet__robot-arm--left,
+.desktop-pet--role-robot.desktop-pet--activity-working .desktop-pet__robot-arm--left {
+  animation: robot-arm-left-work 0.45s ease-in-out infinite alternate;
+}
+
+.desktop-pet--role-robot.desktop-pet--state-working .desktop-pet__robot-arm--right,
+.desktop-pet--role-robot.desktop-pet--activity-working .desktop-pet__robot-arm--right {
+  animation: robot-arm-right-work 0.45s ease-in-out infinite alternate;
+}
+
+.desktop-pet--role-robot.desktop-pet--state-done .desktop-pet__robot-panel,
+.desktop-pet--role-robot.desktop-pet--activity-done .desktop-pet__robot-panel {
+  animation: robot-panel-flash 0.35s ease-in-out 6 alternate;
+}
+
+.desktop-pet--role-robot.desktop-pet--state-blocked .desktop-pet__robot-eye,
+.desktop-pet--role-robot.desktop-pet--activity-blocked .desktop-pet__robot-eye {
   background: #ffb39a;
   box-shadow: 0 0 8px rgba(255, 179, 154, 0.5);
 }
@@ -1570,67 +1696,101 @@ body[data-surface='pet'] {
   100% { opacity: 1; }
 }
 
+@keyframes robot-eye-scan {
+  0% { transform: translateX(0); }
+  100% { transform: translateX(2px); }
+}
+
 .desktop-pet--role-monk .desktop-pet__monk-body {
   animation: monk-breathe 3.2s ease-in-out infinite;
 }
 
-.desktop-pet--role-monk.desktop-pet--state-working .desktop-pet__stage {
+.desktop-pet--role-monk.desktop-pet--interaction-hovered .desktop-pet__monk-eye,
+.desktop-pet--role-monk.desktop-pet--interaction-focused .desktop-pet__monk-eye {
+  transform: scaleY(1.2);
+}
+
+.desktop-pet--role-monk.desktop-pet--interaction-hovered .desktop-pet__monk-arm--right,
+.desktop-pet--role-monk.desktop-pet--interaction-panel-open .desktop-pet__monk-arm--right {
+  transform: rotate(28deg) translate(-2px, -6px);
+}
+
+.desktop-pet--role-monk.desktop-pet--interaction-pressed .desktop-pet__monk-body {
+  transform: translateY(4px) scale(0.98, 0.95);
+}
+
+.desktop-pet--role-monk.desktop-pet--state-working .desktop-pet__stage,
+.desktop-pet--role-monk.desktop-pet--activity-working .desktop-pet__stage {
   animation: monk-stage-work 0.72s cubic-bezier(0.45, 0, 0.2, 1) infinite;
 }
 
-.desktop-pet--role-monk.desktop-pet--state-thinking .desktop-pet__monk-arm--right {
+.desktop-pet--role-monk.desktop-pet--state-thinking .desktop-pet__monk-arm--right,
+.desktop-pet--role-monk.desktop-pet--activity-thinking .desktop-pet__monk-arm--right {
   transform: rotate(18deg) translate(-3px, -5px);
 }
 
-.desktop-pet--role-monk.desktop-pet--state-thinking .desktop-pet__monk-eye {
+.desktop-pet--role-monk.desktop-pet--state-thinking .desktop-pet__monk-eye,
+.desktop-pet--role-monk.desktop-pet--activity-thinking .desktop-pet__monk-eye {
   transform: scaleY(0.7);
 }
 
-.desktop-pet--role-monk.desktop-pet--state-thinking .desktop-pet__mallet {
+.desktop-pet--role-monk.desktop-pet--state-thinking .desktop-pet__mallet,
+.desktop-pet--role-monk.desktop-pet--activity-thinking .desktop-pet__mallet {
   transform: rotate(-48deg) translate(-4px, -6px);
 }
 
-.desktop-pet--role-monk.desktop-pet--state-thinking .desktop-pet__woodfish-impact {
+.desktop-pet--role-monk.desktop-pet--state-thinking .desktop-pet__woodfish-impact,
+.desktop-pet--role-monk.desktop-pet--activity-thinking .desktop-pet__woodfish-impact {
   opacity: 0;
 }
 
-.desktop-pet--role-monk.desktop-pet--state-working .desktop-pet__monk-arm--right {
+.desktop-pet--role-monk.desktop-pet--state-working .desktop-pet__monk-arm--right,
+.desktop-pet--role-monk.desktop-pet--activity-working .desktop-pet__monk-arm--right {
   animation: monk-mallet-strike 0.72s cubic-bezier(0.45, 0, 0.2, 1) infinite;
 }
 
-.desktop-pet--role-monk.desktop-pet--state-working .desktop-pet__mallet {
+.desktop-pet--role-monk.desktop-pet--state-working .desktop-pet__mallet,
+.desktop-pet--role-monk.desktop-pet--activity-working .desktop-pet__mallet {
   animation: monk-mallet-follow 0.72s cubic-bezier(0.45, 0, 0.2, 1) infinite;
 }
 
-.desktop-pet--role-monk.desktop-pet--state-working .desktop-pet__monk-sleeve {
+.desktop-pet--role-monk.desktop-pet--state-working .desktop-pet__monk-sleeve,
+.desktop-pet--role-monk.desktop-pet--activity-working .desktop-pet__monk-sleeve {
   animation: monk-sleeve-swing 0.72s cubic-bezier(0.45, 0, 0.2, 1) infinite;
 }
 
-.desktop-pet--role-monk.desktop-pet--state-working .desktop-pet__woodfish {
+.desktop-pet--role-monk.desktop-pet--state-working .desktop-pet__woodfish,
+.desktop-pet--role-monk.desktop-pet--activity-working .desktop-pet__woodfish {
   animation: monk-woodfish-hit 0.72s cubic-bezier(0.45, 0, 0.2, 1) infinite;
 }
 
-.desktop-pet--role-monk.desktop-pet--state-working .desktop-pet__woodfish-impact {
+.desktop-pet--role-monk.desktop-pet--state-working .desktop-pet__woodfish-impact,
+.desktop-pet--role-monk.desktop-pet--activity-working .desktop-pet__woodfish-impact {
   animation: monk-woodfish-impact 0.72s cubic-bezier(0.45, 0, 0.2, 1) infinite;
 }
 
-.desktop-pet--role-monk.desktop-pet--state-working .desktop-pet__monk-body {
+.desktop-pet--role-monk.desktop-pet--state-working .desktop-pet__monk-body,
+.desktop-pet--role-monk.desktop-pet--activity-working .desktop-pet__monk-body {
   animation: monk-body-rock 0.72s cubic-bezier(0.45, 0, 0.2, 1) infinite;
 }
 
-.desktop-pet--role-monk.desktop-pet--state-done .desktop-pet__monk-body {
+.desktop-pet--role-monk.desktop-pet--state-done .desktop-pet__monk-body,
+.desktop-pet--role-monk.desktop-pet--activity-done .desktop-pet__monk-body {
   animation: monk-bow 0.8s ease-in-out 3;
 }
 
-.desktop-pet--role-monk.desktop-pet--state-done .desktop-pet__monk-arm--right {
+.desktop-pet--role-monk.desktop-pet--state-done .desktop-pet__monk-arm--right,
+.desktop-pet--role-monk.desktop-pet--activity-done .desktop-pet__monk-arm--right {
   transform: rotate(18deg) translateY(-2px);
 }
 
-.desktop-pet--role-monk.desktop-pet--state-done .desktop-pet__woodfish-impact {
+.desktop-pet--role-monk.desktop-pet--state-done .desktop-pet__woodfish-impact,
+.desktop-pet--role-monk.desktop-pet--activity-done .desktop-pet__woodfish-impact {
   animation: monk-finish-glow 0.9s ease-in-out 3;
 }
 
-.desktop-pet--role-monk.desktop-pet--state-blocked .desktop-pet__monk-mouth {
+.desktop-pet--role-monk.desktop-pet--state-blocked .desktop-pet__monk-mouth,
+.desktop-pet--role-monk.desktop-pet--activity-blocked .desktop-pet__monk-mouth {
   width: 12px;
   border-bottom-width: 2px;
   border-radius: 0;

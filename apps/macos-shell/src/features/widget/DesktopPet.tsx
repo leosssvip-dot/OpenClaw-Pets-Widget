@@ -1,8 +1,9 @@
-import { useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import type { ConnectionStatus } from '../connection/ConnectionBadge';
 import { getHabitatDesktopApi } from '../../runtime/habitat-api';
 import { useWidgetStore, widgetStore } from './widget-store';
 import { resolvePetAppearance, type PetAppearanceConfig } from './pet-appearance';
+import { resolvePetAnimationState } from './pet-animation-state';
 
 function renderBuiltInPet(rolePack: 'lobster' | 'cat' | 'robot' | 'monk') {
   switch (rolePack) {
@@ -114,6 +115,11 @@ export function DesktopPet({
     | 'disconnected';
 }) {
   const isPanelOpen = useWidgetStore((state) => state.isPanelOpen);
+  const [isHovered, setIsHovered] = useState(false);
+  const [isPressed, setIsPressed] = useState(false);
+  const [isFocused, setIsFocused] = useState(false);
+  const [isDragging, setIsDragging] = useState(false);
+  const [isGreeting, setIsGreeting] = useState(false);
   const dragStateRef = useRef({
     pointerId: null as number | null,
     startX: 0,
@@ -122,13 +128,32 @@ export function DesktopPet({
     lastWindowX: 0,
     lastWindowY: 0
   });
+  const greetingTimeoutRef = useRef<number | null>(null);
   const resolvedAppearance = resolvePetAppearance(appearance);
-  const visualState =
-    petStatus === 'collaborating'
-      ? 'working'
-      : petStatus === 'disconnected'
-        ? 'blocked'
-        : petStatus ?? 'idle';
+  const animationState = resolvePetAnimationState({
+    petStatus,
+    connectionStatus
+  });
+
+  useEffect(() => {
+    return () => {
+      if (greetingTimeoutRef.current !== null) {
+        window.clearTimeout(greetingTimeoutRef.current);
+      }
+    };
+  }, []);
+
+  function triggerGreeting() {
+    if (greetingTimeoutRef.current !== null) {
+      window.clearTimeout(greetingTimeoutRef.current);
+    }
+
+    setIsGreeting(true);
+    greetingTimeoutRef.current = window.setTimeout(() => {
+      setIsGreeting(false);
+      greetingTimeoutRef.current = null;
+    }, 900);
+  }
 
   async function togglePanel() {
     const result = await getHabitatDesktopApi()?.togglePanel();
@@ -145,19 +170,37 @@ export function DesktopPet({
     <main className="desktop-pet-shell">
       <button
         type="button"
-        className={`desktop-pet desktop-pet--frameless desktop-pet--${connectionStatus} desktop-pet--state-${visualState} desktop-pet--role-${resolvedAppearance.rolePack}${isPanelOpen ? ' desktop-pet--active' : ''}`}
+        className={`desktop-pet desktop-pet--frameless desktop-pet--${connectionStatus} desktop-pet--state-${animationState.activity} desktop-pet--activity-${animationState.activity} desktop-pet--mood-${animationState.mood} desktop-pet--role-${resolvedAppearance.rolePack}${isPanelOpen ? ' desktop-pet--active desktop-pet--interaction-panel-open' : ''}${isHovered ? ' desktop-pet--interaction-hovered' : ''}${isPressed ? ' desktop-pet--interaction-pressed' : ''}${isFocused ? ' desktop-pet--interaction-focused' : ''}${isDragging ? ' desktop-pet--interaction-dragging' : ''}${isGreeting ? ' desktop-pet--interaction-greeting' : ''}`}
         aria-label={`${petName} desktop pet`}
         title="Drag to move. Double-click to open settings."
         onDoubleClick={() => {
+          triggerGreeting();
           void togglePanel();
+        }}
+        onFocus={() => {
+          setIsFocused(true);
+          triggerGreeting();
+        }}
+        onBlur={() => {
+          setIsFocused(false);
         }}
         onKeyDown={(event) => {
           if (event.key === 'Enter' || event.key === ' ') {
             event.preventDefault();
+            triggerGreeting();
             void togglePanel();
           }
         }}
+        onPointerEnter={() => {
+          setIsHovered(true);
+          triggerGreeting();
+        }}
+        onPointerLeave={() => {
+          setIsHovered(false);
+          setIsPressed(false);
+        }}
         onPointerDown={(event) => {
+          setIsPressed(true);
           dragStateRef.current = {
             pointerId: event.pointerId,
             startX: event.clientX,
@@ -182,6 +225,7 @@ export function DesktopPet({
           }
 
           dragStateRef.current.isDragging = true;
+          setIsDragging(true);
           dragStateRef.current.lastWindowX = Math.round(
             event.screenX - dragStateRef.current.startX
           );
@@ -202,6 +246,9 @@ export function DesktopPet({
           if (event.currentTarget.hasPointerCapture?.(event.pointerId)) {
             event.currentTarget.releasePointerCapture?.(event.pointerId);
           }
+
+          setIsPressed(false);
+          setIsDragging(false);
 
           if (dragStateRef.current.isDragging) {
             void getHabitatDesktopApi()?.persistPetWindowPosition({
@@ -227,6 +274,9 @@ export function DesktopPet({
           if (event.currentTarget.hasPointerCapture?.(event.pointerId)) {
             event.currentTarget.releasePointerCapture?.(event.pointerId);
           }
+
+          setIsPressed(false);
+          setIsDragging(false);
 
           dragStateRef.current = {
             pointerId: null,

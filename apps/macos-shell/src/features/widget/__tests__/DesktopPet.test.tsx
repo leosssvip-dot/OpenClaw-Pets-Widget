@@ -111,7 +111,7 @@ describe('DesktopPet', () => {
     });
   });
 
-  it('applies a visual state class for richer pet animation states', () => {
+  it('applies layered activity and mood classes for agent states', () => {
     widgetStore.getState().setPanelOpen(false);
     mockHabitatDesktopApi({
       togglePanel: vi.fn().mockResolvedValue({ isOpen: false })
@@ -126,7 +126,10 @@ describe('DesktopPet', () => {
     );
 
     expect(screen.getByRole('button', { name: 'Ruby desktop pet' })).toHaveClass(
-      'desktop-pet--state-working'
+      'desktop-pet--activity-working'
+    );
+    expect(screen.getByRole('button', { name: 'Ruby desktop pet' })).toHaveClass(
+      'desktop-pet--mood-focused'
     );
   });
 
@@ -215,5 +218,61 @@ describe('DesktopPet', () => {
       />
     );
     expect(container.querySelector('.desktop-pet__robot')).toBeInTheDocument();
+  });
+
+  it('applies owner interaction classes for hover, press, focus, and drag', () => {
+    widgetStore.getState().setPanelOpen(false);
+    mockHabitatDesktopApi({
+      togglePanel: vi.fn().mockResolvedValue({ isOpen: false })
+    });
+
+    render(<DesktopPet petName="Ruby" connectionStatus="connected" />);
+
+    const pet = screen.getByRole('button', { name: 'Ruby desktop pet' });
+    installPointerCaptureMocks(pet);
+
+    fireEvent.pointerEnter(pet);
+    expect(pet).toHaveClass('desktop-pet--interaction-hovered');
+
+    fireEvent.pointerDown(
+      pet,
+      createEvent.pointerDown(pet, {
+        pointerId: 7,
+        buttons: 1,
+        clientX: 18,
+        clientY: 20
+      })
+    );
+    expect(pet).toHaveClass('desktop-pet--interaction-pressed');
+
+    fireEvent.focus(pet);
+    expect(pet).toHaveClass('desktop-pet--interaction-focused');
+
+    fireEvent(
+      pet,
+      createEvent.pointerMove(pet, {
+        pointerId: 7,
+        buttons: 1,
+        clientX: 42,
+        clientY: 50,
+        screenX: 202,
+        screenY: 218
+      })
+    );
+    expect(pet).toHaveClass('desktop-pet--interaction-dragging');
+
+    fireEvent(
+      pet,
+      createEvent.pointerUp(pet, {
+        pointerId: 7
+      })
+    );
+    expect(pet).not.toHaveClass('desktop-pet--interaction-pressed');
+    expect(pet).not.toHaveClass('desktop-pet--interaction-dragging');
+
+    fireEvent.blur(pet);
+    fireEvent.pointerLeave(pet);
+    expect(pet).not.toHaveClass('desktop-pet--interaction-hovered');
+    expect(pet).not.toHaveClass('desktop-pet--interaction-focused');
   });
 });
