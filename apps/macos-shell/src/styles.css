@@ -1175,6 +1175,13 @@ body[data-surface='pet'] {
   filter: drop-shadow(0 7px 10px rgba(116, 56, 22, 0.16));
 }
 
+.desktop-pet__monk-breath-halo {
+  transform-box: fill-box;
+  transform-origin: center;
+  opacity: 0.22;
+  filter: blur(1.5px);
+}
+
 .desktop-pet__monk-svg {
   width: 100%;
   height: 100%;
@@ -1218,6 +1225,7 @@ body[data-surface='pet'] {
 
 .desktop-pet__monk-head,
 .desktop-pet__monk-brow,
+.desktop-pet__monk-cheek,
 .desktop-pet__monk-eye,
 .desktop-pet__monk-mouth,
 .desktop-pet__monk-robe,
@@ -1234,6 +1242,10 @@ body[data-surface='pet'] {
 }
 
 .desktop-pet__monk-brow {
+  transform-origin: center center;
+}
+
+.desktop-pet__monk-cheek {
   transform-origin: center center;
 }
 
@@ -1621,6 +1633,10 @@ body[data-surface='pet'] {
   animation: monk-breathe 3.2s ease-in-out infinite;
 }
 
+.desktop-pet--role-monk .desktop-pet__monk-breath-halo {
+  animation: monk-breath-halo 3.2s ease-in-out infinite;
+}
+
 .desktop-pet--role-monk.desktop-pet--activity-idle .desktop-pet__monk-arm--right {
   animation: monk-idle-tap 2.6s ease-in-out infinite;
 }
@@ -1652,6 +1668,17 @@ body[data-surface='pet'] {
 .desktop-pet--role-monk.desktop-pet--interaction-hovered .desktop-pet__monk-eye,
 .desktop-pet--role-monk.desktop-pet--interaction-focused .desktop-pet__monk-eye {
   transform: scaleY(1.2);
+}
+
+.desktop-pet--role-monk.desktop-pet--interaction-hovered .desktop-pet__monk-cheek,
+.desktop-pet--role-monk.desktop-pet--interaction-focused .desktop-pet__monk-cheek {
+  animation: monk-cheek-warm 1s ease-in-out infinite alternate;
+}
+
+.desktop-pet--role-monk.desktop-pet--interaction-hovered .desktop-pet__monk-breath-halo,
+.desktop-pet--role-monk.desktop-pet--interaction-greeting .desktop-pet__monk-breath-halo {
+  animation-duration: 1.5s;
+  opacity: 0.34;
 }
 
 .desktop-pet--role-monk.desktop-pet--interaction-hovered .desktop-pet__monk-arm--right,
@@ -1748,11 +1775,27 @@ body[data-surface='pet'] {
   animation: monk-finish-glow 0.9s ease-in-out 3;
 }
 
+.desktop-pet--role-monk.desktop-pet--state-done .desktop-pet__monk-cheek,
+.desktop-pet--role-monk.desktop-pet--activity-done .desktop-pet__monk-cheek {
+  animation: monk-cheek-proud 0.9s ease-in-out 3;
+}
+
 .desktop-pet--role-monk.desktop-pet--state-blocked .desktop-pet__monk-mouth,
 .desktop-pet--role-monk.desktop-pet--activity-blocked .desktop-pet__monk-mouth {
   width: 12px;
   border-bottom-width: 2px;
   border-radius: 0;
+}
+
+@keyframes monk-breath-halo {
+  0%, 100% {
+    opacity: 0.2;
+    transform: scale(0.96);
+  }
+  50% {
+    opacity: 0.32;
+    transform: scale(1.06);
+  }
 }
 
 @keyframes monk-breathe {
@@ -1928,6 +1971,28 @@ body[data-surface='pet'] {
   50% {
     opacity: 0.6;
     transform: scale(1.15);
+  }
+}
+
+@keyframes monk-cheek-warm {
+  0% {
+    opacity: 0.34;
+    transform: scale(1);
+  }
+  100% {
+    opacity: 0.54;
+    transform: scale(1.08);
+  }
+}
+
+@keyframes monk-cheek-proud {
+  0%, 100% {
+    opacity: 0.34;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 0.62;
+    transform: scale(1.14);
   }
 }
 

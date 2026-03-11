@@ -7,6 +7,15 @@ export function MonkPetSvg() {
         aria-hidden="true"
       >
         <ellipse
+          className="desktop-pet__monk-breath-halo"
+          cx="67"
+          cy="71"
+          rx="30"
+          ry="22"
+          fill="#f5d59b"
+          opacity="0.22"
+        />
+        <ellipse
           className="desktop-pet__monk-cushion"
           cx="63"
           cy="103"
@@ -74,6 +83,8 @@ export function MonkPetSvg() {
                 strokeWidth="1.5"
               />
               <ellipse className="desktop-pet__monk-brow" cx="68" cy="22" rx="8" ry="2" fill="#8a603d" opacity="0.25" />
+              <circle className="desktop-pet__monk-cheek desktop-pet__monk-cheek--left" cx="58" cy="31" r="3.4" fill="#e59c86" opacity="0.35" />
+              <circle className="desktop-pet__monk-cheek desktop-pet__monk-cheek--right" cx="78" cy="31" r="3.4" fill="#e59c86" opacity="0.35" />
               <ellipse className="desktop-pet__monk-eye desktop-pet__monk-eye--left" cx="62" cy="27" rx="2.8" ry="1.6" fill="#5b432e" />
               <ellipse className="desktop-pet__monk-eye desktop-pet__monk-eye--right" cx="74" cy="27" rx="2.8" ry="1.6" fill="#5b432e" />
               <path
