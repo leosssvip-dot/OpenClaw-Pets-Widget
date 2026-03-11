@@ -1,0 +1,113 @@
+import { createEvent, fireEvent, render, screen, waitFor } from '@testing-library/react';
+import { vi } from 'vitest';
+import { DesktopPet } from '../DesktopPet';
+import { widgetStore } from '../widget-store';
+
+function mockHabitatDesktopApi(api: Record<string, unknown>) {
+  (globalThis as typeof globalThis & {
+    habitat?: Record<string, unknown>;
+  }).habitat = {
+    getRuntimeInfo: vi.fn(),
+    prepareGatewayConnection: vi.fn(),
+    teardownGatewayConnection: vi.fn(),
+    movePetWindow: vi.fn().mockResolvedValue(undefined),
+    persistPetWindowPosition: vi.fn().mockResolvedValue(undefined),
+    togglePanel: vi.fn().mockResolvedValue({ isOpen: false }),
+    snapPetWindow: vi.fn().mockResolvedValue({ side: 'left' }),
+    storeSecret: vi.fn(),
+    retrieveSecret: vi.fn(),
+    deleteSecret: vi.fn(),
+    ...api
+  };
+}
+
+if (!globalThis.PointerEvent) {
+  (globalThis as typeof globalThis & {
+    PointerEvent: typeof MouseEvent;
+  }).PointerEvent = MouseEvent;
+}
+
+function installPointerCaptureMocks(element: HTMLElement) {
+  const activePointerIds = new Set<number>();
+
+  Object.defineProperty(element, 'setPointerCapture', {
+    value: vi.fn((pointerId: number) => {
+      activePointerIds.add(pointerId);
+    })
+  });
+  Object.defineProperty(element, 'hasPointerCapture', {
+    value: vi.fn((pointerId: number) => activePointerIds.has(pointerId))
+  });
+  Object.defineProperty(element, 'releasePointerCapture', {
+    value: vi.fn((pointerId: number) => {
+      activePointerIds.delete(pointerId);
+    })
+  });
+}
+
+describe('DesktopPet', () => {
+  it('moves the pet window without snapping on drag end', async () => {
+    widgetStore.getState().setPanelOpen(false);
+    const movePetWindow = vi.fn().mockResolvedValue(undefined);
+    const persistPetWindowPosition = vi.fn().mockResolvedValue(undefined);
+    const togglePanel = vi.fn().mockResolvedValue({ isOpen: true });
+    const snapPetWindow = vi.fn().mockResolvedValue({ side: 'left' });
+
+    mockHabitatDesktopApi({
+      movePetWindow,
+      persistPetWindowPosition,
+      togglePanel,
+      snapPetWindow
+    });
+
+    render(<DesktopPet petName="Ruby" connectionStatus="connected" />);
+
+    const pet = screen.getByRole('button', { name: 'Ruby desktop pet' });
+    installPointerCaptureMocks(pet);
+
+    expect(pet).toHaveClass('desktop-pet--frameless');
+    expect(screen.getByText('Ruby')).toBeInTheDocument();
+    expect(document.querySelector('.desktop-pet__bubble')).toBeNull();
+    expect(screen.queryByText('connected')).not.toBeInTheDocument();
+
+    fireEvent(
+      pet,
+      createEvent.pointerDown(pet, {
+        pointerId: 1,
+        buttons: 1,
+        clientX: 20,
+        clientY: 24
+      })
+    );
+    fireEvent(
+      pet,
+      createEvent.pointerMove(pet, {
+        pointerId: 1,
+        buttons: 1,
+        clientX: 52,
+        clientY: 64,
+        screenX: 252,
+        screenY: 264
+      })
+    );
+    fireEvent(
+      pet,
+      createEvent.pointerUp(pet, {
+        pointerId: 1
+      })
+    );
+    fireEvent.click(pet);
+
+    expect(movePetWindow).toHaveBeenCalledWith({ x: 232, y: 240 });
+    expect(persistPetWindowPosition).toHaveBeenCalledTimes(1);
+    expect(persistPetWindowPosition).toHaveBeenCalledWith({ x: 232, y: 240 });
+    expect(snapPetWindow).not.toHaveBeenCalled();
+    expect(togglePanel).not.toHaveBeenCalled();
+
+    fireEvent.doubleClick(pet);
+
+    await waitFor(() => {
+      expect(togglePanel).toHaveBeenCalledTimes(1);
+    });
+  });
+});

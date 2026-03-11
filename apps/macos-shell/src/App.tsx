@@ -7,7 +7,12 @@ import { getRuntimeDeps } from './runtime/runtime-deps';
 import { getHabitatDesktopApi } from './runtime/habitat-api';
 import type { SshConnectionInput } from './features/settings/SshConnectionForm';
 import { settingsStore, useSettingsStore } from './features/settings/settings-store';
+import {
+  clearGatewaySessionAuth,
+  setGatewaySessionAuth
+} from './runtime/gateway-session-auth';
 import { DesktopPet } from './features/widget/DesktopPet';
+import type { PetAppearanceConfig } from './features/widget/pet-appearance';
 import { WidgetPanel } from './features/widget/WidgetPanel';
 
 function toHabitatPets(agents: AgentBindingSeed[]) {
@@ -20,9 +25,9 @@ function toHabitatPets(agents: AgentBindingSeed[]) {
   }));
 }
 
-function toGatewayProfile(input: SshConnectionInput) {
+function toGatewayProfile(input: SshConnectionInput, profileId?: string) {
   return {
-    id: `gateway-${Date.now()}`,
+    id: profileId ?? `gateway-${Date.now()}`,
     label: input.host,
     transport: 'ssh' as const,
     host: input.host,
@@ -34,6 +39,67 @@ function toGatewayProfile(input: SshConnectionInput) {
   };
 }
 
+function tokenSecretKey(profileId: string) {
+  return `gateway-token:${profileId}`;
+}
+
+async function storeProfileToken(profileId: string, token: string) {
+  const api = getHabitatDesktopApi();
+
+  if (api?.storeSecret) {
+    await api.storeSecret(tokenSecretKey(profileId), token);
+  }
+}
+
+async function deleteProfileToken(profileId: string) {
+  const api = getHabitatDesktopApi();
+
+  if (api?.deleteSecret) {
+    await api.deleteSecret(tokenSecretKey(profileId));
+  }
+}
+
+async function hydrateProfileTokens() {
+  const api = getHabitatDesktopApi();
+
+  if (!api?.retrieveSecret) {
+    return;
+  }
+
+  const profiles = settingsStore.getState().gatewayProfiles;
+
+  for (const profile of Object.values(profiles)) {
+    const token = await api.retrieveSecret(tokenSecretKey(profile.id));
+
+    if (token) {
+      settingsStore.getState().updateProfileToken(profile.id, token);
+    }
+  }
+}
+
+let initialReconnectAttempted = false;
+
+export async function hydrateAndReconnectActiveProfile(
+  surface: 'pet' | 'panel',
+  alreadyAttempted: boolean,
+  hydrateTokens: () => Promise<void>,
+  markReconnectAttempted: () => void,
+  getActiveProfileId: () => string | null,
+  reconnectProfile: (profileId: string) => Promise<void>
+) {
+  if (surface !== 'panel' || alreadyAttempted) {
+    return;
+  }
+
+  markReconnectAttempted();
+  await hydrateTokens();
+  const profileId = getActiveProfileId();
+
+  if (profileId) {
+    await reconnectProfile(profileId);
+  }
+}
+
 export function App() {
   const [surface, setSurface] = useState<'pet' | 'panel'>(() => {
     return new URLSearchParams(window.location.search).get('surface') === 'pet'
@@ -41,17 +107,46 @@ export function App() {
       : 'panel';
   });
   const [connectionStatus, setConnectionStatus] = useState<ConnectionStatus>('offline');
+  const [connectionError, setConnectionError] = useState<string | null>(null);
   const bridgeUnsubscribeRef = useRef<(() => void) | null>(null);
   const petsById = useHabitatStore((state) => state.pets);
+  const agentSnapshotsById = useHabitatStore((state) => state.agentSnapshots);
   const petCount = useHabitatStore((state) => Object.keys(state.pets).length);
   const selectedPetId = useHabitatStore((state) => state.selectedPetId);
   const selectedPet = selectedPetId ? petsById[selectedPetId] : null;
   const submitQuickPrompt = useQuickComposer(selectedPet?.id ?? '');
   const gatewayProfilesById = useSettingsStore((state) => state.gatewayProfiles);
   const activeProfileId = useSettingsStore((state) => state.activeProfileId);
+  const displayMode = useSettingsStore((state) => state.displayMode);
+  const pinnedAgentId = useSettingsStore((state) => state.pinnedAgentId);
   const bindingsByPetId = useSettingsStore((state) => state.bindings);
+  const appearancesByPetId = useSettingsStore((state) => state.appearances);
   const gatewayProfiles = Object.values(gatewayProfilesById);
-  const bindings = Object.values(bindingsByPetId);
+  const agentRows = [
+    ...Object.values(petsById).map((pet) => ({
+      petId: pet.id,
+      petName: pet.name,
+      agentId: bindingsByPetId[pet.id]?.agentId ?? pet.agentId,
+      gatewayId: bindingsByPetId[pet.id]?.gatewayId ?? pet.gatewayId,
+      status: pet.status,
+      isSelected: selectedPetId === pet.id,
+      appearance: appearancesByPetId[pet.id]
+    })),
+    ...Object.values(bindingsByPetId)
+      .filter((binding) => !petsById[binding.petId])
+      .map((binding) => ({
+        petId: binding.petId,
+        petName: undefined,
+        agentId: binding.agentId,
+        gatewayId: binding.gatewayId,
+        status: agentSnapshotsById[binding.agentId]?.runtimeStatus ?? 'disconnected',
+        isSelected: false,
+        appearance: appearancesByPetId[binding.petId]
+      }))
+  ];
+  const selectedPetAppearance: PetAppearanceConfig | undefined = selectedPet
+    ? appearancesByPetId[selectedPet.id]
+    : undefined;
   const applyBridgeEvent = useEffectEvent((event: HabitatEvent) => {
     habitatStore.getState().applyEvent(event);
   });
@@ -61,6 +156,7 @@ export function App() {
     setConnectionStatus((status) =>
       status === 'connected' ? 'reconnecting' : 'connecting'
     );
+    setConnectionError(null);
 
     try {
       bridgeUnsubscribeRef.current?.();
@@ -83,8 +179,10 @@ export function App() {
       }
 
       setConnectionStatus('connected');
+      setConnectionError(null);
     } catch (error) {
       const message = error instanceof Error ? error.message : String(error);
+      setConnectionError(message);
       setConnectionStatus(
         message.includes('AUTH_EXPIRED') ? 'auth-expired' : 'offline'
       );
@@ -92,25 +190,53 @@ export function App() {
   });
 
   useEffect(() => {
-    void getHabitatDesktopApi()
+    document.body.dataset.surface = surface;
+
+    return () => {
+      delete document.body.dataset.surface;
+    };
+  }, [surface]);
+
+  useEffect(() => {
+    const api = getHabitatDesktopApi();
+    let isActive = true;
+
+    void api
       ?.getRuntimeInfo()
       .then((info) => {
-        if (info.surface) {
+        if (isActive && info.surface) {
           setSurface(info.surface);
         }
       });
 
+    void hydrateAndReconnectActiveProfile(
+      surface,
+      initialReconnectAttempted,
+      hydrateProfileTokens,
+      () => {
+        initialReconnectAttempted = true;
+      },
+      () => (isActive ? settingsStore.getState().activeProfileId : null),
+      async (profileId) => {
+        if (isActive) {
+          await connectToProfile(profileId);
+        }
+      }
+    );
+
     return () => {
+      isActive = false;
       bridgeUnsubscribeRef.current?.();
       void getRuntimeDeps().bridge.disconnect();
     };
-  }, []);
+  }, [connectToProfile, surface]);
 
   if (surface === 'pet') {
     return (
       <DesktopPet
         petName={selectedPet?.name ?? 'OpenClaw'}
         connectionStatus={connectionStatus}
+        appearance={selectedPetAppearance}
       />
     );
   }
@@ -118,9 +244,12 @@ export function App() {
   return (
     <WidgetPanel
       connectionStatus={connectionStatus}
+      connectionError={connectionError}
       activeProfileId={activeProfileId}
+      displayMode={displayMode}
+      pinnedAgentId={pinnedAgentId}
       gatewayProfiles={gatewayProfiles}
-      bindings={bindings}
+      agentRows={agentRows}
       petCount={petCount}
       selectedPet={selectedPet}
       onReconnect={() => {
@@ -128,11 +257,31 @@ export function App() {
           void connectToProfile(activeProfileId);
         }
       }}
-      onConnect={async (input) => {
-        const profile = toGatewayProfile(input);
+      onSaveProfile={async (input, profileId) => {
+        const profile = toGatewayProfile(input, profileId);
+        if (input.password !== undefined || !profileId) {
+          setGatewaySessionAuth(profile.id, {
+            password: input.password
+          });
+        }
         settingsStore.getState().saveGatewayProfile(profile);
         settingsStore.getState().selectGatewayProfile(profile.id);
+        await storeProfileToken(profile.id, profile.gatewayToken);
         await connectToProfile(profile.id);
+      }}
+      onDeleteProfile={(profileId) => {
+        clearGatewaySessionAuth(profileId);
+        settingsStore.getState().deleteGatewayProfile(profileId);
+        void deleteProfileToken(profileId);
+      }}
+      onDisplayModeChange={(mode) => {
+        settingsStore.getState().setDisplayMode(mode);
+      }}
+      onPinnedAgentChange={(agentId) => {
+        settingsStore.getState().setPinnedAgentId(agentId);
+      }}
+      onUpdateAppearance={(petId, appearance) => {
+        settingsStore.getState().setPetAppearance(petId, appearance);
       }}
       onSubmitQuickPrompt={submitQuickPrompt}
     />

@@ -23,19 +23,17 @@ export interface PreparedGatewayConnection {
   authToken?: string;
 }
 
+interface BaseHabitatEvent {
+  agentId: string;
+  gatewayId: string;
+  petId?: string;
+}
+
 export type HabitatEvent =
-  | {
-      kind: 'agent.completed';
-      agentId: string;
-      gatewayId: string;
-      petId?: string;
-    }
-  | {
-      kind: 'agent.unknown';
-      agentId: string;
-      gatewayId: string;
-      petId?: string;
-    };
+  | (BaseHabitatEvent & { kind: 'agent.completed' })
+  | (BaseHabitatEvent & { kind: 'agent.error'; message?: string })
+  | (BaseHabitatEvent & { kind: 'agent.status'; status: string })
+  | (BaseHabitatEvent & { kind: 'agent.unknown' });
 
 export interface BridgeClient {
   connect(profileId: string): Promise<void>;

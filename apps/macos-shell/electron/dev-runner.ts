@@ -1,12 +1,11 @@
 import { spawn } from 'node:child_process';
 import { access } from 'node:fs/promises';
-import { createRequire } from 'node:module';
 import { dirname, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { context } from 'esbuild';
+import { ensureElectronBinary } from './ensure-electron';
 
-const require = createRequire(import.meta.url);
-const electronBinary = require('electron') as string;
+const electronBinary = await ensureElectronBinary();
 const currentDir = dirname(fileURLToPath(import.meta.url));
 const appDir = resolve(currentDir, '..');
 const outputFile = resolve(appDir, '.electron-build/main.js');

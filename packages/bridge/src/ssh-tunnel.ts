@@ -11,10 +11,16 @@ export function buildSshTunnelCommand(input: SshTunnelCommandInput) {
   const args = [
     'ssh',
     '-N',
+    '-o',
+    'ExitOnForwardFailure=yes',
+    '-o',
+    'StrictHostKeyChecking=accept-new',
+    '-o',
+    'ServerAliveInterval=15',
     '-p',
     String(input.sshPort),
     '-L',
-    `${input.localPort}:127.0.0.1:${input.remotePort}`
+    `127.0.0.1:${input.localPort}:127.0.0.1:${input.remotePort}`
   ];
 
   if (input.identityFile) {

@@ -6,6 +6,7 @@ import {
   type GatewayProfile,
   type PreparedGatewayConnection
 } from '@openclaw-habitat/bridge';
+import type { GatewaySessionAuth } from '../src/runtime/gateway-session-auth';
 
 type SshGatewayProfile = Extract<GatewayProfile, { transport: 'ssh' }>;
 
@@ -13,6 +14,60 @@ interface ActiveTunnel {
   child: ChildProcess;
   localPort: number;
   profileId: string;
+}
+
+/**
+ * Escape a string for use inside a Tcl double-quoted string.
+ * Tcl special chars inside "": $ [ ] \ "
+ */
+function tclEscape(str: string) {
+  return str.replace(/[\\\$\[\]"]/g, '\\$&');
+}
+
+export function buildExpectScript(password: string, sshArgs: string[]) {
+  const escapedPassword = tclEscape(password);
+  const quotedArgs = sshArgs.map((a) => `"${tclEscape(a)}"`).join(' ');
+
+  return `log_user 0
+set timeout 30
+spawn ${quotedArgs}
+expect {
+  -re {[Pp]assword} {
+    send -- "${escapedPassword}\\r"
+  }
+  -re {ermission denied} {
+    puts stderr "Permission denied"
+    exit 1
+  }
+  timeout {
+    puts stderr "SSH password prompt timed out"
+    exit 1
+  }
+  eof {
+    puts stderr "SSH connection closed before authentication"
+    exit 1
+  }
+}
+set timeout 5
+expect {
+  -re {ermission denied} {
+    puts stderr "SSH authentication failed (wrong password?)"
+    exit 1
+  }
+  eof {
+    lassign [wait] pid spawnid os_error value
+    if {$value != 0} {
+      puts stderr "SSH exited with code $value"
+    }
+    exit $value
+  }
+  timeout {}
+}
+set timeout -1
+expect eof
+lassign [wait] pid spawnid os_error value
+exit $value
+`;
 }
 
 function buildLoopbackUrl(port: number) {
@@ -46,7 +101,7 @@ async function findOpenPort() {
   });
 }
 
-async function waitForPort(port: number, timeoutMs = 4_000) {
+async function waitForPort(port: number, timeoutMs = 8_000) {
   const startedAt = Date.now();
 
   for (;;) {
@@ -71,7 +126,7 @@ async function waitForPort(port: number, timeoutMs = 4_000) {
       throw new Error(`SSH tunnel did not open local port ${port}`);
     }
 
-    await new Promise((resolve) => setTimeout(resolve, 100));
+    await new Promise((resolve) => setTimeout(resolve, 200));
   }
 }
 
@@ -84,7 +139,10 @@ export class SshTunnelRuntime {
     private readonly waitForLocalPort: (port: number) => Promise<void> = waitForPort
   ) {}
 
-  async prepareConnection(profile: SshGatewayProfile): Promise<PreparedGatewayConnection> {
+  async prepareConnection(
+    profile: SshGatewayProfile,
+    sessionAuth?: GatewaySessionAuth
+  ): Promise<PreparedGatewayConnection> {
     if (this.activeTunnel?.profileId === profile.id) {
       return {
         url: buildLoopbackUrl(this.activeTunnel.localPort),
@@ -95,7 +153,7 @@ export class SshTunnelRuntime {
     await this.disconnect();
 
     const localPort = await this.reservePort();
-    const [command, ...args] = buildSshTunnelCommand({
+    const sshArgs = buildSshTunnelCommand({
       host: profile.host,
       username: profile.username,
       sshPort: profile.sshPort,
@@ -103,9 +161,31 @@ export class SshTunnelRuntime {
       localPort,
       remotePort: profile.remoteGatewayPort
     });
-    const child = this.spawnProcess(command, args, {
-      stdio: ['ignore', 'ignore', 'pipe']
-    });
+
+    const useExpect = Boolean(sessionAuth?.password) && !profile.identityFile;
+
+    let child: ChildProcess;
+
+    if (useExpect) {
+      const passwordSshArgs = [
+        ...sshArgs.slice(0, 1),
+        '-o',
+        'PreferredAuthentications=password,keyboard-interactive',
+        '-o',
+        'PubkeyAuthentication=no',
+        ...sshArgs.slice(1)
+      ];
+      const expectScript = buildExpectScript(sessionAuth!.password!, passwordSshArgs);
+      child = this.spawnProcess('expect', ['-c', expectScript], {
+        stdio: ['ignore', 'ignore', 'pipe']
+      });
+    } else {
+      const [command, ...args] = sshArgs;
+      child = this.spawnProcess(command, ['-o', 'BatchMode=yes', ...args], {
+        stdio: ['ignore', 'ignore', 'pipe']
+      });
+    }
+
     let stderrOutput = '';
 
     child.stderr?.on('data', (chunk) => {
@@ -129,7 +209,12 @@ export class SshTunnelRuntime {
       ]);
     } catch (error) {
       child.kill('SIGTERM');
-      throw error;
+      const raw = stderrOutput.trim() || (error instanceof Error ? error.message : String(error));
+      const hint =
+        !useExpect && raw.includes('Permission denied')
+          ? '\n(No SSH password was provided — edit the gateway profile and re-enter your password)'
+          : '';
+      throw new Error(raw + hint);
     }
 
     this.activeTunnel = {
@@ -153,7 +238,6 @@ export class SshTunnelRuntime {
     }
 
     tunnel.child.kill('SIGTERM');
-
     await once(tunnel.child, 'exit').catch(() => undefined);
   }
 }
