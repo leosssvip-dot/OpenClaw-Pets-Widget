@@ -9,20 +9,30 @@ import {
   getGatewaySessionAuth
 } from './runtime/gateway-session-auth';
 
+const bridgeMocks = vi.hoisted(() => ({
+  connect: vi.fn().mockResolvedValue(undefined),
+  disconnect: vi.fn().mockResolvedValue(undefined),
+  subscribe: vi.fn(() => () => undefined),
+  listAgents: vi.fn().mockResolvedValue([])
+}));
+
 vi.mock('./runtime/runtime-deps', () => ({
   getRuntimeDeps: () => ({
-    bridge: {
-      connect: vi.fn().mockResolvedValue(undefined),
-      disconnect: vi.fn().mockResolvedValue(undefined),
-      subscribe: vi.fn(() => () => undefined),
-      listAgents: vi.fn().mockResolvedValue([])
-    }
+    bridge: bridgeMocks
   })
 }));
 
 beforeEach(() => {
   window.history.replaceState({}, '', '/');
   localStorage.clear();
+  bridgeMocks.connect.mockClear();
+  bridgeMocks.disconnect.mockClear();
+  bridgeMocks.subscribe.mockClear();
+  bridgeMocks.listAgents.mockClear();
+  bridgeMocks.connect.mockResolvedValue(undefined);
+  bridgeMocks.disconnect.mockResolvedValue(undefined);
+  bridgeMocks.subscribe.mockImplementation(() => () => undefined);
+  bridgeMocks.listAgents.mockResolvedValue([]);
   habitatStore.setState({
     pets: {},
     agentSnapshots: {},
@@ -137,7 +147,7 @@ describe('hydrateAndReconnectActiveProfile', () => {
     expect(reconnectProfile).not.toHaveBeenCalled();
   });
 
-  it('shows the companion stage and reveals grouped settings controls', async () => {
+  it('shows a unified prompt-first panel with collapsible settings groups', async () => {
     habitatStore.getState().seedPets([
       {
         id: 'pet-1',
@@ -173,27 +183,23 @@ describe('hydrateAndReconnectActiveProfile', () => {
 
     render(<App />);
 
+    expect(await screen.findByRole('button', { name: 'Send Task' })).toBeInTheDocument();
+    expect(screen.queryByText('Agent Habitat')).not.toBeInTheDocument();
     expect(
-      await screen.findByRole('heading', {
+      screen.queryByRole('heading', {
         name: 'Your coding pet is already at the keyboard.'
       })
-    ).toBeInTheDocument();
-    expect(screen.queryByText('Agent Habitat')).not.toBeInTheDocument();
-    expect(screen.getByText('Coder Claw')).toBeInTheDocument();
-    expect(screen.getAllByText('Code').length).toBeGreaterThan(0);
-    expect(screen.getByRole('button', { name: 'Send Task' })).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: 'Switch agent' })).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: 'Switch character' })).toBeInTheDocument();
-    expect(
-      screen.getByText('Swap between Code, Plan, Ops, and Focus modes.')
-    ).toBeInTheDocument();
-    fireEvent.click(screen.getByRole('button', { name: 'More settings' }));
+    ).not.toBeInTheDocument();
+    expect(screen.queryByText('Signal')).not.toBeInTheDocument();
+    expect(screen.getByTestId('settings-pet-hint')).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'Switch agent' })).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'Switch character' })).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'More settings' })).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'Agent' })).not.toBeInTheDocument();
+    expect(screen.queryByLabelText('Current agent')).not.toBeInTheDocument();
 
-    expect(screen.getByRole('heading', { name: 'Display' })).toBeInTheDocument();
-    expect(screen.getByRole('heading', { name: 'Characters' })).toBeInTheDocument();
-    expect(screen.getByRole('heading', { name: 'Connection' })).toBeInTheDocument();
-    expect(screen.getAllByText('Ops').length).toBeGreaterThan(0);
-
+    expect(screen.getByRole('button', { name: 'Display' })).toHaveAttribute('aria-expanded', 'true');
+    expect(screen.getByLabelText('Pinned agent')).toBeInTheDocument();
     fireEvent.click(screen.getByRole('radio', { name: 'Group' }));
     fireEvent.change(screen.getByLabelText('Pinned agent'), {
       target: { value: 'ad-expert' }
@@ -201,6 +207,16 @@ describe('hydrateAndReconnectActiveProfile', () => {
 
     expect(screen.getByRole('radio', { name: 'Group' })).toBeChecked();
     expect(screen.getByLabelText('Pinned agent')).toHaveValue('ad-expert');
+
+    fireEvent.click(screen.getByRole('button', { name: 'Connection' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Edit' }));
+
+    expect(screen.getByRole('heading', { name: 'Gateway management' })).toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole('button', { name: 'Connect Remote' }));
+
+    expect(screen.getByLabelText('Gateway Port')).toBeInTheDocument();
+    expect(screen.getByLabelText('Gateway Token')).toBeInTheDocument();
   });
 
   it('shows a direct gateway connection action when no companion is connected', async () => {
@@ -211,8 +227,36 @@ describe('hydrateAndReconnectActiveProfile', () => {
 
     fireEvent.click(connectButton);
 
-    expect(screen.getByRole('heading', { name: 'Connection' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Connection' })).toHaveAttribute(
+      'aria-expanded',
+      'true'
+    );
     expect(screen.getByRole('button', { name: 'Connect Remote' })).toBeInTheDocument();
+  });
+
+  it('reconnects again when the panel remounts with an active profile', async () => {
+    settingsStore.getState().saveGatewayProfile({
+      id: 'remote-1',
+      label: 'Remote 1',
+      transport: 'ssh',
+      host: '127.0.0.1',
+      username: 'demo',
+      sshPort: 22,
+      identityFile: '',
+      remoteGatewayPort: 62828,
+      gatewayToken: 'token'
+    });
+
+    const firstRender = render(<App />);
+    await screen.findByRole('button', { name: 'Connect gateway' });
+    expect(bridgeMocks.connect).toHaveBeenCalledTimes(1);
+
+    firstRender.unmount();
+
+    render(<App />);
+    await screen.findByRole('button', { name: 'Connect gateway' });
+
+    expect(bridgeMocks.connect).toHaveBeenCalledTimes(2);
   });
 
   it('marks the pet surface as transparent chrome', async () => {

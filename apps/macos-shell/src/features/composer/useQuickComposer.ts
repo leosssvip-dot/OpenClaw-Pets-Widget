@@ -7,10 +7,18 @@ export function useQuickComposer(petId: string) {
       return;
     }
 
-    await getRuntimeDeps().bridge.sendMessage({
-      petId,
-      content
-    });
     habitatStore.getState().markPetAsThinking(petId, content);
+
+    try {
+      await getRuntimeDeps().bridge.sendMessage({
+        petId,
+        content
+      });
+    } catch (error) {
+      habitatStore.getState().markPetAsBlocked(
+        petId,
+        error instanceof Error ? error.message : String(error)
+      );
+    }
   };
 }

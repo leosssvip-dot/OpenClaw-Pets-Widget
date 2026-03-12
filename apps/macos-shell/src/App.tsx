@@ -109,8 +109,6 @@ export async function hydrateProfileSecrets() {
   }
 }
 
-let initialReconnectAttempted = false;
-
 export async function hydrateAndReconnectActiveProfile(
   surface: 'pet' | 'panel',
   alreadyAttempted: boolean,
@@ -141,6 +139,7 @@ export function App() {
   const [connectionStatus, setConnectionStatus] = useState<ConnectionStatus>('offline');
   const [connectionError, setConnectionError] = useState<string | null>(null);
   const bridgeUnsubscribeRef = useRef<(() => void) | null>(null);
+  const reconnectAttemptedRef = useRef(false);
   const petsById = useHabitatStore((state) => state.pets);
   const agentSnapshotsById = useHabitatStore((state) => state.agentSnapshots);
   const selectedPetId = useHabitatStore((state) => state.selectedPetId);
@@ -253,10 +252,10 @@ export function App() {
 
     void hydrateAndReconnectActiveProfile(
       surface,
-      initialReconnectAttempted,
+      reconnectAttemptedRef.current,
       hydrateProfileSecrets,
       () => {
-        initialReconnectAttempted = true;
+        reconnectAttemptedRef.current = true;
       },
       () => (isActive ? settingsStore.getState().activeProfileId : null),
       async (profileId) => {
@@ -275,14 +274,28 @@ export function App() {
 
   const handlePetSendMessage = async (petId: string, text: string) => {
     const bridge = getRuntimeDeps().bridge;
-    await bridge.sendMessage({ petId, content: text });
     habitatStore.getState().markPetAsThinking(petId, text);
+    try {
+      await bridge.sendMessage({ petId, content: text });
+    } catch (error) {
+      habitatStore.getState().markPetAsBlocked(
+        petId,
+        error instanceof Error ? error.message : String(error)
+      );
+    }
   };
 
   const handlePetCreateTask = async (petId: string, prompt: string) => {
     const bridge = getRuntimeDeps().bridge;
-    await bridge.createTask({ petId, prompt });
     habitatStore.getState().markPetAsThinking(petId, prompt);
+    try {
+      await bridge.createTask({ petId, prompt });
+    } catch (error) {
+      habitatStore.getState().markPetAsBlocked(
+        petId,
+        error instanceof Error ? error.message : String(error)
+      );
+    }
   };
 
   // Build multi-pet slots from all agent rows

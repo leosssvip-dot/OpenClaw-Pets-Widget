@@ -18,5 +18,6 @@ export interface HabitatState {
   seedPets: (pets: HabitatPet[]) => void;
   selectPet: (petId: string) => void;
   markPetAsThinking: (petId: string, content: string) => void;
+  markPetAsBlocked: (petId: string, message: string) => void;
   applyEvent: (event: HabitatEvent) => void;
 }

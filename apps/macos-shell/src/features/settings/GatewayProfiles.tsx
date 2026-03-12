@@ -46,7 +46,10 @@ export function GatewayProfiles({
   return (
     <section className="gateway-profiles">
       <div className="section-heading">
-        <h2>Gateways</h2>
+        <div className="section-heading__copy">
+          <h2>Gateway management</h2>
+          <p>Saved links and SSH setup for this companion.</p>
+        </div>
         <button
           type="button"
           disabled={isConnecting}

@@ -93,6 +93,13 @@ export const createHabitatStore = () =>
           }
         };
       }),
+    markPetAsBlocked: (petId: string, message: string) =>
+      set((state) => ({
+        pets: updatePet(state.pets, petId, () => ({
+          status: 'blocked',
+          bubbleText: message
+        }))
+      })),
     applyEvent: (event: HabitatEvent) =>
       set((state) => ({
         pets: applyHabitatEvent(state.pets, event),
