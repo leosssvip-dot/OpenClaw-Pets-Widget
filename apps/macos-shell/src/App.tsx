@@ -12,6 +12,7 @@ import {
   setGatewaySessionAuth
 } from './runtime/gateway-session-auth';
 import { DesktopPet } from './features/widget/DesktopPet';
+import { MultiPetShell, type PetSlot } from './features/widget/MultiPetShell';
 import type { PetAppearanceConfig } from './features/widget/pet-appearance';
 import { WidgetPanel } from './features/widget/WidgetPanel';
 
@@ -272,13 +273,59 @@ export function App() {
     };
   }, [connectToProfile, surface]);
 
+  const handlePetSendMessage = async (petId: string, text: string) => {
+    const bridge = getRuntimeDeps().bridge;
+    await bridge.sendMessage({ petId, content: text });
+    habitatStore.getState().markPetAsThinking(petId, text);
+  };
+
+  const handlePetCreateTask = async (petId: string, prompt: string) => {
+    const bridge = getRuntimeDeps().bridge;
+    await bridge.createTask({ petId, prompt });
+    habitatStore.getState().markPetAsThinking(petId, prompt);
+  };
+
+  // Build multi-pet slots from all agent rows
+  const petSlots: PetSlot[] = agentRows.map((row) => ({
+    petId: row.petId,
+    petName: row.petName ?? row.agentId ?? 'OpenClaw',
+    agentId: row.agentId,
+    status: row.status ?? 'idle',
+    appearance: row.appearance,
+  }));
+
   if (surface === 'pet') {
+    // Multi-pet mode when display mode is 'group', single pet when 'pinned'
+    if (displayMode === 'group' && petSlots.length > 1) {
+      return (
+        <MultiPetShell
+          pets={petSlots}
+          connectionStatus={connectionStatus}
+          activePetId={selectedPetId}
+          onSendMessage={handlePetSendMessage}
+          onCreateTask={handlePetCreateTask}
+          onSelectPet={(id) => habitatStore.getState().selectPet(id)}
+        />
+      );
+    }
+
     return (
       <DesktopPet
         petName={petDisplayName}
+        petId={visiblePetRow?.petId}
         connectionStatus={connectionStatus}
         appearance={selectedPetAppearance}
         petStatus={petDisplayStatus}
+        onSendMessage={(text) => {
+          if (visiblePetRow) {
+            void handlePetSendMessage(visiblePetRow.petId, text);
+          }
+        }}
+        onCreateTask={(prompt) => {
+          if (visiblePetRow) {
+            void handlePetCreateTask(visiblePetRow.petId, prompt);
+          }
+        }}
       />
     );
   }

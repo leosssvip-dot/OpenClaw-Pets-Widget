@@ -191,60 +191,53 @@ export function MonkPetSvg({
                   fill="#e6b37d"
                 />
               </g>
-              <g className="desktop-pet__monk-arm desktop-pet__monk-arm--right">
-                <path
-                  className="desktop-pet__monk-sleeve"
-                  d="M73 55 C79 53 83 56 85 61 C84 67 81 71 76 72 C72 68 71 61 73 55 Z"
-                  fill="#ca7a37"
-                  stroke="#a55c2a"
-                  strokeWidth="1.5"
-                />
-                <rect
-                  x="74"
-                  y="57"
-                  width="8"
-                  height="20"
-                  rx="4"
-                  fill="#e6b37d"
-                  transform="rotate(-12 78 67)"
-                />
-                <circle
-                  className="desktop-pet__monk-hand desktop-pet__monk-hand--right"
-                  cx="80"
-                  cy="73"
-                  r="4.1"
-                  fill="#e6b37d"
-                />
-                <g className="desktop-pet__mallet">
+              {/* Outer g positions the arm so (0,0) = shoulder joint at local (73,55) */}
+              <g transform="translate(73 55)">
+                <g className="desktop-pet__monk-arm desktop-pet__monk-arm--right">
                   <path
-                    className="desktop-pet__mallet-trail"
-                    d="M77 61 Q83 67 86 75"
-                    fill="none"
-                    stroke="#f5d8ab"
-                    strokeWidth="3"
-                    strokeLinecap="round"
-                    opacity="0"
+                    className="desktop-pet__monk-sleeve"
+                    d="M0 0 C6 -2 10 1 12 6 C11 12 8 16 3 17 C-1 13 -2 6 0 0 Z"
+                    fill="#ca7a37"
+                    stroke="#a55c2a"
+                    strokeWidth="1.5"
                   />
-                  <rect
-                    x="81"
-                    y="60"
-                    width="4"
-                    height="17"
-                    rx="2"
-                    fill="#d6b17a"
-                    transform="rotate(-18 83 68.5)"
+                  <circle
+                    className="desktop-pet__monk-hand desktop-pet__monk-hand--right"
+                    cx="7"
+                    cy="18"
+                    r="4.1"
+                    fill="#e6b37d"
                   />
-                  <rect
-                    x="77"
-                    y="56"
-                    width="10"
-                    height="6"
-                    rx="3"
-                    fill="#b97636"
-                    stroke="#975822"
-                    strokeWidth="1.4"
-                    transform="rotate(-18 82 59)"
-                  />
+                  <g className="desktop-pet__mallet">
+                    <path
+                      className="desktop-pet__mallet-trail"
+                      d="M6 20 Q7 24 7 28"
+                      fill="none"
+                      stroke="#f5d8ab"
+                      strokeWidth="3"
+                      strokeLinecap="round"
+                      opacity="0"
+                    />
+                    {/* handle: starts at hand, extends down to woodfish */}
+                    <rect
+                      x="5.5"
+                      y="17"
+                      width="3"
+                      height="10"
+                      rx="1.5"
+                      fill="#d6b17a"
+                    />
+                    {/* head: rounded striking end resting on woodfish top */}
+                    <ellipse
+                      cx="7"
+                      cy="27"
+                      rx="4.5"
+                      ry="3"
+                      fill="#b97636"
+                      stroke="#975822"
+                      strokeWidth="1.4"
+                    />
+                  </g>
                 </g>
               </g>
             </g>

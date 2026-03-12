@@ -16,6 +16,7 @@
   "dependencies": {
     "@openclaw-habitat/bridge": "workspace:*",
     "@openclaw-habitat/domain": "workspace:*",
+    "@rive-app/react-canvas": "^4.27.1",
     "gsap": "^3.14.2",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",

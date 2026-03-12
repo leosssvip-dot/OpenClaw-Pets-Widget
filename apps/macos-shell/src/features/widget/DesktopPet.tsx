@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState, useCallback } from 'react';
 import { gsap } from 'gsap';
 import type { ConnectionStatus } from '../connection/ConnectionBadge';
 import { getHabitatDesktopApi } from '../../runtime/habitat-api';
@@ -6,10 +6,13 @@ import { useWidgetStore, widgetStore } from './widget-store';
 import { resolvePetAppearance, type PetAppearanceConfig } from './pet-appearance';
 import { resolvePetAnimationState } from './pet-animation-state';
 import { DesktopPetIllustration } from './DesktopPetIllustration';
+import { MeritParticles } from './MeritParticles';
+import { PetBubble } from './PetBubble';
+import { PetContextMenu } from './PetContextMenu';
 
-function renderBuiltInPet(rolePack: 'lobster' | 'cat' | 'robot' | 'monk') {
-  return <DesktopPetIllustration rolePack={rolePack} />;
-}
+// ---------------------------------------------------------------------------
+// GSAP monk working timeline (preserved from original)
+// ---------------------------------------------------------------------------
 
 function prefersReducedMotion() {
   const mediaQuery = window.matchMedia?.('(prefers-reduced-motion: reduce)');
@@ -36,7 +39,6 @@ function buildMonkWorkingTimeline(root: HTMLElement) {
   const woodfishSlot = queryElement<SVGElement>(root, '.desktop-pet__woodfish-slot');
   const impact = queryElement<SVGElement>(root, '.desktop-pet__woodfish-impact');
   const echo = queryElement<SVGElement>(root, '.desktop-pet__woodfish-echo');
-  const meritBadge = queryElement<HTMLElement>(root, '.desktop-pet__merit-badge');
 
   if (
     !stage ||
@@ -53,8 +55,7 @@ function buildMonkWorkingTimeline(root: HTMLElement) {
     !woodfishShell ||
     !woodfishSlot ||
     !impact ||
-    !echo ||
-    !meritBadge
+    !echo
   ) {
     return null;
   }
@@ -72,12 +73,6 @@ function buildMonkWorkingTimeline(root: HTMLElement) {
     .set([impact, echo], {
       autoAlpha: 0,
       scale: 0.35
-    })
-    .set(meritBadge, {
-      autoAlpha: 0,
-      x: 0,
-      y: 6,
-      scale: 0.88
     })
     .addLabel('lift', 0)
     .to(
@@ -102,12 +97,20 @@ function buildMonkWorkingTimeline(root: HTMLElement) {
       'lift'
     )
     .to(
-      [arm, mallet],
+      arm,
       {
         duration: 0.2,
-        x: -3,
-        y: -6,
-        rotation: -18,
+        rotation: -12,
+        svgOrigin: '0 0',
+        ease: 'power2.out'
+      },
+      'lift'
+    )
+    .to(
+      mallet,
+      {
+        duration: 0.2,
+        rotation: -85,
         ease: 'power2.out'
       },
       'lift'
@@ -145,12 +148,20 @@ function buildMonkWorkingTimeline(root: HTMLElement) {
     )
     .addLabel('strike', 0.24)
     .to(
-      [arm, mallet],
+      arm,
       {
         duration: 0.12,
-        x: 2,
-        y: 2.5,
-        rotation: 30,
+        rotation: 4,
+        svgOrigin: '0 0',
+        ease: 'power4.in'
+      },
+      'strike'
+    )
+    .to(
+      mallet,
+      {
+        duration: 0.12,
+        rotation: 10,
         ease: 'power4.in'
       },
       'strike'
@@ -234,30 +245,6 @@ function buildMonkWorkingTimeline(root: HTMLElement) {
       'strike+=0.08'
     )
     .to(
-      meritBadge,
-      {
-        duration: 0.14,
-        autoAlpha: 1,
-        x: 0,
-        y: -12,
-        scale: 1,
-        ease: 'back.out(2)'
-      },
-      'strike+=0.08'
-    )
-    .to(
-      meritBadge,
-      {
-        duration: 0.2,
-        autoAlpha: 0,
-        x: -2,
-        y: -30,
-        scale: 1.04,
-        ease: 'power1.in'
-      },
-      'strike+=0.24'
-    )
-    .to(
       malletTrail,
       {
         duration: 0.14,
@@ -273,7 +260,7 @@ function buildMonkWorkingTimeline(root: HTMLElement) {
     )
     .addLabel('recover', 0.48)
     .to(
-      [stage, roleArt, body, head, beads, arm, sleeve, robeFold, mallet, halo],
+      [stage, roleArt, body, head, beads, arm, mallet, sleeve, robeFold, halo],
       {
         duration: 0.24,
         x: 0,
@@ -299,13 +286,32 @@ function buildMonkWorkingTimeline(root: HTMLElement) {
   return timeline;
 }
 
+// ---------------------------------------------------------------------------
+// Merit particle interval by activity
+// ---------------------------------------------------------------------------
+
+const MERIT_INTERVAL: Record<string, number> = {
+  idle: 2100,
+  working: 720,
+  waiting: 2100,
+  blocked: 2100,
+};
+
+// ---------------------------------------------------------------------------
+// DesktopPet component
+// ---------------------------------------------------------------------------
+
 export function DesktopPet({
   petName,
+  petId,
   connectionStatus,
   appearance,
-  petStatus
+  petStatus,
+  onSendMessage,
+  onCreateTask
 }: {
   petName: string;
+  petId?: string;
   connectionStatus: ConnectionStatus;
   appearance?: PetAppearanceConfig;
   petStatus?:
@@ -317,6 +323,8 @@ export function DesktopPet({
     | 'done'
     | 'blocked'
     | 'disconnected';
+  onSendMessage?: (text: string) => void;
+  onCreateTask?: (prompt: string) => void;
 }) {
   const isPanelOpen = useWidgetStore((state) => state.isPanelOpen);
   const [isHovered, setIsHovered] = useState(false);
@@ -324,6 +332,8 @@ export function DesktopPet({
   const [isFocused, setIsFocused] = useState(false);
   const [isDragging, setIsDragging] = useState(false);
   const [isGreeting, setIsGreeting] = useState(false);
+  const [bubbleMode, setBubbleMode] = useState<'input' | 'status' | null>(null);
+  const [contextMenu, setContextMenu] = useState<{ x: number; y: number } | null>(null);
   const petRef = useRef<HTMLButtonElement | null>(null);
   const dragStateRef = useRef({
     pointerId: null as number | null,
@@ -344,6 +354,16 @@ export function DesktopPet({
     resolvedAppearance.rolePack === 'monk' &&
     animationState.activity === 'working';
   const stageClassName = `desktop-pet__stage${resolvedAppearance.rolePack === 'monk' ? ' desktop-pet__stage--roomy' : ''}`;
+
+  // Merit particles: monk only, during tapping states
+  const showMerit =
+    !resolvedAppearance.avatar &&
+    resolvedAppearance.rolePack === 'monk' &&
+    (animationState.activity === 'idle' ||
+      animationState.activity === 'working' ||
+      animationState.activity === 'waiting' ||
+      animationState.activity === 'blocked');
+  const meritInterval = MERIT_INTERVAL[animationState.activity] ?? 2100;
 
   useEffect(() => {
     return () => {
@@ -392,17 +412,70 @@ export function DesktopPet({
     widgetStore.getState().togglePanel();
   }
 
+  const handleContextMenu = useCallback((event: React.MouseEvent) => {
+    event.preventDefault();
+    setContextMenu({ x: event.clientX, y: event.clientY });
+  }, []);
+
+  const handleContextAction = useCallback(
+    (actionId: string) => {
+      if (actionId === 'chat') {
+        setBubbleMode('input');
+      } else if (actionId === 'task') {
+        setBubbleMode('input');
+      } else if (actionId === 'status') {
+        setBubbleMode('status');
+      } else if (actionId.startsWith('switch:')) {
+        // Character switch is handled upstream via appearance config
+      }
+      setContextMenu(null);
+    },
+    []
+  );
+
+  const handleBubbleSend = useCallback(
+    (text: string) => {
+      if (onSendMessage) {
+        onSendMessage(text);
+      }
+    },
+    [onSendMessage]
+  );
+
+  // Status text for bubble
+  const statusTextMap: Record<string, string> = {
+    idle: 'Idle — ready for a task',
+    thinking: 'Thinking...',
+    working: 'Working on it...',
+    waiting: 'Waiting for input...',
+    done: 'Task complete!',
+    blocked: 'Something went wrong',
+  };
+
   return (
     <main className="desktop-pet-shell">
+      {/* Chat / status bubble */}
+      <PetBubble
+        mode={bubbleMode}
+        statusText={statusTextMap[animationState.activity] ?? ''}
+        onSend={handleBubbleSend}
+        onClose={() => setBubbleMode(null)}
+      />
       <button
         ref={petRef}
         type="button"
         className={`desktop-pet desktop-pet--frameless desktop-pet--${connectionStatus} desktop-pet--state-${animationState.activity} desktop-pet--activity-${animationState.activity} desktop-pet--mood-${animationState.mood} desktop-pet--role-${resolvedAppearance.rolePack}${usesGsapMonkWorkingAnimation ? ' desktop-pet--monk-gsap' : ''}${isPanelOpen ? ' desktop-pet--active desktop-pet--interaction-panel-open' : ''}${isHovered ? ' desktop-pet--interaction-hovered' : ''}${isPressed ? ' desktop-pet--interaction-pressed' : ''}${isFocused ? ' desktop-pet--interaction-focused' : ''}${isDragging ? ' desktop-pet--interaction-dragging' : ''}${isGreeting ? ' desktop-pet--interaction-greeting' : ''}`}
         aria-label={`${petName} desktop pet`}
-        title="Drag to move. Double-click to open settings."
+        title="Drag to move. Click to chat. Double-click to open panel. Right-click for menu."
+        onContextMenu={handleContextMenu}
         onDoubleClick={() => {
           triggerGreeting();
           void togglePanel();
+        }}
+        onClick={() => {
+          if (!dragStateRef.current.isDragging) {
+            setBubbleMode((prev) => (prev === 'input' ? null : 'input'));
+          }
         }}
         onFocus={() => {
           setIsFocused(true);
@@ -524,15 +597,29 @@ export function DesktopPet({
             <span
               className={`desktop-pet__role-art-motion desktop-pet__role-art-motion--${resolvedAppearance.rolePack}`}
             >
-              {renderBuiltInPet(resolvedAppearance.rolePack)}
+              <DesktopPetIllustration rolePack={resolvedAppearance.rolePack} />
             </span>
           )}
-          {resolvedAppearance.rolePack === 'monk' ? (
+          {/* Legacy merit badge (used by GSAP working timeline) */}
+          {resolvedAppearance.rolePack === 'monk' && usesGsapMonkWorkingAnimation ? (
             <span className="desktop-pet__merit-badge">功德+1</span>
           ) : null}
+          {/* New merit particle system — floating 功德+1 for idle/working/waiting */}
+          <MeritParticles active={showMerit} petId={petId} intervalMs={meritInterval} />
         </span>
         <span className="desktop-pet__label">{petName}</span>
       </button>
+
+      {/* Right-click context menu */}
+      {contextMenu ? (
+        <PetContextMenu
+          x={contextMenu.x}
+          y={contextMenu.y}
+          currentRole={resolvedAppearance.rolePack}
+          onAction={handleContextAction}
+          onClose={() => setContextMenu(null)}
+        />
+      ) : null}
     </main>
   );
 }

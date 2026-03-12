@@ -2145,33 +2145,33 @@ button.toggle {
 
 .desktop-pet__woodfish {
   filter: drop-shadow(0 6px 10px rgba(111, 57, 20, 0.16));
-  transform-origin: 119px 104px;
-  transform-box: fill-box;
+  transform-box: view-box;
+  transform-origin: 89px 89px; /* woodfish center: local (79,81) + translate(10,8) */
 }
 
 .desktop-pet__woodfish-slot {
-  transform-box: fill-box;
-  transform-origin: 119px 105px;
+  transform-box: view-box;
+  transform-origin: 89px 89.5px; /* slot center: local (79,81.5) + translate(10,8) */
 }
 
 .desktop-pet__woodfish-impact {
   opacity: 0;
   transform: scale(0.35);
-  transform-box: fill-box;
-  transform-origin: 119px 104px;
+  transform-box: view-box;
+  transform-origin: 89px 89px;
 }
 
 .desktop-pet__woodfish-echo {
   opacity: 0;
   transform: scale(0.7);
-  transform-box: fill-box;
-  transform-origin: 119px 104px;
+  transform-box: view-box;
+  transform-origin: 89px 89px;
 }
 
 .desktop-pet__monk-rig,
 .desktop-pet__monk-body {
-  transform-box: fill-box;
-  transform-origin: 79px 114px;
+  transform-box: view-box;
+  transform-origin: 73px 104px; /* seat center: local (63,96) + translate(10,8) */
 }
 
 .desktop-pet__monk-rig {
@@ -2197,7 +2197,8 @@ button.toggle {
 }
 
 .desktop-pet__monk-head {
-  transform-origin: 76px 50px;
+  transform-box: view-box;
+  transform-origin: 73px 46px; /* neck base: local (63,38) + translate(10,8) */
 }
 
 .desktop-pet__monk-brow {
@@ -2221,7 +2222,8 @@ button.toggle {
 }
 
 .desktop-pet__monk-robe-fold {
-  transform-origin: 69px 67px;
+  transform-box: view-box;
+  transform-origin: 72px 73px; /* fold midpoint: local (62,65) + translate(10,8) */
 }
 
 .desktop-pet__monk-arm {
@@ -2229,7 +2231,10 @@ button.toggle {
 }
 
 .desktop-pet__monk-arm--right {
-  transform-origin: 97px 77px;
+  /* Arm g is inside <g translate(73 55)>, so local (0,0) = shoulder.
+     fill-box percentage targets shoulder reliably. */
+  transform-box: fill-box;
+  transform-origin: 14% 6%;
 }
 
 .desktop-pet__monk-sleeve {
@@ -2237,11 +2242,14 @@ button.toggle {
 }
 
 .desktop-pet__mallet {
-  transform-origin: 96px 76px;
+  /* Grip at top of handle: fill-box ≈ x:[2.5,11.5] y:[17,30] → grip (7,18) = (50%, 8%) */
+  transform-box: fill-box;
+  transform-origin: 50% 8%;
 }
 
 .desktop-pet__mallet-trail {
-  transform-origin: 96px 76px;
+  transform-box: view-box;
+  transform-origin: 90px 81px; /* same as mallet grip */
   opacity: 0;
   filter: blur(0.8px);
 }
@@ -2743,6 +2751,24 @@ button.toggle {
   100% { transform: translateX(2px); }
 }
 
+/* Pivot points for natural rotation */
+.desktop-pet--role-monk .desktop-pet__monk-arm--right {
+  /* Arm SVG restructured: <g translate(73 55)> wraps arm, so (0,0) = shoulder */
+  transform-box: fill-box;
+  transform-origin: 14% 6%;
+}
+
+.desktop-pet--role-monk .desktop-pet__mallet {
+  /* Grip at top of handle: fill-box ≈ x:[2.5,11.5] y:[17,30] → grip (7,18) = (50%, 8%) */
+  transform-box: fill-box;
+  transform-origin: 50% 8%;
+}
+
+.desktop-pet--role-monk .desktop-pet__monk-head {
+  transform-box: view-box;
+  transform-origin: 73px 46px; /* neck base: local (63,38) + (10,8) */
+}
+
 .desktop-pet--role-monk .desktop-pet__monk-body {
   animation: monk-breathe 3.2s ease-in-out infinite;
 }
@@ -2768,13 +2794,15 @@ button.toggle {
 .desktop-pet--role-monk.desktop-pet--activity-idle .desktop-pet__monk-arm--right,
 .desktop-pet--role-monk.desktop-pet--activity-waiting .desktop-pet__monk-arm--right,
 .desktop-pet--role-monk.desktop-pet--activity-blocked .desktop-pet__monk-arm--right {
-  animation: monk-idle-tap 2.1s cubic-bezier(0.38, 0, 0.24, 1) infinite;
+  /* entire arm rotates from shoulder — forearm + hand + mallet move as one unit */
+  animation: monk-arm-idle-tap 2.1s cubic-bezier(0.38, 0, 0.24, 1) infinite;
 }
 
 .desktop-pet--role-monk.desktop-pet--activity-idle .desktop-pet__mallet,
 .desktop-pet--role-monk.desktop-pet--activity-waiting .desktop-pet__mallet,
 .desktop-pet--role-monk.desktop-pet--activity-blocked .desktop-pet__mallet {
-  animation: monk-idle-mallet 2.1s cubic-bezier(0.38, 0, 0.24, 1) infinite;
+  /* Mallet pivots at grip (top of handle) — head swings down to strike woodfish */
+  animation: monk-mallet-tap 2.1s cubic-bezier(0.38, 0, 0.24, 1) infinite;
 }
 
 .desktop-pet--role-monk.desktop-pet--activity-idle .desktop-pet__mallet-trail,
@@ -2907,12 +2935,13 @@ button.toggle {
 
 .desktop-pet--role-monk.desktop-pet--state-working .desktop-pet__monk-arm--right,
 .desktop-pet--role-monk.desktop-pet--activity-working .desktop-pet__monk-arm--right {
-  animation: monk-mallet-strike 0.72s cubic-bezier(0.45, 0, 0.2, 1) infinite;
+  /* entire arm rotates from shoulder for striking */
+  animation: monk-arm-work-tap 0.72s cubic-bezier(0.45, 0, 0.2, 1) infinite;
 }
 
 .desktop-pet--role-monk.desktop-pet--state-working .desktop-pet__mallet,
 .desktop-pet--role-monk.desktop-pet--activity-working .desktop-pet__mallet {
-  animation: monk-mallet-follow 0.72s cubic-bezier(0.45, 0, 0.2, 1) infinite;
+  animation: monk-mallet-tap-work 0.72s cubic-bezier(0.45, 0, 0.2, 1) infinite;
 }
 
 .desktop-pet--role-monk.desktop-pet--state-working .desktop-pet__monk-sleeve,
@@ -3025,236 +3054,355 @@ button.toggle {
   46% { transform: translateY(0); }
 }
 
+/*
+ * Idle tap cycle (2.1s total):
+ *   Entire arm rotates from shoulder (83,63 viewport).
+ *   Negative = arm lifts back (mallet away from woodfish).
+ *   Positive = arm swings forward (mallet strikes woodfish).
+ */
+
+@keyframes monk-arm-idle-tap {
+  /* Arm provides subtle shoulder motion; mallet does the actual striking */
+  0%, 15% { transform: rotate(0deg); }
+  25%     { transform: rotate(-8deg); }            /* slight lift */
+  32%     { transform: rotate(-10deg); }           /* peak */
+  36%     { transform: rotate(3deg); }             /* follow through */
+  44%     { transform: rotate(0deg); }             /* settle */
+  100%    { transform: rotate(0deg); }
+}
+
+/*
+ * Mallet pivots at grip (top of handle).
+ * Negative = head lifts up/back. Positive = head swings down toward woodfish.
+ * ~80° arc from lift to strike.
+ */
+@keyframes monk-mallet-tap {
+  0%, 15% { transform: rotate(0deg); }            /* rest: head near woodfish */
+  25%     { transform: rotate(-70deg); }           /* lift: head swings up/back */
+  32%     { transform: rotate(-75deg); }           /* peak hold */
+  36%     { transform: rotate(8deg); }             /* STRIKE: head slams down ~83° arc */
+  40%     { transform: rotate(-5deg); }            /* bounce off woodfish */
+  48%     { transform: rotate(2deg); }             /* settle */
+  100%    { transform: rotate(0deg); }             /* rest */
+}
+
+@keyframes monk-mallet-tap-work {
+  0%, 8%  { transform: rotate(0deg); }
+  20%     { transform: rotate(-80deg); }           /* bigger lift */
+  26%     { transform: rotate(-85deg); }           /* peak */
+  32%     { transform: rotate(10deg); }            /* SLAM ~95° arc */
+  36%     { transform: rotate(-6deg); }            /* bounce */
+  44%     { transform: rotate(3deg); }             /* settle */
+  100%    { transform: rotate(0deg); }
+}
+
+/* legacy — kept for reference but no longer used */
 @keyframes monk-idle-tap {
-  0%, 12%, 100% { transform: rotate(12deg) translate(0, 0); }
-  22% { transform: rotate(-6deg) translate(-1px, -3px); }
-  33% { transform: rotate(21deg) translate(1px, 1.5px); }
-  43% { transform: rotate(13deg) translate(0, 0); }
-  56% { transform: rotate(12deg) translate(0, 0); }
+  0%, 15% { transform: rotate(0deg); }
+  25%     { transform: rotate(-40deg); }
+  32%     { transform: rotate(-45deg); }
+  36%     { transform: rotate(5deg); }
+  40%     { transform: rotate(-3deg); }
+  48%     { transform: rotate(1deg); }
+  100%    { transform: rotate(0deg); }
 }
 
 @keyframes monk-idle-mallet {
-  0%, 12%, 100% { transform: rotate(-8deg) translate(0, 0); }
-  22% { transform: rotate(-24deg) translate(-1px, -2px); }
-  33% { transform: rotate(6deg) translate(1px, 1px); }
-  43% { transform: rotate(-6deg) translate(0, 0); }
-  56% { transform: rotate(-8deg) translate(0, 0); }
+  /* mallet: extra wrist-flick on top of arm rotation */
+  0%, 15% { transform: rotate(0deg); }
+  26%     { transform: rotate(-30deg); }         /* mallet cocks back further */
+  33%     { transform: rotate(-35deg); }         /* peak */
+  37%     { transform: rotate(22deg); }          /* WHIP down — fastest phase */
+  40%     { transform: rotate(28deg); }          /* overshoot into woodfish */
+  46%     { transform: rotate(-5deg); }          /* bounce back */
+  56%     { transform: rotate(2deg); }           /* settle oscillation */
+  100%    { transform: rotate(0deg); }
 }
 
 @keyframes monk-idle-trail {
-  0%, 16%, 100% {
+  /* motion blur trail — visible during strike arc 32-36% */
+  0%, 31% {
     opacity: 0;
-    transform: scaleX(0.82) translate(-1px, -1px);
+    transform: scaleX(0.7) translate(-1px, -3px);
   }
-  24% {
-    opacity: 0.08;
-    transform: scaleX(0.9) translate(0, -2px);
-  }
-  33% {
-    opacity: 0.28;
-    transform: scaleX(0.98) translate(1px, 0);
+  35% {
+    opacity: 0.35;
+    transform: scaleX(1.1) translate(1px, 2px);
   }
   40% {
-    opacity: 0.06;
-    transform: scaleX(0.94) translate(0, 1px);
+    opacity: 0.1;
+    transform: scaleX(0.9) translate(2px, 3px);
+  }
+  48%, 100% {
+    opacity: 0;
+    transform: scaleX(0.7) translate(0, 0);
   }
 }
 
 @keyframes monk-idle-woodfish {
-  0%, 22%, 100% { transform: translateY(0) scale(1); }
-  33% { transform: translateY(1.6px) scale(0.96, 0.93); }
-  42% { transform: translateY(-0.2px) scale(1.01); }
-  52% { transform: translateY(0) scale(1); }
+  /* woodfish jolts down on impact at 36% */
+  0%, 35% { transform: translateY(0); }
+  37%     { transform: translateY(2px); }     /* pushed down by strike */
+  42%     { transform: translateY(-1px); }    /* bounce back */
+  50%     { transform: translateY(0); }
+  100%    { transform: translateY(0); }
 }
 
 @keyframes monk-idle-impact {
-  0%, 22%, 100% {
+  /* impact ring — pops on hit at 36% */
+  0%, 35% {
     opacity: 0;
-    transform: scale(0.35);
+    transform: scale(0.2);
   }
-  30% {
-    opacity: 0.18;
-    transform: scale(0.72);
+  37% {
+    opacity: 0.8;
+    transform: scale(0.7);
   }
-  34% {
-    opacity: 0.66;
-    transform: scale(1.02);
+  44% {
+    opacity: 0.4;
+    transform: scale(1.1);
   }
-  42% {
+  54% {
     opacity: 0;
-    transform: scale(1.24);
+    transform: scale(1.35);
+  }
+  100% {
+    opacity: 0;
+    transform: scale(0.2);
   }
 }
 
 @keyframes monk-idle-echo {
-  0%, 26%, 100% {
+  /* echo ring — delayed after impact at 36% */
+  0%, 40% {
     opacity: 0;
-    transform: scale(0.82);
+    transform: scale(0.6);
   }
-  34% {
-    opacity: 0.24;
-    transform: scale(1);
+  46% {
+    opacity: 0.3;
+    transform: scale(0.85);
   }
-  48% {
+  58% {
+    opacity: 0.12;
+    transform: scale(1.15);
+  }
+  70% {
     opacity: 0;
-    transform: scale(1.26);
+    transform: scale(1.35);
+  }
+  100% {
+    opacity: 0;
+    transform: scale(0.6);
   }
 }
 
 @keyframes monk-idle-head-nod {
-  0%, 12%, 100% { transform: rotate(0deg); }
-  22% { transform: rotate(-3deg) translate(-0.4px, -1px); }
-  35% { transform: rotate(2deg) translate(0.3px, 0.4px); }
-  48% { transform: rotate(0deg); }
+  /* head nods on impact at 36% */
+  0%, 20% { transform: rotate(0deg) translateY(0); }
+  34%     { transform: rotate(-1.5deg) translateY(-0.5px); }   /* anticipation */
+  38%     { transform: rotate(4deg) translateY(1px); }         /* nod on impact */
+  46%     { transform: rotate(-0.5deg) translateY(-0.2px); }   /* rebound */
+  58%     { transform: rotate(0deg) translateY(0); }
+  100%    { transform: rotate(0deg) translateY(0); }
 }
 
 @keyframes monk-idle-beads {
-  0%, 20%, 100% { transform: rotate(0deg); }
-  34% { transform: rotate(8deg) translate(1px, 1px); }
-  44% { transform: rotate(-2deg) translate(0, -0.5px); }
-  54% { transform: rotate(0deg); }
+  /* beads swing with body momentum */
+  0%, 20% { transform: rotate(0deg); }
+  35%     { transform: rotate(-6deg) translate(-0.5px, -0.5px); } /* swing back during lift */
+  42%     { transform: rotate(10deg) translate(1px, 1.5px); }     /* swing forward on strike */
+  54%     { transform: rotate(-3deg) translate(-0.3px, 0); }      /* dampen */
+  68%     { transform: rotate(0deg); }
+  100%    { transform: rotate(0deg); }
 }
+
+/*
+ * Working strike cycle (0.72s total) — same phases as idle but tighter & more forceful.
+ *   0-10%  Rest
+ *   10-25% Lift (sharper)
+ *   25-28% Peak
+ *   28-35% STRIKE (very fast)
+ *   35-50% Impact + bounce
+ *   50-100% Settle
+ */
 
 @keyframes monk-stage-work {
-  0%, 100% { transform: translateY(0); }
-  22% { transform: translateY(-0.5px); }
-  40% { transform: translateY(0.8px); }
-  56% { transform: translateY(-1px); }
-  72% { transform: translateY(0.6px); }
+  0%, 10% { transform: translateY(0); }
+  22%     { transform: translateY(-1px); }       /* body lifts slightly during windup */
+  35%     { transform: translateY(1.5px); }      /* body drops on impact */
+  45%     { transform: translateY(-0.5px); }
+  100%    { transform: translateY(0); }
 }
 
+@keyframes monk-arm-work-tap {
+  /* Arm provides subtle shoulder motion; mallet does the striking */
+  0%, 8%  { transform: rotate(0deg); }
+  20%     { transform: rotate(-10deg); }
+  26%     { transform: rotate(-12deg); }
+  32%     { transform: rotate(4deg); }
+  40%     { transform: rotate(0deg); }
+  100%    { transform: rotate(0deg); }
+}
+
+/* legacy — kept for reference */
 @keyframes monk-mallet-strike {
-  0%, 100% { transform: rotate(12deg) translate(0, 0); }
-  14% { transform: rotate(-8deg) translate(-2px, -5px); }
-  30% { transform: rotate(-20deg) translate(-4px, -9px); }
-  46% { transform: rotate(26deg) translate(1px, 1px); }
-  54% { transform: rotate(34deg) translate(2px, 3px); }
-  70% { transform: rotate(16deg) translate(0.4px, 0.4px); }
+  0%, 8%  { transform: rotate(0deg); }
+  20%     { transform: rotate(-50deg); }
+  26%     { transform: rotate(-55deg); }
+  32%     { transform: rotate(8deg); }
+  36%     { transform: rotate(-5deg); }
+  44%     { transform: rotate(2deg); }
+  100%    { transform: rotate(0deg); }
 }
 
 @keyframes monk-mallet-follow {
-  0%, 100% { transform: rotate(-10deg) translate(0, 0); }
-  16% { transform: rotate(-24deg) translate(-1px, -3px); }
-  32% { transform: rotate(-38deg) translate(-2px, -6px); }
-  46% { transform: rotate(4deg) translate(1px, 1px); }
-  54% { transform: rotate(10deg) translate(2px, 2px); }
-  70% { transform: rotate(-6deg) translate(0.2px, 0.4px); }
+  /* mallet wrist-flick — extra whip on working strikes */
+  0%, 10% { transform: rotate(0deg); }
+  20%     { transform: rotate(-38deg); }         /* cock way back */
+  28%     { transform: rotate(-42deg); }         /* peak */
+  33%     { transform: rotate(30deg); }          /* WHIP! maximum speed */
+  37%     { transform: rotate(36deg); }          /* dig into woodfish */
+  44%     { transform: rotate(-8deg); }          /* bounce back */
+  56%     { transform: rotate(3deg); }
+  100%    { transform: rotate(0deg); }
 }
 
 @keyframes monk-sleeve-swing {
-  0%, 100% { transform: rotate(0deg) scale(1); }
-  18% { transform: rotate(-5deg) scale(1.01); }
-  36% { transform: rotate(-8deg) scale(1.01, 1.02); }
-  52% { transform: rotate(7deg) scale(0.98, 1.02); }
-  68% { transform: rotate(2deg) scale(1); }
+  /* sleeve follows arm with cloth-like lag */
+  0%, 12% { transform: rotate(0deg) scale(1); }
+  26%     { transform: rotate(-10deg) scale(1.02, 1.04); }    /* stretches during lift */
+  36%     { transform: rotate(12deg) scale(0.96, 1.03); }     /* whips on strike */
+  48%     { transform: rotate(-3deg) scale(1.01); }
+  100%    { transform: rotate(0deg) scale(1); }
 }
 
 @keyframes monk-robe-fold-strike {
-  0%, 100% { transform: skewX(0deg) translateX(0); }
-  18% { transform: skewX(-5deg) translateX(-1px); }
-  42% { transform: skewX(6deg) translateX(1px); }
-  58% { transform: skewX(2deg) translateX(0); }
+  0%, 15% { transform: skewX(0deg) translateX(0); }
+  30%     { transform: skewX(-6deg) translateX(-1.5px); }      /* body leans back */
+  38%     { transform: skewX(8deg) translateX(2px); }          /* body lurches forward */
+  52%     { transform: skewX(-2deg) translateX(-0.5px); }
+  100%    { transform: skewX(0deg) translateX(0); }
 }
 
 @keyframes monk-woodfish-hit {
-  0%, 100% { transform: translateY(0) scale(1); }
-  18% { transform: translateY(0) scale(1); }
-  40% { transform: translateY(1.8px) scale(0.95, 0.92); }
-  54% { transform: translateY(-0.3px) scale(1.02); }
-  70% { transform: translateY(0.4px) scale(0.99, 0.98); }
+  0%, 32% { transform: translateY(0) scale(1); }
+  36%     { transform: translateY(3px) scale(1.06, 0.84); }    /* BIG squash */
+  42%     { transform: translateY(-2px) scale(0.95, 1.08); }   /* stretch rebound */
+  50%     { transform: translateY(1px) scale(1.02, 0.97); }    /* bounce */
+  62%     { transform: translateY(0) scale(1); }
+  100%    { transform: translateY(0) scale(1); }
 }
 
 @keyframes monk-woodfish-shell-hit {
-  0%, 38%, 100% { transform: scale(1); }
-  46% { transform: scale(0.97, 0.93); }
-  52% { transform: scale(0.94, 0.88); }
-  62% { transform: scale(1.02, 1.01); }
-  74% { transform: scale(0.99); }
+  /* jolt on impact at 32% */
+  0%, 31% { transform: translateY(0); }
+  33%     { transform: translateY(2px); }
+  38%     { transform: translateY(-1px); }
+  46%     { transform: translateY(0); }
+  100%    { transform: translateY(0); }
 }
 
 @keyframes monk-woodfish-slot-hit {
-  0%, 38%, 100% { transform: scale(1); opacity: 0.82; }
-  50% { transform: scale(0.9, 0.72); opacity: 0.96; }
-  60% { transform: scale(1.04, 1.08); opacity: 0.78; }
+  0%, 31%, 100% { opacity: 0.82; }
+  34%           { opacity: 1; }       /* flash brighter on hit */
+  46%           { opacity: 0.82; }
 }
 
 @keyframes monk-woodfish-impact {
-  0%, 40%, 100% {
+  /* impact ring at 32% */
+  0%, 31% {
     opacity: 0;
-    transform: scale(0.35);
+    transform: scale(0.15);
   }
-  47% {
-    opacity: 0.32;
-    transform: scale(0.52);
+  33% {
+    opacity: 0.9;
+    transform: scale(0.65);
   }
-  54% {
-    opacity: 0.82;
-    transform: scale(0.96);
+  40% {
+    opacity: 0.4;
+    transform: scale(1.15);
   }
-  64% {
-    opacity: 0.08;
-    transform: scale(1.18);
+  52% {
+    opacity: 0;
+    transform: scale(1.45);
+  }
+  100% {
+    opacity: 0;
+    transform: scale(0.15);
   }
 }
 
 @keyframes monk-woodfish-echo {
-  0%, 46%, 100% {
+  /* echo ring delayed after impact at 32% */
+  0%, 36% {
     opacity: 0;
-    transform: scale(0.72);
+    transform: scale(0.5);
   }
-  55% {
-    opacity: 0.28;
-    transform: scale(0.9);
+  42% {
+    opacity: 0.3;
+    transform: scale(0.8);
   }
-  72% {
+  56% {
+    opacity: 0.1;
+    transform: scale(1.2);
+  }
+  70% {
     opacity: 0;
-    transform: scale(1.24);
+    transform: scale(1.45);
+  }
+  100% {
+    opacity: 0;
+    transform: scale(0.5);
   }
 }
 
 @keyframes monk-mallet-trail {
-  0%, 18%, 100% {
+  /* motion blur — only visible during the fast strike arc */
+  0%, 26% {
     opacity: 0;
-    transform: scaleX(0.78) translate(-1px, -2px);
+    transform: scaleX(0.6) translate(-2px, -4px);
   }
-  30% {
+  32% {
+    opacity: 0.4;
+    transform: scaleX(1.2) translate(2px, 3px);
+  }
+  40% {
     opacity: 0.1;
-    transform: scaleX(0.88) translate(-2px, -4px);
+    transform: scaleX(0.8) translate(3px, 4px);
   }
-  44% {
-    opacity: 0.34;
-    transform: scaleX(1) translate(0.8px, -0.6px);
-  }
-  56% {
-    opacity: 0.12;
-    transform: scaleX(0.96) translate(1.4px, 1px);
-  }
-  66% {
+  50%, 100% {
     opacity: 0;
-    transform: scaleX(0.92) translate(0.4px, 1.2px);
+    transform: scaleX(0.6) translate(0, 0);
   }
 }
 
 @keyframes monk-body-rock {
-  0%, 100% { transform: translateY(0) rotate(0deg); }
-  18% { transform: translateY(-0.5px) rotate(-1.2deg); }
-  34% { transform: translateY(-1px) rotate(-1.8deg); }
-  52% { transform: translateY(0.8px) rotate(1.1deg); }
-  68% { transform: translateY(0) rotate(-0.3deg); }
+  /* body anticipation + follow-through */
+  0%, 10% { transform: translateY(0) rotate(0deg); }
+  24%     { transform: translateY(-1px) rotate(-2.5deg); }     /* lean back during lift */
+  35%     { transform: translateY(1.5px) rotate(2deg); }       /* lurch forward on strike */
+  46%     { transform: translateY(-0.3px) rotate(-0.5deg); }
+  100%    { transform: translateY(0) rotate(0deg); }
 }
 
 @keyframes monk-head-nod-work {
-  0%, 100% { transform: translateY(0) rotate(0deg); }
-  24% { transform: translateY(-0.8px) rotate(-2.4deg); }
-  52% { transform: translateY(0.7px) rotate(1.8deg); }
-  66% { transform: translateY(0) rotate(-0.4deg); }
+  /* head nods forward sharply on impact, synced to 0.72s strike cycle */
+  0%, 12% { transform: translateY(0) rotate(0deg); }
+  26%     { transform: translateY(-1px) rotate(-3deg); }       /* look up during windup */
+  36%     { transform: translateY(2px) rotate(6deg); }         /* nod DOWN hard on hit */
+  46%     { transform: translateY(-0.5px) rotate(-1.5deg); }   /* rebound */
+  60%     { transform: translateY(0) rotate(0deg); }
+  100%    { transform: translateY(0) rotate(0deg); }
 }
 
 @keyframes monk-beads-work {
-  0%, 100% { transform: rotate(0deg); }
-  24% { transform: rotate(-4deg); }
-  40% { transform: rotate(4deg); }
-  58% { transform: rotate(-1deg); }
+  /* beads sway with the strike rhythm */
+  0%, 10% { transform: rotate(0deg); }
+  30%     { transform: rotate(-5deg); }    /* arm lifts, beads swing back */
+  38%     { transform: rotate(6deg); }     /* impact jolt, beads swing forward */
+  50%     { transform: rotate(-2deg); }    /* damped return */
+  65%     { transform: rotate(1deg); }
+  100%    { transform: rotate(0deg); }
 }
 
 @keyframes monk-bow {
@@ -3315,6 +3463,546 @@ button.toggle {
   50% {
     opacity: 0.62;
     transform: scale(1.14);
+  }
+}
+
+/* ===================================================================
+   Merit Particles — floating "功德+1" text
+   =================================================================== */
+
+.merit-particles {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  pointer-events: none;
+  overflow: visible;
+  z-index: 10;
+}
+
+.merit-particles__item {
+  position: absolute;
+  bottom: 72%;
+  left: 50%;
+  font-size: 13px;
+  font-weight: 800;
+  letter-spacing: 0.02em;
+  color: #f5c842;
+  text-shadow:
+    0 0 8px rgba(245, 200, 66, 0.5),
+    0 1px 2px rgba(0, 0, 0, 0.12);
+  white-space: nowrap;
+  pointer-events: none;
+  transform: translateX(var(--merit-x, 0));
+  animation: merit-rise 1.4s cubic-bezier(0.22, 0.68, 0.36, 1) forwards;
+}
+
+@keyframes merit-rise {
+  0% {
+    opacity: 0;
+    transform: translateX(var(--merit-x, 0)) translateY(8px) scale(calc(var(--merit-scale, 1) * 0.7));
+  }
+  12% {
+    opacity: 1;
+    transform: translateX(var(--merit-x, 0)) translateY(0) scale(calc(var(--merit-scale, 1) * 1.15));
+  }
+  28% {
+    opacity: 1;
+    transform: translateX(var(--merit-x, 0)) translateY(-12px) scale(var(--merit-scale, 1));
+  }
+  100% {
+    opacity: 0;
+    transform: translateX(var(--merit-x, 0)) translateY(-56px) scale(calc(var(--merit-scale, 1) * 0.88));
+  }
+}
+
+/* ===================================================================
+   Rive canvas integration
+   =================================================================== */
+
+.desktop-pet__rive-canvas {
+  width: 100%;
+  height: 100%;
+  display: block;
+}
+
+/* ===================================================================
+   Pet Bubble — chat / status overlay
+   =================================================================== */
+
+.pet-bubble {
+  position: absolute;
+  bottom: calc(100% + 8px);
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 100;
+  min-width: 180px;
+  max-width: 280px;
+  padding: 10px 14px;
+  border-radius: 14px;
+  background: rgba(255, 255, 255, 0.96);
+  backdrop-filter: blur(12px);
+  box-shadow:
+    0 8px 28px rgba(0, 0, 0, 0.12),
+    0 2px 8px rgba(0, 0, 0, 0.06),
+    inset 0 1px 0 rgba(255, 255, 255, 0.9);
+  animation: bubble-appear 0.24s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+}
+
+.pet-bubble__tail {
+  position: absolute;
+  bottom: -6px;
+  left: 50%;
+  transform: translateX(-50%) rotate(45deg);
+  width: 12px;
+  height: 12px;
+  background: rgba(255, 255, 255, 0.96);
+  border-radius: 0 0 3px 0;
+  box-shadow: 2px 2px 4px rgba(0, 0, 0, 0.06);
+}
+
+.pet-bubble__form {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+.pet-bubble__input {
+  flex: 1;
+  border: none;
+  background: transparent;
+  font-size: 13px;
+  color: #1a3a54;
+  outline: none;
+  font-family: inherit;
+  min-width: 0;
+}
+
+.pet-bubble__input::placeholder {
+  color: #8ba4b8;
+}
+
+.pet-bubble__send {
+  flex-shrink: 0;
+  padding: 4px 12px;
+  border: none;
+  border-radius: 8px;
+  background: #3b8bba;
+  color: #fff;
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+
+.pet-bubble__send:hover {
+  background: #2e7aa6;
+}
+
+.pet-bubble__send:disabled {
+  opacity: 0.4;
+  cursor: default;
+}
+
+.pet-bubble__status {
+  margin: 0;
+  font-size: 13px;
+  color: #4a6a7f;
+  text-align: center;
+}
+
+@keyframes bubble-appear {
+  0% {
+    opacity: 0;
+    transform: translateX(-50%) translateY(8px) scale(0.92);
+  }
+  100% {
+    opacity: 1;
+    transform: translateX(-50%) translateY(0) scale(1);
+  }
+}
+
+/* ===================================================================
+   Pet Context Menu
+   =================================================================== */
+
+.pet-context-menu {
+  position: fixed;
+  z-index: 200;
+  min-width: 160px;
+  padding: 6px 0;
+  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.96);
+  backdrop-filter: blur(16px);
+  box-shadow:
+    0 12px 36px rgba(0, 0, 0, 0.16),
+    0 2px 8px rgba(0, 0, 0, 0.08),
+    inset 0 1px 0 rgba(255, 255, 255, 0.9);
+  animation: context-menu-appear 0.16s ease-out;
+}
+
+.pet-context-menu__item {
+  display: block;
+  width: 100%;
+  padding: 7px 16px;
+  border: none;
+  background: transparent;
+  font-size: 13px;
+  color: #1a3a54;
+  text-align: left;
+  cursor: pointer;
+  font-family: inherit;
+  transition: background 0.1s;
+}
+
+.pet-context-menu__item:hover {
+  background: rgba(59, 139, 186, 0.1);
+}
+
+.pet-context-menu__item--active {
+  font-weight: 700;
+  color: #3b8bba;
+}
+
+.pet-context-menu__item:disabled {
+  opacity: 0.4;
+  cursor: default;
+}
+
+.pet-context-menu__separator {
+  height: 1px;
+  margin: 4px 12px;
+  background: rgba(0, 0, 0, 0.08);
+}
+
+.pet-context-menu__group-label {
+  padding: 6px 16px 2px;
+  font-size: 11px;
+  font-weight: 700;
+  color: #8ba4b8;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+}
+
+@keyframes context-menu-appear {
+  0% {
+    opacity: 0;
+    transform: scale(0.95);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+/* ===================================================================
+   Merit Counter — persistent total display
+   =================================================================== */
+
+.merit-particles__counter {
+  position: absolute;
+  top: -4px;
+  right: -8px;
+  z-index: 11;
+  padding: 2px 8px;
+  border-radius: 10px;
+  background: linear-gradient(135deg, #fff8e7, #ffedc2);
+  border: 1px solid rgba(198, 153, 73, 0.3);
+  box-shadow:
+    0 2px 8px rgba(168, 122, 46, 0.15),
+    inset 0 1px 0 rgba(255, 255, 255, 0.8);
+  color: #9b6118;
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 0.02em;
+  white-space: nowrap;
+  pointer-events: none;
+  animation: merit-counter-appear 0.4s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+}
+
+@keyframes merit-counter-appear {
+  0% {
+    opacity: 0;
+    transform: scale(0.8);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+/* ===================================================================
+   Multi-Pet Shell — horizontal pet group layout
+   =================================================================== */
+
+.multi-pet-shell {
+  display: flex;
+  align-items: flex-end;
+  gap: 0;
+  padding: 0;
+}
+
+.multi-pet-shell__slot {
+  position: relative;
+  flex-shrink: 0;
+  transform: scale(calc(1 - var(--slot-count, 2) * 0.05 + 0.1));
+  transform-origin: center bottom;
+  transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+  cursor: pointer;
+  margin-top: calc(var(--slot-index, 0) * 8px);
+  margin-left: calc(var(--slot-index, 0) * -16px);
+}
+
+.multi-pet-shell__slot:first-child {
+  margin-left: 0;
+}
+
+.multi-pet-shell__slot--active {
+  z-index: 2;
+  transform: scale(1);
+}
+
+.multi-pet-shell__slot:not(.multi-pet-shell__slot--active) {
+  opacity: 0.85;
+  filter: brightness(0.95);
+}
+
+.multi-pet-shell__slot:hover {
+  z-index: 3;
+  transform: scale(1.02);
+  opacity: 1 !important;
+  filter: none !important;
+}
+
+/* ===================================================================
+   Merit Counter — tier colors
+   =================================================================== */
+
+.merit-particles__counter--silver {
+  background: linear-gradient(135deg, #f5f5f5, #e0e0e0);
+  border-color: rgba(160, 160, 160, 0.4);
+  color: #555;
+}
+
+.merit-particles__counter--gold {
+  background: linear-gradient(135deg, #fff8e1, #ffd54f);
+  border-color: rgba(255, 193, 7, 0.5);
+  color: #8d6e0f;
+  box-shadow:
+    0 2px 12px rgba(255, 193, 7, 0.25),
+    inset 0 1px 0 rgba(255, 255, 255, 0.8);
+}
+
+.merit-particles__counter--diamond {
+  background: linear-gradient(135deg, #e8f5e9, #b9f6ca, #e1f5fe);
+  border-color: rgba(0, 200, 83, 0.4);
+  color: #1b5e20;
+  box-shadow:
+    0 2px 16px rgba(0, 200, 83, 0.2),
+    0 0 24px rgba(100, 255, 218, 0.15),
+    inset 0 1px 0 rgba(255, 255, 255, 0.9);
+}
+
+/* ===================================================================
+   Merit Celebration — milestone achievement overlay
+   =================================================================== */
+
+.merit-celebration {
+  position: absolute;
+  inset: 0;
+  z-index: 50;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  pointer-events: none;
+  animation: celebration-enter 0.5s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+}
+
+.merit-celebration__burst {
+  position: absolute;
+  inset: -40%;
+  border-radius: 50%;
+  animation: celebration-burst 2.4s ease-out forwards;
+}
+
+.merit-celebration--bronze .merit-celebration__burst {
+  background: radial-gradient(circle, rgba(205, 127, 50, 0.3) 0%, transparent 70%);
+}
+
+.merit-celebration--silver .merit-celebration__burst {
+  background: radial-gradient(circle, rgba(192, 192, 192, 0.35) 0%, transparent 70%);
+}
+
+.merit-celebration--gold .merit-celebration__burst {
+  background: radial-gradient(circle, rgba(255, 215, 0, 0.4) 0%, transparent 70%);
+}
+
+.merit-celebration--diamond .merit-celebration__burst {
+  background: radial-gradient(circle, rgba(100, 255, 218, 0.35) 0%, rgba(129, 212, 250, 0.2) 40%, transparent 70%);
+}
+
+.merit-celebration__content {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  animation: celebration-content 0.6s cubic-bezier(0.34, 1.56, 0.64, 1) 0.2s both;
+}
+
+.merit-celebration__icon {
+  font-size: 32px;
+  line-height: 1;
+  animation: celebration-icon-bounce 0.8s ease-out 0.3s both;
+}
+
+.merit-celebration__label {
+  font-size: 14px;
+  font-weight: 800;
+  color: #1d4565;
+  text-shadow: 0 1px 4px rgba(255, 255, 255, 0.8);
+  white-space: nowrap;
+}
+
+.merit-celebration__threshold {
+  font-size: 11px;
+  font-weight: 700;
+  color: #9b6118;
+  opacity: 0.8;
+}
+
+.merit-celebration__ring {
+  position: absolute;
+  width: 100%;
+  height: 100%;
+}
+
+.merit-celebration__spark {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 4px;
+  height: 4px;
+  border-radius: 50%;
+  background: #ffd54f;
+  transform-origin: center center;
+  animation: celebration-spark 1.2s ease-out var(--spark-delay, 0s) forwards;
+  --spark-angle: 0deg;
+}
+
+.merit-celebration--silver .merit-celebration__spark {
+  background: #bdbdbd;
+}
+
+.merit-celebration--diamond .merit-celebration__spark {
+  background: #64ffda;
+}
+
+@keyframes celebration-enter {
+  0% { opacity: 0; }
+  100% { opacity: 1; }
+}
+
+@keyframes celebration-burst {
+  0% {
+    opacity: 0;
+    transform: scale(0.3);
+  }
+  30% {
+    opacity: 1;
+    transform: scale(1);
+  }
+  100% {
+    opacity: 0;
+    transform: scale(1.6);
+  }
+}
+
+@keyframes celebration-content {
+  0% {
+    opacity: 0;
+    transform: translateY(12px) scale(0.8);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(-8px) scale(1);
+  }
+}
+
+@keyframes celebration-icon-bounce {
+  0% {
+    transform: scale(0);
+  }
+  50% {
+    transform: scale(1.3);
+  }
+  70% {
+    transform: scale(0.9);
+  }
+  100% {
+    transform: scale(1);
+  }
+}
+
+@keyframes celebration-spark {
+  0% {
+    opacity: 1;
+    transform: translate(-50%, -50%) rotate(var(--spark-angle)) translateY(0) scale(1);
+  }
+  100% {
+    opacity: 0;
+    transform: translate(-50%, -50%) rotate(var(--spark-angle)) translateY(-48px) scale(0.3);
+  }
+}
+
+/* ===================================================================
+   Pet State Transitions — smooth crossfade between animation states
+   =================================================================== */
+
+.desktop-pet__role-art-motion {
+  transition:
+    filter 0.4s ease,
+    opacity 0.3s ease;
+}
+
+.desktop-pet__stage {
+  transition: filter 0.3s ease;
+}
+
+/* Glow pulse during state transition */
+.desktop-pet__monk-breath-halo {
+  transition: opacity 0.5s ease;
+}
+
+/* Merit badge smooth positioning */
+.desktop-pet__merit-badge {
+  transition: opacity 0.2s ease;
+}
+
+/* Status-specific glow enhancements */
+.desktop-pet--activity-working .desktop-pet__monk-breath-halo {
+  opacity: 0.5;
+}
+
+.desktop-pet--activity-thinking .desktop-pet__monk-breath-halo {
+  opacity: 0.15;
+}
+
+.desktop-pet--activity-done .desktop-pet__monk-breath-halo {
+  opacity: 0.7;
+}
+
+/* Reduced motion: disable particle animations */
+@media (prefers-reduced-motion: reduce) {
+  .merit-particles__item {
+    animation: none;
+    opacity: 0;
+  }
+  .pet-bubble {
+    animation: none;
+  }
+  .pet-context-menu {
+    animation: none;
   }
 }
 
