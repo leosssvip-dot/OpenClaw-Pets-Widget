@@ -63,26 +63,26 @@ export function DesktopPetIllustration({ rolePack }: { rolePack: PetRolePackId }
             <g className="desktop-pet__woodfish">
               <ellipse
                 className="desktop-pet__woodfish-shell"
-                cx="118"
-                cy="104"
-                rx="22"
-                ry="17"
+                cx="132"
+                cy="98"
+                rx="20"
+                ry="15"
                 fill="#A96B33"
               />
-              <ellipse cx="113" cy="101" rx="12" ry="8" fill="#D59A57" opacity="0.9" />
+              <ellipse cx="131" cy="95" rx="11" ry="7" fill="#D59A57" opacity="0.9" />
               <ellipse
                 className="desktop-pet__woodfish-slot"
-                cx="119"
-                cy="105"
-                rx="7.5"
-                ry="2.6"
+                cx="133"
+                cy="98"
+                rx="6.8"
+                ry="2.4"
                 fill="#8a5325"
                 opacity="0.82"
               />
               <circle
                 className="desktop-pet__woodfish-impact"
-                cx="119"
-                cy="104"
+                cx="133"
+                cy="98"
                 r="11"
                 fill="none"
                 stroke="#f8dca2"
@@ -90,8 +90,8 @@ export function DesktopPetIllustration({ rolePack }: { rolePack: PetRolePackId }
               />
               <circle
                 className="desktop-pet__woodfish-echo"
-                cx="119"
-                cy="104"
+                cx="133"
+                cy="98"
                 r="16"
                 fill="none"
                 stroke="#f6d8a0"
@@ -179,23 +179,25 @@ export function DesktopPetIllustration({ rolePack }: { rolePack: PetRolePackId }
                 />
                 <g className="desktop-pet__monk-arm desktop-pet__monk-arm--left">
                   <path
-                    d="M94 92 C102 97 107 99 111 101"
+                    d="M91 90 C96 92 100 94 103 95"
                     stroke="#F6A96C"
-                    strokeWidth="10"
+                    strokeWidth="8"
                     strokeLinecap="round"
+                    opacity="0.82"
                   />
                   <circle
                     className="desktop-pet__monk-hand desktop-pet__monk-hand--left"
-                    cx="109"
-                    cy="100"
-                    r="4.8"
+                    cx="103"
+                    cy="95"
+                    r="4.1"
                     fill="#e6b37d"
+                    opacity="0.84"
                   />
                 </g>
                 <g className="desktop-pet__monk-arm desktop-pet__monk-arm--right">
                   <path
                     className="desktop-pet__monk-sleeve"
-                    d="M97 77 C109 59 118 51 127 44"
+                    d="M97 77 C101 74 106 71 112 68"
                     fill="none"
                     stroke="#8C5A30"
                     strokeWidth="9"
@@ -203,15 +205,15 @@ export function DesktopPetIllustration({ rolePack }: { rolePack: PetRolePackId }
                   />
                   <circle
                     className="desktop-pet__monk-hand desktop-pet__monk-hand--right"
-                    cx="130"
-                    cy="41"
-                    r="7"
+                    cx="112"
+                    cy="68"
+                    r="6.4"
                     fill="#D5A16A"
                   />
                   <g className="desktop-pet__mallet">
                     <path
                       className="desktop-pet__mallet-trail"
-                      d="M94 78 Q108 62 124 47"
+                      d="M112 69 Q122 79 128 88"
                       fill="none"
                       stroke="#f5d8ab"
                       strokeWidth="4"
@@ -219,11 +221,27 @@ export function DesktopPetIllustration({ rolePack }: { rolePack: PetRolePackId }
                       opacity="0"
                     />
                     <path
-                      d="M96 76 C109 58 117 50 126 44"
+                      d="M112 69 C120 78 126 85 130 90"
                       fill="none"
                       stroke="#8C5A30"
-                      strokeWidth="7"
+                      strokeWidth="6"
                       strokeLinecap="round"
+                    />
+                    <ellipse
+                      className="desktop-pet__mallet-head"
+                      cx="131"
+                      cy="93.5"
+                      rx="7.6"
+                      ry="5.4"
+                      fill="#D5A16A"
+                    />
+                    <ellipse
+                      cx="128.8"
+                      cy="93.1"
+                      rx="3.2"
+                      ry="2.2"
+                      fill="#efc38d"
+                      opacity="0.72"
                     />
                   </g>
                 </g>

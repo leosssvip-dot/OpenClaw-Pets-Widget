@@ -27,6 +27,8 @@ interface MeritParticlesProps {
   petId?: string;
   /** Spawn interval in ms — should match the woodfish strike cycle. */
   intervalMs?: number;
+  /** Delay before the first particle so text can align with the actual strike moment. */
+  initialDelayMs?: number;
   /** Text to display. Defaults to "功德+1". */
   text?: string;
 }
@@ -46,11 +48,13 @@ export function MeritParticles({
   active,
   petId,
   intervalMs = 2100,
+  initialDelayMs = 0,
   text = '功德+1',
 }: MeritParticlesProps) {
   const [particles, setParticles] = useState<MeritParticle[]>([]);
   const [celebration, setCelebration] = useState<MeritMilestone | null>(null);
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const initialTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const prevCountRef = useRef<number>(0);
   const totalMerit = useMeritStore((state) => {
     if (!petId) return 0;
@@ -67,8 +71,8 @@ export function MeritParticles({
       ...prev,
       {
         id: nextId++,
-        xOffset: randomBetween(-24, 24),
-        scale: randomBetween(0.85, 1.1),
+        xOffset: randomBetween(-12, 12),
+        scale: randomBetween(0.94, 1.04),
       },
     ]);
     // Increment persistent merit counter
@@ -93,6 +97,10 @@ export function MeritParticles({
 
   useEffect(() => {
     if (!active) {
+      if (initialTimeoutRef.current !== null) {
+        clearTimeout(initialTimeoutRef.current);
+        initialTimeoutRef.current = null;
+      }
       if (intervalRef.current !== null) {
         clearInterval(intervalRef.current);
         intervalRef.current = null;
@@ -100,18 +108,31 @@ export function MeritParticles({
       return;
     }
 
-    // Spawn one immediately on activation
-    spawnParticle();
+    const startInterval = () => {
+      spawnParticle();
+      intervalRef.current = setInterval(spawnParticle, intervalMs);
+    };
 
-    intervalRef.current = setInterval(spawnParticle, intervalMs);
+    if (initialDelayMs > 0) {
+      initialTimeoutRef.current = setTimeout(() => {
+        initialTimeoutRef.current = null;
+        startInterval();
+      }, initialDelayMs);
+    } else {
+      startInterval();
+    }
 
     return () => {
+      if (initialTimeoutRef.current !== null) {
+        clearTimeout(initialTimeoutRef.current);
+        initialTimeoutRef.current = null;
+      }
       if (intervalRef.current !== null) {
         clearInterval(intervalRef.current);
         intervalRef.current = null;
       }
     };
-  }, [active, intervalMs, spawnParticle]);
+  }, [active, initialDelayMs, intervalMs, spawnParticle]);
 
   const achieved = currentMilestone(totalMerit);
   const next = nextMilestone(totalMerit);

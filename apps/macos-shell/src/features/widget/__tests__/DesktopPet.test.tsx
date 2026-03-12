@@ -229,10 +229,17 @@ describe('DesktopPet', () => {
     expect(container.querySelector('.desktop-pet__monk-breath-halo')).toBeInTheDocument();
     expect(container.querySelector('.desktop-pet__monk-arm--right')).toBeInTheDocument();
     expect(container.querySelector('.desktop-pet__mallet')).toBeInTheDocument();
+    expect(container.querySelector('.desktop-pet__mallet-head')).toBeInTheDocument();
     expect(container.querySelector('.desktop-pet__woodfish-impact')).toBeInTheDocument();
     expect(container.querySelector('.desktop-pet__woodfish-echo')).toBeInTheDocument();
     expect(container.querySelector('.desktop-pet__merit-badge')).toHaveTextContent('功德+1');
     expect(container.querySelector('.desktop-pet__stage--roomy')).toBeInTheDocument();
+    expect(container.querySelector('.desktop-pet__monk-hand--right')).toHaveAttribute('cx', '112');
+    expect(container.querySelector('.desktop-pet__monk-hand--right')).toHaveAttribute('cy', '68');
+    expect(container.querySelector('.desktop-pet__woodfish-shell')).toHaveAttribute('cx', '132');
+    expect(container.querySelector('.desktop-pet__woodfish-shell')).toHaveAttribute('cy', '98');
+    expect(container.querySelector('.desktop-pet__monk-hand--left')).toHaveAttribute('cx', '103');
+    expect(container.querySelector('.desktop-pet__monk-hand--left')).toHaveAttribute('cy', '95');
   });
 
   it('builds a GSAP strike timeline for the monk working state', () => {
@@ -260,6 +267,33 @@ describe('DesktopPet', () => {
       })
     );
     expect(gsapMocks.timelineApi.to).toHaveBeenCalled();
+  });
+
+  it('builds a GSAP meditation timeline for the monk idle state', () => {
+    widgetStore.getState().setPanelOpen(false);
+    mockHabitatDesktopApi({
+      togglePanel: vi.fn().mockResolvedValue({ isOpen: false })
+    });
+
+    render(
+      <DesktopPet
+        petName="Zen"
+        connectionStatus="connected"
+        appearance={{
+          rolePack: 'monk'
+        }}
+        petStatus="idle"
+      />
+    );
+
+    expect(gsapMocks.gsapContext).toHaveBeenCalledTimes(1);
+    expect(gsapMocks.gsapTimeline).toHaveBeenCalledWith(
+      expect.objectContaining({
+        paused: false,
+        repeat: -1
+      })
+    );
+    expect(gsapMocks.timelineApi.addLabel).toHaveBeenCalledWith('rest', 0);
   });
 
   it('uses distinct shared SVG art for each built-in role pack', () => {

@@ -97,4 +97,22 @@ describe('MeritParticles', () => {
     );
     expect(container.querySelector('.merit-particles__item')?.textContent).toBe('善哉+1');
   });
+
+  it('waits for the first strike when an initial delay is provided', () => {
+    const { container } = render(
+      <MeritParticles active={true} petId="test-pet" intervalMs={1780} initialDelayMs={1080} />
+    );
+
+    expect(container.querySelectorAll('.merit-particles__item').length).toBe(0);
+
+    act(() => {
+      vi.advanceTimersByTime(1079);
+    });
+    expect(container.querySelectorAll('.merit-particles__item').length).toBe(0);
+
+    act(() => {
+      vi.advanceTimersByTime(1);
+    });
+    expect(container.querySelectorAll('.merit-particles__item').length).toBe(1);
+  });
 });

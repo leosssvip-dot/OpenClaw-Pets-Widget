@@ -23,7 +23,12 @@ function queryElement<T extends Element>(root: HTMLElement, selector: string) {
   return root.querySelector(selector) as T | null;
 }
 
-function buildMonkWorkingTimeline(root: HTMLElement) {
+// These anchors match the current monk SVG rig.
+// Keeping them explicit prevents the mallet from rotating around stale pivots.
+const MONK_ARM_ORIGIN = '97 77';
+const MONK_MALLET_ORIGIN = '112 68';
+
+function getMonkTimelineTargets(root: HTMLElement) {
   const stage = queryElement<HTMLElement>(root, '.desktop-pet__stage');
   const roleArt = queryElement<HTMLElement>(root, '.desktop-pet__role-art-motion');
   const halo = queryElement<SVGElement>(root, '.desktop-pet__monk-breath-halo');
@@ -39,6 +44,324 @@ function buildMonkWorkingTimeline(root: HTMLElement) {
   const woodfishSlot = queryElement<SVGElement>(root, '.desktop-pet__woodfish-slot');
   const impact = queryElement<SVGElement>(root, '.desktop-pet__woodfish-impact');
   const echo = queryElement<SVGElement>(root, '.desktop-pet__woodfish-echo');
+
+  return {
+    stage,
+    roleArt,
+    halo,
+    body,
+    head,
+    beads,
+    arm,
+    sleeve,
+    robeFold,
+    mallet,
+    malletTrail,
+    woodfishShell,
+    woodfishSlot,
+    impact,
+    echo
+  };
+}
+
+function buildMonkIdleTimeline(root: HTMLElement) {
+  const {
+    stage,
+    roleArt,
+    halo,
+    body,
+    head,
+    beads,
+    arm,
+    sleeve,
+    robeFold,
+    mallet,
+    malletTrail,
+    woodfishShell,
+    woodfishSlot,
+    impact,
+    echo
+  } = getMonkTimelineTargets(root);
+
+  if (
+    !stage ||
+    !roleArt ||
+    !halo ||
+    !body ||
+    !head ||
+    !beads ||
+    !arm ||
+    !sleeve ||
+    !robeFold ||
+    !mallet ||
+    !malletTrail ||
+    !woodfishShell ||
+    !woodfishSlot ||
+    !impact ||
+    !echo
+  ) {
+    return null;
+  }
+
+  const timeline = gsap.timeline({
+    paused: false,
+    repeat: -1,
+    defaults: {
+      ease: 'none'
+    }
+  });
+
+  timeline
+    .set([impact, echo, malletTrail], {
+      autoAlpha: 0
+    })
+    .set([impact, echo], {
+      scale: 0.3
+    })
+    .set([stage, roleArt, body, head, beads, arm, sleeve, robeFold, mallet, halo], {
+      x: 0,
+      y: 0,
+      rotation: 0,
+      scale: 1,
+      autoAlpha: 1
+    })
+    .addLabel('rest', 0)
+    .to(
+      [body, head],
+      {
+        duration: 0.62,
+        y: -1.2,
+        ease: 'sine.inOut',
+        yoyo: true,
+        repeat: 1
+      },
+      'rest'
+    )
+    .to(
+      halo,
+      {
+        duration: 0.62,
+        autoAlpha: 0.3,
+        scale: 1.06,
+        ease: 'sine.inOut',
+        yoyo: true,
+        repeat: 1
+      },
+      'rest'
+    )
+    .to(
+      robeFold,
+      {
+        duration: 0.62,
+        x: -0.6,
+        rotation: -1.6,
+        ease: 'sine.inOut',
+        yoyo: true,
+        repeat: 1
+      },
+      'rest'
+    )
+    .addLabel('lift', 0.62)
+    .to(
+      [stage, roleArt],
+      {
+        duration: 0.36,
+        y: -1.2,
+        rotation: -0.9,
+        ease: 'power2.out'
+      },
+      'lift'
+    )
+    .to(
+      [body, head, beads],
+      {
+        duration: 0.36,
+        x: -0.6,
+        y: -1.5,
+        rotation: -1.6,
+        ease: 'power2.out'
+      },
+      'lift'
+    )
+    .to(
+      arm,
+      {
+        duration: 0.36,
+        rotation: -5,
+        svgOrigin: MONK_ARM_ORIGIN,
+        ease: 'power2.out'
+      },
+      'lift'
+    )
+    .to(
+      mallet,
+      {
+        duration: 0.36,
+        rotation: -42,
+        svgOrigin: MONK_MALLET_ORIGIN,
+        ease: 'power2.out'
+      },
+      'lift'
+    )
+    .to(
+      [sleeve, robeFold],
+      {
+        duration: 0.36,
+        x: -1,
+        rotation: -3,
+        ease: 'power2.out'
+      },
+      'lift'
+    )
+    .addLabel('strike', 0.98)
+    .to(
+      arm,
+      {
+        duration: 0.12,
+        rotation: 0.8,
+        svgOrigin: MONK_ARM_ORIGIN,
+        ease: 'power3.in'
+      },
+      'strike'
+    )
+    .to(
+      mallet,
+      {
+        duration: 0.12,
+        rotation: 3.5,
+        svgOrigin: MONK_MALLET_ORIGIN,
+        ease: 'power3.in'
+      },
+      'strike'
+    )
+    .to(
+      [body, head, beads],
+      {
+        duration: 0.12,
+        x: 0.4,
+        y: 0.4,
+        rotation: 0.8,
+        ease: 'power3.in'
+      },
+      'strike'
+    )
+    .to(
+      [stage, roleArt],
+      {
+        duration: 0.12,
+        y: 0.5,
+        rotation: 0.6,
+        ease: 'power3.in'
+      },
+      'strike'
+    )
+    .to(
+      woodfishShell,
+      {
+        duration: 0.1,
+        scaleX: 0.96,
+        scaleY: 0.92,
+        ease: 'power2.out',
+        yoyo: true,
+        repeat: 1
+      },
+      'strike+=0.04'
+    )
+    .to(
+      woodfishSlot,
+      {
+        duration: 0.1,
+        scaleX: 0.94,
+        scaleY: 0.84,
+        autoAlpha: 0.9,
+        ease: 'power2.out',
+        yoyo: true,
+        repeat: 1
+      },
+      'strike+=0.04'
+    )
+    .to(
+      impact,
+      {
+        duration: 0.12,
+        autoAlpha: 0.55,
+        scale: 0.84,
+        ease: 'sine.out',
+        yoyo: true,
+        repeat: 1
+      },
+      'strike+=0.06'
+    )
+    .to(
+      echo,
+      {
+        duration: 0.2,
+        autoAlpha: 0.18,
+        scale: 1.16,
+        ease: 'sine.out'
+      },
+      'strike+=0.08'
+    )
+    .to(
+      malletTrail,
+      {
+        duration: 0.12,
+        autoAlpha: 0.14,
+        scaleX: 0.96,
+        x: 0.8,
+        y: -0.8,
+        ease: 'power1.out',
+        yoyo: true,
+        repeat: 1
+      },
+      'strike'
+    )
+    .addLabel('settle', 1.28)
+    .to(
+      [stage, roleArt, body, head, beads, arm, mallet, sleeve, robeFold, halo],
+      {
+        duration: 0.5,
+        x: 0,
+        y: 0,
+        rotation: 0,
+        scale: 1,
+        autoAlpha: 1,
+        ease: 'sine.out'
+      },
+      'settle'
+    )
+    .to(
+      echo,
+      {
+        duration: 0.5,
+        autoAlpha: 0,
+        scale: 1.24,
+        ease: 'sine.out'
+      },
+      'settle'
+    );
+
+  return timeline;
+}
+
+function buildMonkWorkingTimeline(root: HTMLElement) {
+  const {
+    stage,
+    roleArt,
+    halo,
+    body,
+    head,
+    beads,
+    arm,
+    sleeve,
+    robeFold,
+    mallet,
+    malletTrail,
+    woodfishShell,
+    woodfishSlot,
+    impact,
+    echo
+  } = getMonkTimelineTargets(root);
 
   if (
     !stage ||
@@ -100,8 +423,8 @@ function buildMonkWorkingTimeline(root: HTMLElement) {
       arm,
       {
         duration: 0.2,
-        rotation: -12,
-        svgOrigin: '0 0',
+        rotation: -7,
+        svgOrigin: MONK_ARM_ORIGIN,
         ease: 'power2.out'
       },
       'lift'
@@ -110,7 +433,8 @@ function buildMonkWorkingTimeline(root: HTMLElement) {
       mallet,
       {
         duration: 0.2,
-        rotation: -85,
+        rotation: -52,
+        svgOrigin: MONK_MALLET_ORIGIN,
         ease: 'power2.out'
       },
       'lift'
@@ -120,7 +444,7 @@ function buildMonkWorkingTimeline(root: HTMLElement) {
       {
         duration: 0.2,
         x: -1.5,
-        rotation: -8,
+        rotation: -4.5,
         ease: 'power2.out'
       },
       'lift'
@@ -151,8 +475,8 @@ function buildMonkWorkingTimeline(root: HTMLElement) {
       arm,
       {
         duration: 0.12,
-        rotation: 4,
-        svgOrigin: '0 0',
+        rotation: 2.2,
+        svgOrigin: MONK_ARM_ORIGIN,
         ease: 'power4.in'
       },
       'strike'
@@ -161,7 +485,8 @@ function buildMonkWorkingTimeline(root: HTMLElement) {
       mallet,
       {
         duration: 0.12,
-        rotation: 10,
+        rotation: 5,
+        svgOrigin: MONK_MALLET_ORIGIN,
         ease: 'power4.in'
       },
       'strike'
@@ -171,7 +496,7 @@ function buildMonkWorkingTimeline(root: HTMLElement) {
       {
         duration: 0.12,
         x: 1,
-        rotation: 8,
+        rotation: 4.5,
         ease: 'power4.in'
       },
       'strike'
@@ -291,7 +616,7 @@ function buildMonkWorkingTimeline(root: HTMLElement) {
 // ---------------------------------------------------------------------------
 
 const MERIT_INTERVAL: Record<string, number> = {
-  idle: 2100,
+  idle: 1780,
   working: 720,
   waiting: 2100,
   blocked: 2100,
@@ -349,10 +674,14 @@ export function DesktopPet({
     petStatus,
     connectionStatus
   });
-  const usesGsapMonkWorkingAnimation =
-    !resolvedAppearance.avatar &&
-    resolvedAppearance.rolePack === 'monk' &&
-    animationState.activity === 'working';
+  const monkGsapMode =
+    !resolvedAppearance.avatar && resolvedAppearance.rolePack === 'monk'
+      ? animationState.activity === 'idle'
+        ? 'idle'
+        : animationState.activity === 'working'
+          ? 'working'
+          : null
+      : null;
   const stageClassName = `desktop-pet__stage${resolvedAppearance.rolePack === 'monk' ? ' desktop-pet__stage--roomy' : ''}`;
 
   // Merit particles: monk only, during tapping states
@@ -364,6 +693,12 @@ export function DesktopPet({
       animationState.activity === 'waiting' ||
       animationState.activity === 'blocked');
   const meritInterval = MERIT_INTERVAL[animationState.activity] ?? 2100;
+  const meritInitialDelay =
+    animationState.activity === 'idle'
+      ? 1060
+      : animationState.activity === 'working'
+        ? 300
+        : 0;
 
   useEffect(() => {
     return () => {
@@ -374,20 +709,24 @@ export function DesktopPet({
   }, []);
 
   useEffect(() => {
-    if (!usesGsapMonkWorkingAnimation || !petRef.current || prefersReducedMotion()) {
+    if (!monkGsapMode || !petRef.current || prefersReducedMotion()) {
       return;
     }
 
-    let timeline: ReturnType<typeof buildMonkWorkingTimeline> = null;
+    let timeline: ReturnType<typeof buildMonkIdleTimeline> | ReturnType<typeof buildMonkWorkingTimeline> =
+      null;
     const context = gsap.context(() => {
-      timeline = buildMonkWorkingTimeline(petRef.current!);
+      timeline =
+        monkGsapMode === 'idle'
+          ? buildMonkIdleTimeline(petRef.current!)
+          : buildMonkWorkingTimeline(petRef.current!);
     }, petRef);
 
     return () => {
       timeline?.kill();
       context.revert();
     };
-  }, [usesGsapMonkWorkingAnimation]);
+  }, [monkGsapMode]);
 
   function triggerGreeting() {
     if (greetingTimeoutRef.current !== null) {
@@ -464,7 +803,7 @@ export function DesktopPet({
       <button
         ref={petRef}
         type="button"
-        className={`desktop-pet desktop-pet--frameless desktop-pet--${connectionStatus} desktop-pet--state-${animationState.activity} desktop-pet--activity-${animationState.activity} desktop-pet--mood-${animationState.mood} desktop-pet--role-${resolvedAppearance.rolePack}${usesGsapMonkWorkingAnimation ? ' desktop-pet--monk-gsap' : ''}${isPanelOpen ? ' desktop-pet--active desktop-pet--interaction-panel-open' : ''}${isHovered ? ' desktop-pet--interaction-hovered' : ''}${isPressed ? ' desktop-pet--interaction-pressed' : ''}${isFocused ? ' desktop-pet--interaction-focused' : ''}${isDragging ? ' desktop-pet--interaction-dragging' : ''}${isGreeting ? ' desktop-pet--interaction-greeting' : ''}`}
+        className={`desktop-pet desktop-pet--frameless desktop-pet--${connectionStatus} desktop-pet--state-${animationState.activity} desktop-pet--activity-${animationState.activity} desktop-pet--mood-${animationState.mood} desktop-pet--role-${resolvedAppearance.rolePack}${monkGsapMode ? ` desktop-pet--monk-gsap desktop-pet--monk-gsap-${monkGsapMode}` : ''}${isPanelOpen ? ' desktop-pet--active desktop-pet--interaction-panel-open' : ''}${isHovered ? ' desktop-pet--interaction-hovered' : ''}${isPressed ? ' desktop-pet--interaction-pressed' : ''}${isFocused ? ' desktop-pet--interaction-focused' : ''}${isDragging ? ' desktop-pet--interaction-dragging' : ''}${isGreeting ? ' desktop-pet--interaction-greeting' : ''}`}
         aria-label={`${petName} desktop pet`}
         title="Drag to move. Click to chat. Double-click to open panel. Right-click for menu."
         onContextMenu={handleContextMenu}
@@ -601,11 +940,16 @@ export function DesktopPet({
             </span>
           )}
           {/* Legacy merit badge (used by GSAP working timeline) */}
-          {resolvedAppearance.rolePack === 'monk' && usesGsapMonkWorkingAnimation ? (
+          {resolvedAppearance.rolePack === 'monk' && monkGsapMode === 'working' ? (
             <span className="desktop-pet__merit-badge">功德+1</span>
           ) : null}
           {/* New merit particle system — floating 功德+1 for idle/working/waiting */}
-          <MeritParticles active={showMerit} petId={petId} intervalMs={meritInterval} />
+          <MeritParticles
+            active={showMerit}
+            petId={petId}
+            intervalMs={meritInterval}
+            initialDelayMs={meritInitialDelay}
+          />
         </span>
         <span className="desktop-pet__label">{petName}</span>
       </button>

@@ -2146,26 +2146,26 @@ button.toggle {
 .desktop-pet__woodfish {
   filter: drop-shadow(0 6px 10px rgba(111, 57, 20, 0.16));
   transform-box: view-box;
-  transform-origin: 89px 89px; /* woodfish center: local (79,81) + translate(10,8) */
+  transform-origin: 132px 98px;
 }
 
 .desktop-pet__woodfish-slot {
   transform-box: view-box;
-  transform-origin: 89px 89.5px; /* slot center: local (79,81.5) + translate(10,8) */
+  transform-origin: 133px 98px;
 }
 
 .desktop-pet__woodfish-impact {
   opacity: 0;
   transform: scale(0.35);
   transform-box: view-box;
-  transform-origin: 89px 89px;
+  transform-origin: 133px 98px;
 }
 
 .desktop-pet__woodfish-echo {
   opacity: 0;
   transform: scale(0.7);
   transform-box: view-box;
-  transform-origin: 89px 89px;
+  transform-origin: 133px 98px;
 }
 
 .desktop-pet__monk-rig,
@@ -2191,6 +2191,7 @@ button.toggle {
 .desktop-pet__monk-sleeve,
 .desktop-pet__woodfish-shell,
 .desktop-pet__mallet,
+.desktop-pet__mallet-head,
 .desktop-pet__mallet-trail {
   transform-box: fill-box;
   transform-origin: center;
@@ -2231,10 +2232,8 @@ button.toggle {
 }
 
 .desktop-pet__monk-arm--right {
-  /* Arm g is inside <g translate(73 55)>, so local (0,0) = shoulder.
-     fill-box percentage targets shoulder reliably. */
-  transform-box: fill-box;
-  transform-origin: 14% 6%;
+  transform-box: view-box;
+  transform-origin: 97px 77px;
 }
 
 .desktop-pet__monk-sleeve {
@@ -2242,14 +2241,13 @@ button.toggle {
 }
 
 .desktop-pet__mallet {
-  /* Grip at top of handle: fill-box ≈ x:[2.5,11.5] y:[17,30] → grip (7,18) = (50%, 8%) */
-  transform-box: fill-box;
-  transform-origin: 50% 8%;
+  transform-box: view-box;
+  transform-origin: 112px 68px;
 }
 
 .desktop-pet__mallet-trail {
   transform-box: view-box;
-  transform-origin: 90px 81px; /* same as mallet grip */
+  transform-origin: 112px 68px;
   opacity: 0;
   filter: blur(0.8px);
 }
@@ -2753,15 +2751,13 @@ button.toggle {
 
 /* Pivot points for natural rotation */
 .desktop-pet--role-monk .desktop-pet__monk-arm--right {
-  /* Arm SVG restructured: <g translate(73 55)> wraps arm, so (0,0) = shoulder */
-  transform-box: fill-box;
-  transform-origin: 14% 6%;
+  transform-box: view-box;
+  transform-origin: 97px 77px;
 }
 
 .desktop-pet--role-monk .desktop-pet__mallet {
-  /* Grip at top of handle: fill-box ≈ x:[2.5,11.5] y:[17,30] → grip (7,18) = (50%, 8%) */
-  transform-box: fill-box;
-  transform-origin: 50% 8%;
+  transform-box: view-box;
+  transform-origin: 112px 68px;
 }
 
 .desktop-pet--role-monk .desktop-pet__monk-head {
@@ -2873,38 +2869,72 @@ button.toggle {
 
 .desktop-pet--monk-gsap.desktop-pet--role-monk.desktop-pet--state-working .desktop-pet__stage,
 .desktop-pet--monk-gsap.desktop-pet--role-monk.desktop-pet--activity-working .desktop-pet__stage,
+.desktop-pet--monk-gsap-idle.desktop-pet--role-monk.desktop-pet--state-idle .desktop-pet__stage,
+.desktop-pet--monk-gsap-idle.desktop-pet--role-monk.desktop-pet--activity-idle .desktop-pet__stage,
 .desktop-pet--monk-gsap.desktop-pet--role-monk.desktop-pet--state-working .desktop-pet__role-art-motion,
 .desktop-pet--monk-gsap.desktop-pet--role-monk.desktop-pet--activity-working .desktop-pet__role-art-motion,
+.desktop-pet--monk-gsap-idle.desktop-pet--role-monk.desktop-pet--state-idle .desktop-pet__role-art-motion,
+.desktop-pet--monk-gsap-idle.desktop-pet--role-monk.desktop-pet--activity-idle .desktop-pet__role-art-motion,
 .desktop-pet--monk-gsap.desktop-pet--role-monk.desktop-pet--state-working .desktop-pet__monk-body,
 .desktop-pet--monk-gsap.desktop-pet--role-monk.desktop-pet--activity-working .desktop-pet__monk-body,
+.desktop-pet--monk-gsap-idle.desktop-pet--role-monk.desktop-pet--state-idle .desktop-pet__monk-body,
+.desktop-pet--monk-gsap-idle.desktop-pet--role-monk.desktop-pet--activity-idle .desktop-pet__monk-body,
 .desktop-pet--monk-gsap.desktop-pet--role-monk.desktop-pet--state-working .desktop-pet__monk-breath-halo,
 .desktop-pet--monk-gsap.desktop-pet--role-monk.desktop-pet--activity-working .desktop-pet__monk-breath-halo,
+.desktop-pet--monk-gsap-idle.desktop-pet--role-monk.desktop-pet--state-idle .desktop-pet__monk-breath-halo,
+.desktop-pet--monk-gsap-idle.desktop-pet--role-monk.desktop-pet--activity-idle .desktop-pet__monk-breath-halo,
 .desktop-pet--monk-gsap.desktop-pet--role-monk.desktop-pet--state-working .desktop-pet__monk-head,
 .desktop-pet--monk-gsap.desktop-pet--role-monk.desktop-pet--activity-working .desktop-pet__monk-head,
+.desktop-pet--monk-gsap-idle.desktop-pet--role-monk.desktop-pet--state-idle .desktop-pet__monk-head,
+.desktop-pet--monk-gsap-idle.desktop-pet--role-monk.desktop-pet--activity-idle .desktop-pet__monk-head,
 .desktop-pet--monk-gsap.desktop-pet--role-monk.desktop-pet--state-working .desktop-pet__monk-beads,
 .desktop-pet--monk-gsap.desktop-pet--role-monk.desktop-pet--activity-working .desktop-pet__monk-beads,
+.desktop-pet--monk-gsap-idle.desktop-pet--role-monk.desktop-pet--state-idle .desktop-pet__monk-beads,
+.desktop-pet--monk-gsap-idle.desktop-pet--role-monk.desktop-pet--activity-idle .desktop-pet__monk-beads,
 .desktop-pet--monk-gsap.desktop-pet--role-monk.desktop-pet--state-working .desktop-pet__monk-arm--right,
 .desktop-pet--monk-gsap.desktop-pet--role-monk.desktop-pet--activity-working .desktop-pet__monk-arm--right,
+.desktop-pet--monk-gsap-idle.desktop-pet--role-monk.desktop-pet--state-idle .desktop-pet__monk-arm--right,
+.desktop-pet--monk-gsap-idle.desktop-pet--role-monk.desktop-pet--activity-idle .desktop-pet__monk-arm--right,
 .desktop-pet--monk-gsap.desktop-pet--role-monk.desktop-pet--state-working .desktop-pet__monk-sleeve,
 .desktop-pet--monk-gsap.desktop-pet--role-monk.desktop-pet--activity-working .desktop-pet__monk-sleeve,
+.desktop-pet--monk-gsap-idle.desktop-pet--role-monk.desktop-pet--state-idle .desktop-pet__monk-sleeve,
+.desktop-pet--monk-gsap-idle.desktop-pet--role-monk.desktop-pet--activity-idle .desktop-pet__monk-sleeve,
 .desktop-pet--monk-gsap.desktop-pet--role-monk.desktop-pet--state-working .desktop-pet__monk-robe-fold,
 .desktop-pet--monk-gsap.desktop-pet--role-monk.desktop-pet--activity-working .desktop-pet__monk-robe-fold,
+.desktop-pet--monk-gsap-idle.desktop-pet--role-monk.desktop-pet--state-idle .desktop-pet__monk-robe-fold,
+.desktop-pet--monk-gsap-idle.desktop-pet--role-monk.desktop-pet--activity-idle .desktop-pet__monk-robe-fold,
 .desktop-pet--monk-gsap.desktop-pet--role-monk.desktop-pet--state-working .desktop-pet__mallet,
 .desktop-pet--monk-gsap.desktop-pet--role-monk.desktop-pet--activity-working .desktop-pet__mallet,
+.desktop-pet--monk-gsap-idle.desktop-pet--role-monk.desktop-pet--state-idle .desktop-pet__mallet,
+.desktop-pet--monk-gsap-idle.desktop-pet--role-monk.desktop-pet--activity-idle .desktop-pet__mallet,
 .desktop-pet--monk-gsap.desktop-pet--role-monk.desktop-pet--state-working .desktop-pet__mallet-trail,
 .desktop-pet--monk-gsap.desktop-pet--role-monk.desktop-pet--activity-working .desktop-pet__mallet-trail,
+.desktop-pet--monk-gsap-idle.desktop-pet--role-monk.desktop-pet--state-idle .desktop-pet__mallet-trail,
+.desktop-pet--monk-gsap-idle.desktop-pet--role-monk.desktop-pet--activity-idle .desktop-pet__mallet-trail,
 .desktop-pet--monk-gsap.desktop-pet--role-monk.desktop-pet--state-working .desktop-pet__woodfish,
 .desktop-pet--monk-gsap.desktop-pet--role-monk.desktop-pet--activity-working .desktop-pet__woodfish,
+.desktop-pet--monk-gsap-idle.desktop-pet--role-monk.desktop-pet--state-idle .desktop-pet__woodfish,
+.desktop-pet--monk-gsap-idle.desktop-pet--role-monk.desktop-pet--activity-idle .desktop-pet__woodfish,
 .desktop-pet--monk-gsap.desktop-pet--role-monk.desktop-pet--state-working .desktop-pet__woodfish-shell,
 .desktop-pet--monk-gsap.desktop-pet--role-monk.desktop-pet--activity-working .desktop-pet__woodfish-shell,
+.desktop-pet--monk-gsap-idle.desktop-pet--role-monk.desktop-pet--state-idle .desktop-pet__woodfish-shell,
+.desktop-pet--monk-gsap-idle.desktop-pet--role-monk.desktop-pet--activity-idle .desktop-pet__woodfish-shell,
 .desktop-pet--monk-gsap.desktop-pet--role-monk.desktop-pet--state-working .desktop-pet__woodfish-slot,
 .desktop-pet--monk-gsap.desktop-pet--role-monk.desktop-pet--activity-working .desktop-pet__woodfish-slot,
+.desktop-pet--monk-gsap-idle.desktop-pet--role-monk.desktop-pet--state-idle .desktop-pet__woodfish-slot,
+.desktop-pet--monk-gsap-idle.desktop-pet--role-monk.desktop-pet--activity-idle .desktop-pet__woodfish-slot,
 .desktop-pet--monk-gsap.desktop-pet--role-monk.desktop-pet--state-working .desktop-pet__woodfish-impact,
 .desktop-pet--monk-gsap.desktop-pet--role-monk.desktop-pet--activity-working .desktop-pet__woodfish-impact,
+.desktop-pet--monk-gsap-idle.desktop-pet--role-monk.desktop-pet--state-idle .desktop-pet__woodfish-impact,
+.desktop-pet--monk-gsap-idle.desktop-pet--role-monk.desktop-pet--activity-idle .desktop-pet__woodfish-impact,
 .desktop-pet--monk-gsap.desktop-pet--role-monk.desktop-pet--state-working .desktop-pet__woodfish-echo,
 .desktop-pet--monk-gsap.desktop-pet--role-monk.desktop-pet--activity-working .desktop-pet__woodfish-echo,
+.desktop-pet--monk-gsap-idle.desktop-pet--role-monk.desktop-pet--state-idle .desktop-pet__woodfish-echo,
+.desktop-pet--monk-gsap-idle.desktop-pet--role-monk.desktop-pet--activity-idle .desktop-pet__woodfish-echo,
 .desktop-pet--monk-gsap.desktop-pet--role-monk.desktop-pet--state-working .desktop-pet__merit-badge,
-.desktop-pet--monk-gsap.desktop-pet--role-monk.desktop-pet--activity-working .desktop-pet__merit-badge {
+.desktop-pet--monk-gsap.desktop-pet--role-monk.desktop-pet--activity-working .desktop-pet__merit-badge,
+.desktop-pet--monk-gsap-idle.desktop-pet--role-monk.desktop-pet--state-idle .desktop-pet__merit-badge,
+.desktop-pet--monk-gsap-idle.desktop-pet--role-monk.desktop-pet--activity-idle .desktop-pet__merit-badge {
   animation: none !important;
 }
 
@@ -3483,37 +3513,37 @@ button.toggle {
 
 .merit-particles__item {
   position: absolute;
-  bottom: 72%;
+  bottom: 66%;
   left: 50%;
-  font-size: 13px;
+  font-size: 12px;
   font-weight: 800;
   letter-spacing: 0.02em;
-  color: #f5c842;
+  color: rgba(182, 127, 43, 0.88);
   text-shadow:
-    0 0 8px rgba(245, 200, 66, 0.5),
-    0 1px 2px rgba(0, 0, 0, 0.12);
+    0 0 10px rgba(250, 223, 170, 0.32),
+    0 1px 2px rgba(111, 73, 24, 0.1);
   white-space: nowrap;
   pointer-events: none;
   transform: translateX(var(--merit-x, 0));
-  animation: merit-rise 1.4s cubic-bezier(0.22, 0.68, 0.36, 1) forwards;
+  animation: merit-rise 1.12s cubic-bezier(0.24, 0.72, 0.32, 1) forwards;
 }
 
 @keyframes merit-rise {
   0% {
     opacity: 0;
-    transform: translateX(var(--merit-x, 0)) translateY(8px) scale(calc(var(--merit-scale, 1) * 0.7));
+    transform: translateX(var(--merit-x, 0)) translateY(6px) scale(calc(var(--merit-scale, 1) * 0.78));
   }
-  12% {
-    opacity: 1;
-    transform: translateX(var(--merit-x, 0)) translateY(0) scale(calc(var(--merit-scale, 1) * 1.15));
+  16% {
+    opacity: 0.72;
+    transform: translateX(var(--merit-x, 0)) translateY(0) scale(calc(var(--merit-scale, 1) * 1.02));
   }
-  28% {
-    opacity: 1;
-    transform: translateX(var(--merit-x, 0)) translateY(-12px) scale(var(--merit-scale, 1));
+  42% {
+    opacity: 0.52;
+    transform: translateX(calc(var(--merit-x, 0) + 1px)) translateY(-13px) scale(var(--merit-scale, 1));
   }
   100% {
     opacity: 0;
-    transform: translateX(var(--merit-x, 0)) translateY(-56px) scale(calc(var(--merit-scale, 1) * 0.88));
+    transform: translateX(calc(var(--merit-x, 0) - 2px)) translateY(-36px) scale(calc(var(--merit-scale, 1) * 0.92));
   }
 }
 
