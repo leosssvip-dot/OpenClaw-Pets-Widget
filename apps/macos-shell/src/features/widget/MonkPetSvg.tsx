@@ -1,8 +1,14 @@
-export function MonkPetSvg() {
+export function MonkPetSvg({
+  className = '',
+  svgClassName = ''
+}: {
+  className?: string;
+  svgClassName?: string;
+}) {
   return (
-    <span className="desktop-pet__monk">
+    <span className={['desktop-pet__monk', className].filter(Boolean).join(' ')}>
       <svg
-        className="desktop-pet__monk-svg"
+        className={['desktop-pet__monk-svg', svgClassName].filter(Boolean).join(' ')}
         viewBox="0 0 144 138"
         aria-hidden="true"
       >

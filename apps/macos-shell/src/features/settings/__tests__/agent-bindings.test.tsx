@@ -42,6 +42,8 @@ describe('AgentBindings', () => {
     expect(screen.getByText('Agent: researcher')).toBeInTheDocument();
     expect(screen.getByText('Status: thinking')).toBeInTheDocument();
     expect(screen.getByText('Status: waiting')).toBeInTheDocument();
+    expect(screen.getByText('Ops')).toBeInTheDocument();
+    expect(screen.getByText('Code')).toBeInTheDocument();
     expect(screen.getAllByLabelText(/Character for/i)).toHaveLength(2);
     expect(screen.queryByLabelText(/Avatar URL/i)).toBeNull();
 

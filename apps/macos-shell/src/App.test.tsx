@@ -164,17 +164,35 @@ describe('hydrateAndReconnectActiveProfile', () => {
       gatewayId: 'remote-1',
       agentId: 'ad-expert'
     });
+    settingsStore.getState().setPetAppearance('pet-1', {
+      rolePack: 'lobster'
+    });
+    settingsStore.getState().setPetAppearance('pet-2', {
+      rolePack: 'robot'
+    });
 
     render(<App />);
 
-    expect(await screen.findByRole('heading', { name: 'Current companion' })).toBeInTheDocument();
+    expect(
+      await screen.findByRole('heading', {
+        name: 'Your coding pet is already at the keyboard.'
+      })
+    ).toBeInTheDocument();
+    expect(screen.queryByText('Agent Habitat')).not.toBeInTheDocument();
+    expect(screen.getByText('Coder Claw')).toBeInTheDocument();
+    expect(screen.getAllByText('Code').length).toBeGreaterThan(0);
+    expect(screen.getByRole('button', { name: 'Send Task' })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Switch agent' })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Switch character' })).toBeInTheDocument();
+    expect(
+      screen.getByText('Swap between Code, Plan, Ops, and Focus modes.')
+    ).toBeInTheDocument();
     fireEvent.click(screen.getByRole('button', { name: 'More settings' }));
 
     expect(screen.getByRole('heading', { name: 'Display' })).toBeInTheDocument();
     expect(screen.getByRole('heading', { name: 'Characters' })).toBeInTheDocument();
     expect(screen.getByRole('heading', { name: 'Connection' })).toBeInTheDocument();
+    expect(screen.getAllByText('Ops').length).toBeGreaterThan(0);
 
     fireEvent.click(screen.getByRole('radio', { name: 'Group' }));
     fireEvent.change(screen.getByLabelText('Pinned agent'), {
@@ -270,9 +288,12 @@ describe('hydrateAndReconnectActiveProfile', () => {
 
     expect(retrieveSecret).toHaveBeenCalledWith('gateway-token:remote-1');
     expect(retrieveSecret).toHaveBeenCalledWith('gateway-password:remote-1');
-    expect(settingsStore.getState().gatewayProfiles['remote-1'].gatewayToken).toBe(
-      'secret-token'
-    );
+    const hydratedProfile = settingsStore.getState().gatewayProfiles['remote-1'];
+
+    expect(hydratedProfile?.transport).toBe('ssh');
+    if (hydratedProfile?.transport === 'ssh') {
+      expect(hydratedProfile.gatewayToken).toBe('secret-token');
+    }
     expect(getGatewaySessionAuth('remote-1')).toEqual({
       password: 'hunter2'
     });

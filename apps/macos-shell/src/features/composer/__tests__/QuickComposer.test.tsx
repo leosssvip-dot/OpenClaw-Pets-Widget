@@ -11,7 +11,7 @@ describe('QuickComposer', () => {
     fireEvent.change(screen.getByLabelText('Message'), {
       target: { value: "Summarize today's unread Feishu threads" }
     });
-    fireEvent.click(screen.getByText('Send'));
+    fireEvent.click(screen.getByRole('button', { name: 'Send Task' }));
 
     expect(onSubmit).toHaveBeenCalledWith("Summarize today's unread Feishu threads");
   });

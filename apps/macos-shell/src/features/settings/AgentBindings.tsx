@@ -125,10 +125,11 @@ export function AgentBindings({
                       className={`agent-bindings__character-preview agent-bindings__character-preview--${rolePack}`}
                       aria-hidden="true"
                     />
-                    <div className="agent-bindings__character-copy">
-                      <strong>{rolePackMeta.label}</strong>
-                      <span>{rolePackMeta.tagline}</span>
-                    </div>
+                  <div className="agent-bindings__character-copy">
+                    <strong>{rolePackMeta.label}</strong>
+                    <em>{rolePackMeta.roleLabel}</em>
+                    <span>{rolePackMeta.tagline}</span>
+                  </div>
                     <label className="agent-bindings__character-field">
                       <span>Character</span>
                       <select

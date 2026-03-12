@@ -16,27 +16,65 @@ export const DEFAULT_PET_ROLE_PACK: PetRolePackId = 'lobster';
 export const PET_ROLE_PACKS: Array<{
   id: PetRolePackId;
   label: string;
+  roleLabel: string;
   tagline: string;
+  promptHint: string;
+  panelTitle: string;
+  panelDescription: string;
+  signalLabel: string;
+  quickPromptExample: string;
 }> = [
   {
     id: 'lobster',
-    label: 'Lobster',
-    tagline: 'Energetic claw-waving classic.'
+    label: 'Coder Claw',
+    roleLabel: 'Code',
+    tagline: 'Headset on, keyboard ready, bug already spotted.',
+    promptHint: 'Ask for a fix, refactor, or implementation patch.',
+    panelTitle: 'Your coding pet is already at the keyboard.',
+    panelDescription:
+      'Every main-panel variant should read like a clear work role first. This one is here to code, patch, and fix.',
+    signalLabel: 'typing bugfix',
+    quickPromptExample:
+      'Fix the panel layout bug, keep the companion visible, and show me the smallest safe patch.'
   },
   {
     id: 'cat',
-    label: 'Cat',
-    tagline: 'Curious, nimble, and quietly clever.'
+    label: 'Planner Cat',
+    roleLabel: 'Plan',
+    tagline: 'Sticky notes out, priorities sorted, next step in sight.',
+    promptHint: 'Ask for a breakdown, plan, or task ordering.',
+    panelTitle: 'Your planning pet already sorted the next three moves.',
+    panelDescription:
+      'This character turns fuzzy asks into clear task cards, scoped steps, and visible priority decisions.',
+    signalLabel: 'task mapping',
+    quickPromptExample:
+      'Break this feature into the smallest milestones and tell me what to ship first.'
   },
   {
     id: 'robot',
-    label: 'Robot',
-    tagline: 'Precise, focused, and signal-driven.'
+    label: 'Ops Bot',
+    roleLabel: 'Ops',
+    tagline: 'Signals clean, beacon live, runtime under watch.',
+    promptHint: 'Ask for a status check, reconnect, or runtime diagnosis.',
+    panelTitle: 'Your ops pet is watching the runtime for you.',
+    panelDescription:
+      'This character exists to keep the bridge stable, surface connection health, and catch system drift early.',
+    signalLabel: 'runtime watch',
+    quickPromptExample:
+      'Check the gateway health, summarize the warning signs, and tell me the next safe recovery step.'
   },
   {
     id: 'monk',
-    label: 'Monk',
-    tagline: 'Calm focus with rhythmic motion.'
+    label: 'Mokugyo Monk',
+    roleLabel: 'Focus',
+    tagline: 'Wooden fish steady, rhythm locked, execution underway.',
+    promptHint: 'Ask to start, continue, or finish the next focused action.',
+    panelTitle: 'Your focus pet keeps the rhythm and pushes execution forward.',
+    panelDescription:
+      'This character is for deep work. It narrows the next action, keeps momentum, and marks steady progress.',
+    signalLabel: 'working-time tapping',
+    quickPromptExample:
+      'Start the next focused task, keep it narrow, and guide me through execution without context switching.'
   }
 ];
 

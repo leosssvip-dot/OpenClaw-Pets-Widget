@@ -62,4 +62,25 @@ describe('reduceAgentSnapshots', () => {
       lastActiveAt: 300
     });
   });
+
+  it('preserves collaborating status from habitat status events', () => {
+    const state = reduceAgentSnapshots(
+      {},
+      {
+        kind: 'agent.status',
+        agentId: 'pairing',
+        gatewayId: 'remote-1',
+        status: 'collaborating'
+      },
+      {
+        now: 400
+      }
+    );
+
+    expect(state.pairing).toMatchObject({
+      runtimeStatus: 'collaborating',
+      lastActiveAt: 400
+    });
+    expect(state.pairing.priorityScore).toBeGreaterThan(0);
+  });
 });

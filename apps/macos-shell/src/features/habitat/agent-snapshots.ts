@@ -16,6 +16,7 @@ function toRuntimeStatus(status: string): PetStatus {
     case 'thinking':
     case 'working':
     case 'waiting':
+    case 'collaborating':
     case 'idle':
     case 'done':
     case 'blocked':
@@ -30,6 +31,7 @@ function scoreSnapshot(snapshot: AgentSnapshot) {
     blocked: 100,
     working: 90,
     thinking: 80,
+    collaborating: 70,
     waiting: 60,
     idle: 40,
     done: 20

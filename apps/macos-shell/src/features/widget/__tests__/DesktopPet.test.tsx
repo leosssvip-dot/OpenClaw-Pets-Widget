@@ -6,6 +6,41 @@ import { vi } from 'vitest';
 import { DesktopPet } from '../DesktopPet';
 import { widgetStore } from '../widget-store';
 
+const gsapMocks = vi.hoisted(() => {
+  const timelineApi = {
+    addLabel: vi.fn(),
+    set: vi.fn(),
+    to: vi.fn(),
+    kill: vi.fn()
+  };
+  timelineApi.addLabel.mockImplementation(() => timelineApi);
+  timelineApi.set.mockImplementation(() => timelineApi);
+  timelineApi.to.mockImplementation(() => timelineApi);
+
+  const gsapRevert = vi.fn();
+  const gsapTimeline = vi.fn(() => timelineApi);
+  const gsapContext = vi.fn((callback: () => void) => {
+    callback();
+    return {
+      revert: gsapRevert
+    };
+  });
+
+  return {
+    timelineApi,
+    gsapRevert,
+    gsapTimeline,
+    gsapContext
+  };
+});
+
+vi.mock('gsap', () => ({
+  gsap: {
+    context: gsapMocks.gsapContext,
+    timeline: gsapMocks.gsapTimeline
+  }
+}));
+
 function mockHabitatDesktopApi(api: Record<string, unknown>) {
   (globalThis as typeof globalThis & {
     habitat?: Record<string, unknown>;
@@ -49,6 +84,16 @@ function installPointerCaptureMocks(element: HTMLElement) {
 }
 
 describe('DesktopPet', () => {
+  beforeEach(() => {
+    gsapMocks.gsapTimeline.mockClear();
+    gsapMocks.gsapContext.mockClear();
+    gsapMocks.gsapRevert.mockClear();
+    gsapMocks.timelineApi.addLabel.mockClear();
+    gsapMocks.timelineApi.set.mockClear();
+    gsapMocks.timelineApi.to.mockClear();
+    gsapMocks.timelineApi.kill.mockClear();
+  });
+
   it('moves the pet window without snapping on drag end', async () => {
     widgetStore.getState().setPanelOpen(false);
     const movePetWindow = vi.fn().mockResolvedValue(undefined);
@@ -71,6 +116,7 @@ describe('DesktopPet', () => {
     expect(pet).toHaveClass('desktop-pet--frameless');
     expect(screen.getByText('Ruby')).toBeInTheDocument();
     expect(document.querySelector('.desktop-pet__bubble')).toBeNull();
+    expect(document.querySelector('.desktop-pet__ground')).toBeNull();
     expect(screen.queryByText('connected')).not.toBeInTheDocument();
 
     fireEvent(
@@ -157,7 +203,7 @@ describe('DesktopPet', () => {
     );
   });
 
-  it('renders dedicated monk anatomy with a wooden-fish rig', () => {
+  it('renders the monk with the shared role-pack SVG art', () => {
     widgetStore.getState().setPanelOpen(false);
     mockHabitatDesktopApi({
       togglePanel: vi.fn().mockResolvedValue({ isOpen: false })
@@ -174,27 +220,49 @@ describe('DesktopPet', () => {
       />
     );
 
-    expect(container.querySelector('.desktop-pet__monk')).toBeInTheDocument();
-    expect(container.querySelector('.desktop-pet__monk-svg')).toBeInTheDocument();
-    expect(container.querySelector('.desktop-pet__stage')).toHaveClass(
-      'desktop-pet__stage--roomy'
-    );
+    expect(container.querySelector('.desktop-pet__art')).toBeInTheDocument();
+    expect(container.querySelector('.desktop-pet__role-art-motion')).toBeInTheDocument();
+    expect(container.querySelector('.desktop-pet__art--monk')).toBeInTheDocument();
+    expect(container.querySelector('.desktop-pet__art-svg')).toBeInTheDocument();
+    expect(container.querySelector('.desktop-pet__art-backdrop')).toBeNull();
     expect(container.querySelector('.desktop-pet__monk-rig')).toBeInTheDocument();
-    expect(container.querySelector('.desktop-pet__monk-head')).toBeInTheDocument();
     expect(container.querySelector('.desktop-pet__monk-breath-halo')).toBeInTheDocument();
-    expect(container.querySelector('.desktop-pet__monk-cheek')).toBeInTheDocument();
-    expect(container.querySelector('.desktop-pet__woodfish')).toBeInTheDocument();
-    expect(container.querySelector('.desktop-pet__woodfish-shell')).toBeInTheDocument();
+    expect(container.querySelector('.desktop-pet__monk-arm--right')).toBeInTheDocument();
     expect(container.querySelector('.desktop-pet__mallet')).toBeInTheDocument();
-    expect(container.querySelector('.desktop-pet__mallet-trail')).toBeInTheDocument();
     expect(container.querySelector('.desktop-pet__woodfish-impact')).toBeInTheDocument();
     expect(container.querySelector('.desktop-pet__woodfish-echo')).toBeInTheDocument();
-    expect(container.querySelector('.desktop-pet__monk-sleeve')).toBeInTheDocument();
-    expect(container.querySelector('.desktop-pet__monk-hand--left')).toBeInTheDocument();
-    expect(container.querySelector('.desktop-pet__monk-robe-fold')).toBeInTheDocument();
+    expect(container.querySelector('.desktop-pet__merit-badge')).toHaveTextContent('功德+1');
+    expect(container.querySelector('.desktop-pet__stage--roomy')).toBeInTheDocument();
   });
 
-  it('uses distinct markup for each built-in role pack instead of one shared body', () => {
+  it('builds a GSAP strike timeline for the monk working state', () => {
+    widgetStore.getState().setPanelOpen(false);
+    mockHabitatDesktopApi({
+      togglePanel: vi.fn().mockResolvedValue({ isOpen: false })
+    });
+
+    render(
+      <DesktopPet
+        petName="Zen"
+        connectionStatus="connected"
+        appearance={{
+          rolePack: 'monk'
+        }}
+        petStatus="working"
+      />
+    );
+
+    expect(gsapMocks.gsapContext).toHaveBeenCalledTimes(1);
+    expect(gsapMocks.gsapTimeline).toHaveBeenCalledWith(
+      expect.objectContaining({
+        paused: false,
+        repeat: -1
+      })
+    );
+    expect(gsapMocks.timelineApi.to).toHaveBeenCalled();
+  });
+
+  it('uses distinct shared SVG art for each built-in role pack', () => {
     widgetStore.getState().setPanelOpen(false);
     mockHabitatDesktopApi({
       togglePanel: vi.fn().mockResolvedValue({ isOpen: false })
@@ -210,7 +278,7 @@ describe('DesktopPet', () => {
       />
     );
 
-    expect(container.querySelector('.desktop-pet__lobster')).toBeInTheDocument();
+    expect(container.querySelector('.desktop-pet__art--lobster')).toBeInTheDocument();
 
     rerender(
       <DesktopPet
@@ -221,7 +289,7 @@ describe('DesktopPet', () => {
         }}
       />
     );
-    expect(container.querySelector('.desktop-pet__cat')).toBeInTheDocument();
+    expect(container.querySelector('.desktop-pet__art--cat')).toBeInTheDocument();
 
     rerender(
       <DesktopPet
@@ -232,7 +300,7 @@ describe('DesktopPet', () => {
         }}
       />
     );
-    expect(container.querySelector('.desktop-pet__robot')).toBeInTheDocument();
+    expect(container.querySelector('.desktop-pet__art--robot')).toBeInTheDocument();
   });
 
   it('applies owner interaction classes for hover, press, focus, and drag', () => {
