@@ -84,9 +84,6 @@ export async function preloadSettingsFromDisk() {
 
 const SETTINGS_STORAGE_KEY = 'openclaw-habitat-settings';
 
-/** Group 模式最多可选的桌宠数量 */
-export const GROUP_SELECTION_MAX = 5;
-
 export interface PetAgentBinding {
   petId: string;
   gatewayId: string;
@@ -104,10 +101,7 @@ interface SettingsState {
   bindings: Record<string, PetAgentBinding>;
   appearances: Record<string, PetAppearanceConfig>;
   activeProfileId: string | null;
-  displayMode: 'pinned' | 'group';
   pinnedAgentId: string | null;
-  /** Group 模式下已选中的 agentId 列表，最多 GROUP_SELECTION_MAX 个 */
-  groupSelectedAgentIds: string[];
   petWindowPlacement: PetWindowPlacement | null;
   saveGatewayProfile: (profile: GatewayProfile) => void;
   deleteGatewayProfile: (profileId: string) => void;
@@ -115,10 +109,7 @@ interface SettingsState {
   setPetAppearance: (petId: string, appearance: PetAppearanceConfig) => void;
   selectGatewayProfile: (profileId: string) => void;
   updateProfileToken: (profileId: string, token: string) => void;
-  setDisplayMode: (mode: 'pinned' | 'group') => void;
   setPinnedAgentId: (agentId: string | null) => void;
-  /** 切换某 agent 是否加入 Group 展示（最多 GROUP_SELECTION_MAX 个） */
-  toggleGroupAgent: (agentId: string) => void;
   setPetWindowPlacement: (placement: PetWindowPlacement | null) => void;
 }
 
@@ -146,9 +137,7 @@ export const createSettingsStore = () =>
         bindings: {},
         appearances: {},
         activeProfileId: null,
-        displayMode: 'pinned',
         pinnedAgentId: null,
-        groupSelectedAgentIds: [],
         petWindowPlacement: null,
         saveGatewayProfile: (profile) =>
           set((state) => ({
@@ -206,27 +195,9 @@ export const createSettingsStore = () =>
           set({
             activeProfileId: profileId
           }),
-        setDisplayMode: (displayMode) =>
-          set({
-            displayMode
-          }),
         setPinnedAgentId: (pinnedAgentId) =>
           set({
             pinnedAgentId
-          }),
-        toggleGroupAgent: (agentId) =>
-          set((state) => {
-            const ids = state.groupSelectedAgentIds;
-            const idx = ids.indexOf(agentId);
-            if (idx >= 0) {
-              return {
-                groupSelectedAgentIds: ids.filter((_, i) => i !== idx)
-              };
-            }
-            if (ids.length >= GROUP_SELECTION_MAX) return state;
-            return {
-              groupSelectedAgentIds: [...ids, agentId]
-            };
           }),
         setPetWindowPlacement: (placement) =>
           set({
@@ -269,9 +240,7 @@ export const createSettingsStore = () =>
           bindings: state.bindings,
           appearances: state.appearances,
           activeProfileId: state.activeProfileId,
-          displayMode: state.displayMode,
           pinnedAgentId: state.pinnedAgentId,
-          groupSelectedAgentIds: (state.groupSelectedAgentIds ?? []).slice(0, GROUP_SELECTION_MAX),
           petWindowPlacement: state.petWindowPlacement
         })
       }

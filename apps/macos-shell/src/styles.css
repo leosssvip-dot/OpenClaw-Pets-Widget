@@ -532,6 +532,40 @@ body[data-surface='pet'] {
   pointer-events: none;
 }
 
+.gallery-panel__layout-mode {
+  margin: 8px 0 0;
+  padding: 4px;
+  border: 1px solid rgba(163, 148, 184, 0.14);
+  border-radius: 999px;
+  background: #fff;
+  display: inline-flex;
+  gap: 4px;
+}
+
+.gallery-panel__layout-mode label {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 6px 12px;
+  border-radius: 999px;
+  font-size: 11px;
+  color: #5f536f;
+  cursor: pointer;
+  background: #fffaf6;
+}
+
+.gallery-panel__layout-mode label:has(input:checked) {
+  background: #fff0e6;
+  color: #8e5b4b;
+  box-shadow: inset 0 0 0 1px rgba(227, 192, 171, 0.8);
+}
+
+.gallery-panel__layout-mode input {
+  position: absolute;
+  opacity: 0;
+  pointer-events: none;
+}
+
 /* Character list */
 .settings-character-list {
   margin: 0;
@@ -4387,6 +4421,27 @@ button.toggle {
   min-width: 100%;
 }
 
+/* 一字排开（默认） */
+.multi-pet-shell--row {
+  display: flex;
+}
+
+/* 环绕主 agent 圆形布局 */
+.multi-pet-shell--circle {
+  display: block;
+  position: relative;
+  width: 100%;
+  min-height: 200px;
+}
+
+.multi-pet-shell--circle .multi-pet-shell__slot {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  margin-left: 0;
+  transform: translate(-50%, -50%) translate(var(--slot-dx, 0), var(--slot-dy, 0)) scale(var(--group-scale));
+}
+
 /* Group 模式空状态：未选任何桌宠时 */
 .multi-pet-shell--empty {
   align-items: center;
@@ -4402,18 +4457,17 @@ button.toggle {
   line-height: 1.4;
 }
 
-/* 2–5 个桌宠时缩小单体，保证展示区能放下；用 --slot-count 驱动缩放 */
+/* Group 模式：统一缩小约 40%（scale 0.6），不随数量再缩；由 --group-scale 控制 */
 .multi-pet-shell__slot {
   position: relative;
   flex-shrink: 0;
-  /* 2→0.85, 3→0.7, 4→0.58, 5→0.48，保证多只时都能放进展示区 */
-  transform: scale(calc(1.1 - var(--slot-count, 2) * 0.14));
+  --group-scale: 0.6;
+  transform: scale(var(--group-scale));
   transform-origin: center bottom;
-  transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+  transition: transform 0.2s ease, opacity 0.2s ease;
   cursor: pointer;
   margin-top: 0;
-  /* 轻微水平错位，避免完全重叠，同时保持整体紧凑 */
-  margin-left: calc(var(--slot-index, 0) * 22px);
+  margin-left: calc(var(--slot-index, 0) * 18px);
 }
 
 .multi-pet-shell__slot:first-child {
@@ -4422,18 +4476,17 @@ button.toggle {
 
 .multi-pet-shell__slot--active {
   z-index: 2;
-  /* 当前选中的仍略大，但不超过 1，避免溢出 */
-  transform: scale(min(1, calc(1.05 - var(--slot-count, 2) * 0.08)));
+  --group-scale: 0.65;
 }
 
 .multi-pet-shell__slot:not(.multi-pet-shell__slot--active) {
-  opacity: 0.85;
-  filter: brightness(0.95);
+  opacity: 0.9;
+  filter: brightness(0.97);
 }
 
+/* Group 模式下去掉 hover 放大，仅提升层级与可读性 */
 .multi-pet-shell__slot:hover {
   z-index: 3;
-  transform: scale(1.02);
   opacity: 1 !important;
   filter: none !important;
 }
@@ -4762,6 +4815,60 @@ button.toggle {
   line-height: 1.45;
   white-space: pre-wrap;
   word-break: break-word;
+}
+
+.chat-message__content--md {
+  white-space: normal;
+}
+
+.chat-message__content--md .chat-message__md-p {
+  margin: 0 0 0.5em;
+}
+
+.chat-message__content--md .chat-message__md-p:last-child {
+  margin-bottom: 0;
+}
+
+.chat-message__link {
+  color: var(--color-accent, #1a73e8);
+  text-decoration: underline;
+}
+
+.chat-message__link:hover {
+  text-decoration: none;
+}
+
+.chat-message__content--md .chat-message__md-ul,
+.chat-message__content--md .chat-message__md-ol {
+  margin: 0.25em 0 0.5em;
+  padding-left: 1.25em;
+}
+
+.chat-message__content--md .chat-message__md-li {
+  margin-bottom: 0.2em;
+}
+
+.chat-message__content--md .chat-message__md-pre {
+  margin: 0.5em 0;
+  padding: 8px 10px;
+  background: rgba(0, 0, 0, 0.06);
+  border-radius: 6px;
+  overflow-x: auto;
+  font-size: 13px;
+}
+
+.chat-message__content--md .chat-message__md-pre .chat-message__md-inline-code,
+.chat-message__content--md .chat-message__md-pre .chat-message__md-code-block {
+  background: none;
+  padding: 0;
+  font-size: inherit;
+}
+
+.chat-message__content--md .chat-message__md-inline-code {
+  padding: 0.15em 0.4em;
+  background: rgba(0, 0, 0, 0.06);
+  border-radius: 4px;
+  font-size: 0.92em;
 }
 
 /* Inline action buttons (Telegram-style inline keyboard on messages) */

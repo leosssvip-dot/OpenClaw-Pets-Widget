@@ -50,7 +50,6 @@ beforeEach(() => {
     bindings: {},
     appearances: {},
     activeProfileId: null,
-    displayMode: 'pinned',
     pinnedAgentId: null,
     petWindowPlacement: null
   });
@@ -206,15 +205,7 @@ describe('hydrateAndReconnectActiveProfile', () => {
 
     expect(screen.getByRole('button', { name: '💬 Chat' })).toHaveClass('panel-tab--active');
 
-    // Display mode and group multi-select are in Gallery; Setup is gateway-only
-    fireEvent.click(screen.getByRole('button', { name: '🐾 Gallery' }));
-    fireEvent.click(screen.getByRole('radio', { name: 'Group' }));
-    expect(screen.getByRole('radio', { name: 'Group' })).toBeChecked();
-    // Group 模式：点击卡片加入展示组（多选，最多 5 个）
-    const adsCard = screen.getByRole('button', { name: /Ads.*add to group/i });
-    fireEvent.click(adsCard);
-    expect(adsCard).toHaveClass('gallery-card--in-group');
-
+    // Switch to Setup tab
     fireEvent.click(screen.getByRole('button', { name: '⚙️ Setup' }));
     expect(screen.getByRole('heading', { name: 'Connection & Gateways' })).toBeInTheDocument();
     fireEvent.click(screen.getByRole('button', { name: 'Add gateway' }));
@@ -289,7 +280,6 @@ describe('hydrateAndReconnectActiveProfile', () => {
         name: 'Ads'
       }
     ]);
-    settingsStore.getState().setDisplayMode('pinned');
     settingsStore.getState().setPinnedAgentId('ad-expert');
 
     render(<App />);

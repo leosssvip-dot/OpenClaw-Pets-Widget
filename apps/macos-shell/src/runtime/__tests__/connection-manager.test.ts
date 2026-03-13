@@ -93,7 +93,6 @@ describe('ConnectionManager', () => {
       bindings: {},
       appearances: {},
       activeProfileId: 'remote-1',
-      displayMode: 'pinned',
       pinnedAgentId: null,
       petWindowPlacement: null
     });

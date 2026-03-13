@@ -1,4 +1,4 @@
-import { GROUP_SELECTION_MAX } from './settings-store';
+
 import {
   PET_ROLE_PACKS,
   resolvePetAppearance,
@@ -25,32 +25,20 @@ export interface GalleryPanelProps {
     isSelected: boolean;
     appearance?: PetAppearanceConfig;
   }>;
-  displayMode: 'pinned' | 'group';
-  onDisplayModeChange: (mode: 'pinned' | 'group') => void;
   onUpdateAppearance: (petId: string, appearance: PetAppearanceConfig) => void;
   onPinnedAgentChange: (agentId: string | null) => void;
-  /** 点击卡片时切换为该桌宠（Single 模式）或切换 Group 多选（Group 模式） */
+  /** 点击卡片时切换为该桌宠 */
   onCompanionSelect?: (agentId: string, petId: string) => void;
-  /** Group 模式下已选中的 agentId 列表 */
-  groupSelectedAgentIds: string[];
-  /** Group 模式下切换某 agent 是否入选 */
-  onToggleGroupAgent?: (agentId: string) => void;
   pinnedAgentId: string | null;
 }
 
 export function GalleryPanel({
   agentRows,
-  displayMode,
-  onDisplayModeChange,
   onUpdateAppearance,
   onPinnedAgentChange,
   onCompanionSelect,
-  groupSelectedAgentIds,
-  onToggleGroupAgent,
   pinnedAgentId
 }: GalleryPanelProps) {
-  const groupCount = groupSelectedAgentIds.length;
-  const isGroupMode = displayMode === 'group';
 
   return (
     <section className="gallery-panel" aria-label="Companions Gallery">
@@ -62,39 +50,10 @@ export function GalleryPanel({
           <div className="settings-drawer__heading-copy">
             <h3 className="settings-drawer__title">Companions</h3>
             <span className="settings-drawer__subtitle">
-              {isGroupMode
-                ? `多选，最多 ${GROUP_SELECTION_MAX} 个（${groupCount}/${GROUP_SELECTION_MAX}）`
-                : 'Your lovely desktop pets'}
+              Your lovely desktop pets
             </span>
           </div>
         </div>
-        {isGroupMode && (
-          <p className="gallery-panel__group-tip" role="status">
-            多选模式，最多可选 {GROUP_SELECTION_MAX} 个。点击卡片添加或移出展示区。
-          </p>
-        )}
-        <fieldset className="gallery-panel__display-mode" aria-label="Display mode">
-          <label>
-            <input
-              type="radio"
-              name="gallery-display-mode"
-              value="pinned"
-              checked={displayMode === 'pinned'}
-              onChange={() => onDisplayModeChange('pinned')}
-            />
-            Single
-          </label>
-          <label>
-            <input
-              type="radio"
-              name="gallery-display-mode"
-              value="group"
-              checked={displayMode === 'group'}
-              onChange={() => onDisplayModeChange('group')}
-            />
-            Group
-          </label>
-        </fieldset>
       </header>
       
       {agentRows.length === 0 ? (
@@ -108,28 +67,20 @@ export function GalleryPanel({
             const rowRolePack = resolvePetAppearance(row.appearance).rolePack;
             const rowRoleMeta = rolePackMeta(rowRolePack);
             const isFavorite = pinnedAgentId === row.agentId;
-            const isInGroup = groupSelectedAgentIds.includes(row.agentId);
-            const canAddToGroup = groupCount < GROUP_SELECTION_MAX || isInGroup;
-            const isActive =
-              (displayMode === 'pinned' && isFavorite) ||
-              (displayMode === 'group' && row.isSelected);
+            const isActive = isFavorite;
 
             const handleCardClick = () => {
-              if (isGroupMode) {
-                if (canAddToGroup) onToggleGroupAgent?.(row.agentId);
-              } else {
-                onCompanionSelect?.(row.agentId, row.petId);
-              }
+              onCompanionSelect?.(row.agentId, row.petId);
             };
 
             return (
               <div
                 key={row.petId}
-                className={`gallery-card ${isActive ? 'gallery-card--active' : ''} ${isGroupMode && isInGroup ? 'gallery-card--in-group' : ''}`}
+                className={`gallery-card ${isActive ? 'gallery-card--active' : ''}`}
                 role="button"
                 tabIndex={0}
-                aria-pressed={isGroupMode ? isInGroup : isActive}
-                aria-label={isGroupMode ? `${row.petName ?? row.agentId}, ${isInGroup ? 'in group' : 'add to group'}` : `Select ${row.petName ?? row.agentId}`}
+                aria-pressed={isActive}
+                aria-label={`Select ${row.petName ?? row.agentId}`}
                 onClick={handleCardClick}
                 onKeyDown={(e) => {
                   if (e.key === 'Enter' || e.key === ' ') {

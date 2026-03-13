@@ -11,7 +11,6 @@ import {
   setGatewaySessionAuth
 } from './runtime/gateway-session-auth';
 import { DesktopPet } from './features/widget/DesktopPet';
-import { MultiPetShell, type PetSlot } from './features/widget/MultiPetShell';
 import type { PetAppearanceConfig } from './features/widget/pet-appearance';
 import { PetWindowSizeProvider } from './features/widget/PetWindowSizeContext';
 import { WidgetPanel } from './features/widget/WidgetPanel';
@@ -138,7 +137,7 @@ export function App() {
       ? 'pet'
       : 'panel';
   });
-  const [menuExtraHeight, setMenuExtraHeight] = useState(0);
+  const [menuExtraHeight, setMenuExtraHeight] = useState<number | null>(0);
   const reconnectAttemptedRef = useRef(false);
   const connectionSnapshot = useSyncExternalStore(
     (listener) => connectionManager.subscribe(listener),
@@ -151,9 +150,7 @@ export function App() {
   const selectedPetId = useHabitatStore((state) => state.selectedPetId);
   const gatewayProfilesById = useSettingsStore((state) => state.gatewayProfiles);
   const activeProfileId = useSettingsStore((state) => state.activeProfileId);
-  const displayMode = useSettingsStore((state) => state.displayMode);
   const pinnedAgentId = useSettingsStore((state) => state.pinnedAgentId);
-  const groupSelectedAgentIds = useSettingsStore((state) => state.groupSelectedAgentIds ?? []);
   const bindingsByPetId = useSettingsStore((state) => state.bindings);
   const appearancesByPetId = useSettingsStore((state) => state.appearances);
   const gatewayProfiles = Object.values(gatewayProfilesById);
@@ -180,7 +177,7 @@ export function App() {
       }))
   ];
   const visiblePetRow =
-    (displayMode === 'pinned' && pinnedAgentId
+    (pinnedAgentId
       ? agentRows.find((row) => row.agentId === pinnedAgentId)
       : null) ??
     (selectedPetId ? agentRows.find((row) => row.petId === selectedPetId) : null) ??
@@ -264,73 +261,23 @@ export function App() {
     }
   };
 
-  // Group 模式：只展示已多选的桌宠（最多 5 个）；Single 模式用 pinned/visiblePetRow
-  const groupPetSlots: PetSlot[] = agentRows
-    .filter((row) => groupSelectedAgentIds.includes(row.agentId))
-    .map((row) => ({
-      petId: row.petId,
-      petName: row.petName ?? row.agentId ?? 'OpenClaw',
-      agentId: row.agentId,
-      status: row.status ?? 'idle',
-      appearance: row.appearance,
-    }));
-
-  // 桌宠窗口根据内容自适应：宠物数量 + 右键菜单打开时的额外高度 + 内容边距
-  const petCountForSize = surface === 'pet' && displayMode === 'group' ? groupPetSlots.length : 1;
+  // 桌宠窗口根据内容自适应：右键菜单打开时的额外高度 + 内容边距
   const contentPadding = 12;
   useEffect(() => {
     if (surface !== 'pet') return;
     const api = getHabitatDesktopApi();
     if (!api?.setPetWindowSize) return;
-    const gap = 22;
     const singleW = 196;
     const singleH = 220;
-    const baseW =
-      petCountForSize <= 1 ? singleW : Math.min(singleW * petCountForSize + gap * (petCountForSize - 1), 1100);
-    const baseH = singleH + menuExtraHeight;
-    const width = baseW + contentPadding;
-    const height = baseH + contentPadding;
+    
+    const width = singleW + contentPadding;
+    const height = singleH + (menuExtraHeight || 0) + contentPadding;
     void api.setPetWindowSize({ width, height });
-  }, [surface, petCountForSize, menuExtraHeight]);
+  }, [surface, menuExtraHeight]);
 
   if (surface === 'pet') {
     const petWindowSizeValue = { setMenuExtraHeight };
-    if (displayMode === 'group') {
-      if (groupPetSlots.length === 0) {
-        return (
-          <div className="multi-pet-shell multi-pet-shell--empty" data-surface="pet">
-            <p className="multi-pet-shell__empty-text">
-              Group mode: open Gallery and click cards to add up to 5 companions to the stage.
-            </p>
-          </div>
-        );
-      }
-      return (
-        <PetWindowSizeProvider value={petWindowSizeValue}>
-          <MultiPetShell
-            pets={groupPetSlots}
-            connectionStatus={connectionStatus}
-            activePetId={selectedPetId}
-            onSendMessage={(petId, text) => {
-              const row = agentRows.find((entry) => entry.petId === petId);
-              if (row) {
-                return handlePetSendMessage(petId, row.agentId, text);
-              }
-              return Promise.resolve();
-            }}
-            onCreateTask={(petId, prompt) => {
-              const row = agentRows.find((entry) => entry.petId === petId);
-              if (row) {
-                return handlePetCreateTask(petId, row.agentId, prompt);
-              }
-              return Promise.resolve();
-            }}
-            onSelectPet={(id) => habitatStore.getState().selectPet(id)}
-          />
-        </PetWindowSizeProvider>
-      );
-    }
-
+    
     return (
       <PetWindowSizeProvider value={petWindowSizeValue}>
         <DesktopPet
@@ -359,9 +306,7 @@ export function App() {
       connectionStatus={connectionStatus}
       connectionError={connectionError}
       activeProfileId={activeProfileId}
-      displayMode={displayMode}
       pinnedAgentId={pinnedAgentId}
-      groupSelectedAgentIds={groupSelectedAgentIds}
       gatewayProfiles={gatewayProfiles}
       agentRows={agentRows}
       currentCompanion={visiblePetRow}
@@ -390,14 +335,8 @@ export function App() {
         void deleteProfileToken(profileId);
         void deleteProfilePassword(profileId);
       }}
-      onDisplayModeChange={(mode) => {
-        settingsStore.getState().setDisplayMode(mode);
-      }}
       onPinnedAgentChange={(agentId) => {
         settingsStore.getState().setPinnedAgentId(agentId);
-      }}
-      onToggleGroupAgent={(agentId) => {
-        settingsStore.getState().toggleGroupAgent(agentId);
       }}
       onSelectPet={(petId) => {
         habitatStore.getState().selectPet(petId);

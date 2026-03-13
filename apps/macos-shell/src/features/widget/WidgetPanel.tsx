@@ -24,7 +24,6 @@ export function WidgetPanel({
   connectionStatus,
   connectionError,
   activeProfileId,
-  displayMode,
   pinnedAgentId,
   gatewayProfiles,
   agentRows,
@@ -33,10 +32,7 @@ export function WidgetPanel({
   onReconnect,
   onSaveProfile,
   onDeleteProfile,
-  onDisplayModeChange,
   onPinnedAgentChange,
-  groupSelectedAgentIds,
-  onToggleGroupAgent,
   onSelectPet,
   onUpdateAppearance,
   onSubmitQuickPrompt
@@ -44,9 +40,7 @@ export function WidgetPanel({
   connectionStatus: ConnectionStatus;
   connectionError: string | null;
   activeProfileId: string | null;
-  displayMode: 'pinned' | 'group';
   pinnedAgentId: string | null;
-  groupSelectedAgentIds: string[];
   gatewayProfiles: GatewayProfile[];
   agentRows: Array<{
     petId: string;
@@ -69,9 +63,7 @@ export function WidgetPanel({
   onReconnect: () => void;
   onSaveProfile: (input: SshConnectionInput, profileId?: string) => Promise<void>;
   onDeleteProfile: (profileId: string) => void;
-  onDisplayModeChange: (mode: 'pinned' | 'group') => void;
   onPinnedAgentChange: (agentId: string | null) => void;
-  onToggleGroupAgent: (agentId: string) => void;
   onSelectPet: (petId: string) => void;
   onUpdateAppearance: (petId: string, appearance: PetAppearanceConfig) => void;
   onSubmitQuickPrompt: (value: string) => Promise<void>;
@@ -171,16 +163,12 @@ export function WidgetPanel({
               {activeTab === 'pets' && (
                 <GalleryPanel
                   agentRows={agentRows}
-                  displayMode={displayMode}
-                  onDisplayModeChange={onDisplayModeChange}
                   onUpdateAppearance={onUpdateAppearance}
                   onPinnedAgentChange={onPinnedAgentChange}
                   onCompanionSelect={(agentId, petId) => {
                     onPinnedAgentChange(agentId);
                     onSelectPet(petId);
                   }}
-                  groupSelectedAgentIds={groupSelectedAgentIds}
-                  onToggleGroupAgent={onToggleGroupAgent}
                   pinnedAgentId={pinnedAgentId}
                 />
               )}

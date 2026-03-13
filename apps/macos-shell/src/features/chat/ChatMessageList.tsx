@@ -1,5 +1,6 @@
 import { useRef, useEffect, useMemo } from 'react';
 import type { ChatMessage } from './types';
+import { MarkdownContent } from './MarkdownContent';
 import { parseMessageActions, type MessageAction } from './message-actions';
 
 export function ChatMessageList({
@@ -82,7 +83,7 @@ export function ChatMessageList({
             <span className="chat-message__role" aria-hidden="true">
               {m.role === 'user' ? 'You' : 'Assistant'}
             </span>
-            <p className="chat-message__content">{m.content}</p>
+            <MarkdownContent content={m.content} />
             {actions && actions.length > 0 && onAction && (
               <div className="chat-message__actions">
                 {actions.map((a) => (

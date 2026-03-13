@@ -71,7 +71,6 @@ describe('createSettingsStore', () => {
       bindings: {},
       appearances: {},
       activeProfileId: null,
-      displayMode: 'pinned',
       pinnedAgentId: null,
       petWindowPlacement: null
     });
@@ -88,7 +87,6 @@ describe('createSettingsStore', () => {
             }
           },
           activeProfileId: null,
-          displayMode: 'pinned',
           pinnedAgentId: null,
           petWindowPlacement: null
         },
