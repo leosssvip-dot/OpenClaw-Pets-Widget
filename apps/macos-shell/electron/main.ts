@@ -191,6 +191,13 @@ if (ipcMain?.handle) {
     return petWindowPositionController.persist(payload);
   });
 
+  ipcMain.handle('window:setPetWindowSize', (_event, size: { width: number; height: number }) => {
+    if (!petWindow || petWindow.isDestroyed()) return;
+    const [x, y] = petWindow.getPosition();
+    petWindow.setBounds({ x, y, width: size.width, height: size.height });
+    alignPanelWindow();
+  });
+
   ipcMain.handle('window:togglePanel', () => {
     if (!panelWindow) {
       return { isOpen: false };

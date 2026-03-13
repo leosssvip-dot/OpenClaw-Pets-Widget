@@ -35,6 +35,8 @@ export function WidgetPanel({
   onDeleteProfile,
   onDisplayModeChange,
   onPinnedAgentChange,
+  groupSelectedAgentIds,
+  onToggleGroupAgent,
   onSelectPet,
   onUpdateAppearance,
   onSubmitQuickPrompt
@@ -44,6 +46,7 @@ export function WidgetPanel({
   activeProfileId: string | null;
   displayMode: 'pinned' | 'group';
   pinnedAgentId: string | null;
+  groupSelectedAgentIds: string[];
   gatewayProfiles: GatewayProfile[];
   agentRows: Array<{
     petId: string;
@@ -68,6 +71,7 @@ export function WidgetPanel({
   onDeleteProfile: (profileId: string) => void;
   onDisplayModeChange: (mode: 'pinned' | 'group') => void;
   onPinnedAgentChange: (agentId: string | null) => void;
+  onToggleGroupAgent: (agentId: string) => void;
   onSelectPet: (petId: string) => void;
   onUpdateAppearance: (petId: string, appearance: PetAppearanceConfig) => void;
   onSubmitQuickPrompt: (value: string) => Promise<void>;
@@ -175,6 +179,8 @@ export function WidgetPanel({
                     onPinnedAgentChange(agentId);
                     onSelectPet(petId);
                   }}
+                  groupSelectedAgentIds={groupSelectedAgentIds}
+                  onToggleGroupAgent={onToggleGroupAgent}
                   pinnedAgentId={pinnedAgentId}
                 />
               )}

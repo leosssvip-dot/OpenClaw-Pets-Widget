@@ -9,6 +9,7 @@ import { DesktopPetIllustration } from './DesktopPetIllustration';
 import { MeritParticles } from './MeritParticles';
 import { PetBubble } from './PetBubble';
 import { PetContextMenu } from './PetContextMenu';
+import { usePetWindowSize } from './PetWindowSizeContext';
 
 // ---------------------------------------------------------------------------
 // GSAP monk working timeline (preserved from original)
@@ -660,6 +661,7 @@ export function DesktopPet({
   const [bubbleMode, setBubbleMode] = useState<'input' | 'status' | null>(null);
   const [contextMenu, setContextMenu] = useState<{ x: number; y: number } | null>(null);
   const petRef = useRef<HTMLButtonElement | null>(null);
+  const petWindowSize = usePetWindowSize();
   const dragStateRef = useRef({
     pointerId: null as number | null,
     startX: 0,
@@ -961,7 +963,11 @@ export function DesktopPet({
           y={contextMenu.y}
           currentRole={resolvedAppearance.rolePack}
           onAction={handleContextAction}
-          onClose={() => setContextMenu(null)}
+          onClose={() => {
+            setContextMenu(null);
+            petWindowSize?.setMenuExtraHeight(null);
+          }}
+          onMeasured={(height) => petWindowSize?.setMenuExtraHeight(height)}
         />
       ) : null}
     </main>

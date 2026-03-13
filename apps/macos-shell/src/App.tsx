@@ -13,6 +13,7 @@ import {
 import { DesktopPet } from './features/widget/DesktopPet';
 import { MultiPetShell, type PetSlot } from './features/widget/MultiPetShell';
 import type { PetAppearanceConfig } from './features/widget/pet-appearance';
+import { PetWindowSizeProvider } from './features/widget/PetWindowSizeContext';
 import { WidgetPanel } from './features/widget/WidgetPanel';
 
 function toHabitatPets(agents: AgentBindingSeed[]) {
@@ -137,6 +138,7 @@ export function App() {
       ? 'pet'
       : 'panel';
   });
+  const [menuExtraHeight, setMenuExtraHeight] = useState(0);
   const reconnectAttemptedRef = useRef(false);
   const connectionSnapshot = useSyncExternalStore(
     (listener) => connectionManager.subscribe(listener),
@@ -151,6 +153,7 @@ export function App() {
   const activeProfileId = useSettingsStore((state) => state.activeProfileId);
   const displayMode = useSettingsStore((state) => state.displayMode);
   const pinnedAgentId = useSettingsStore((state) => state.pinnedAgentId);
+  const groupSelectedAgentIds = useSettingsStore((state) => state.groupSelectedAgentIds ?? []);
   const bindingsByPetId = useSettingsStore((state) => state.bindings);
   const appearancesByPetId = useSettingsStore((state) => state.appearances);
   const gatewayProfiles = Object.values(gatewayProfilesById);
@@ -261,44 +264,76 @@ export function App() {
     }
   };
 
-  // Build multi-pet slots from all agent rows
-  const petSlots: PetSlot[] = agentRows.map((row) => ({
-    petId: row.petId,
-    petName: row.petName ?? row.agentId ?? 'OpenClaw',
-    agentId: row.agentId,
-    status: row.status ?? 'idle',
-    appearance: row.appearance,
-  }));
+  // Group 模式：只展示已多选的桌宠（最多 5 个）；Single 模式用 pinned/visiblePetRow
+  const groupPetSlots: PetSlot[] = agentRows
+    .filter((row) => groupSelectedAgentIds.includes(row.agentId))
+    .map((row) => ({
+      petId: row.petId,
+      petName: row.petName ?? row.agentId ?? 'OpenClaw',
+      agentId: row.agentId,
+      status: row.status ?? 'idle',
+      appearance: row.appearance,
+    }));
+
+  // 桌宠窗口根据内容自适应：宠物数量 + 右键菜单打开时的额外高度 + 内容边距
+  const petCountForSize = surface === 'pet' && displayMode === 'group' ? groupPetSlots.length : 1;
+  const contentPadding = 12;
+  useEffect(() => {
+    if (surface !== 'pet') return;
+    const api = getHabitatDesktopApi();
+    if (!api?.setPetWindowSize) return;
+    const gap = 22;
+    const singleW = 196;
+    const singleH = 220;
+    const baseW =
+      petCountForSize <= 1 ? singleW : Math.min(singleW * petCountForSize + gap * (petCountForSize - 1), 1100);
+    const baseH = singleH + menuExtraHeight;
+    const width = baseW + contentPadding;
+    const height = baseH + contentPadding;
+    void api.setPetWindowSize({ width, height });
+  }, [surface, petCountForSize, menuExtraHeight]);
 
   if (surface === 'pet') {
-    // Multi-pet mode when display mode is 'group', single pet when 'pinned'
-    if (displayMode === 'group' && petSlots.length > 1) {
+    const petWindowSizeValue = { setMenuExtraHeight };
+    if (displayMode === 'group') {
+      if (groupPetSlots.length === 0) {
+        return (
+          <div className="multi-pet-shell multi-pet-shell--empty" data-surface="pet">
+            <p className="multi-pet-shell__empty-text">
+              Group mode: open Gallery and click cards to add up to 5 companions to the stage.
+            </p>
+          </div>
+        );
+      }
       return (
-        <MultiPetShell
-          pets={petSlots}
-          connectionStatus={connectionStatus}
-          activePetId={selectedPetId}
-          onSendMessage={(petId, text) => {
-            const row = agentRows.find((entry) => entry.petId === petId);
-            if (row) {
-              return handlePetSendMessage(petId, row.agentId, text);
-            }
-            return Promise.resolve();
-          }}
-          onCreateTask={(petId, prompt) => {
-            const row = agentRows.find((entry) => entry.petId === petId);
-            if (row) {
-              return handlePetCreateTask(petId, row.agentId, prompt);
-            }
-            return Promise.resolve();
-          }}
-          onSelectPet={(id) => habitatStore.getState().selectPet(id)}
-        />
+        <PetWindowSizeProvider value={petWindowSizeValue}>
+          <MultiPetShell
+            pets={groupPetSlots}
+            connectionStatus={connectionStatus}
+            activePetId={selectedPetId}
+            onSendMessage={(petId, text) => {
+              const row = agentRows.find((entry) => entry.petId === petId);
+              if (row) {
+                return handlePetSendMessage(petId, row.agentId, text);
+              }
+              return Promise.resolve();
+            }}
+            onCreateTask={(petId, prompt) => {
+              const row = agentRows.find((entry) => entry.petId === petId);
+              if (row) {
+                return handlePetCreateTask(petId, row.agentId, prompt);
+              }
+              return Promise.resolve();
+            }}
+            onSelectPet={(id) => habitatStore.getState().selectPet(id)}
+          />
+        </PetWindowSizeProvider>
       );
     }
 
     return (
-      <DesktopPet
+      <PetWindowSizeProvider value={petWindowSizeValue}>
+        <DesktopPet
         petName={petDisplayName}
         petId={visiblePetRow?.petId}
         connectionStatus={connectionStatus}
@@ -315,6 +350,7 @@ export function App() {
           }
         }}
       />
+      </PetWindowSizeProvider>
     );
   }
 
@@ -325,6 +361,7 @@ export function App() {
       activeProfileId={activeProfileId}
       displayMode={displayMode}
       pinnedAgentId={pinnedAgentId}
+      groupSelectedAgentIds={groupSelectedAgentIds}
       gatewayProfiles={gatewayProfiles}
       agentRows={agentRows}
       currentCompanion={visiblePetRow}
@@ -358,6 +395,9 @@ export function App() {
       }}
       onPinnedAgentChange={(agentId) => {
         settingsStore.getState().setPinnedAgentId(agentId);
+      }}
+      onToggleGroupAgent={(agentId) => {
+        settingsStore.getState().toggleGroupAgent(agentId);
       }}
       onSelectPet={(petId) => {
         habitatStore.getState().selectPet(petId);

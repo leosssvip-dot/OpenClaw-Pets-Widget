@@ -13,6 +13,8 @@ contextBridge.exposeInMainWorld('habitat', {
     ipcRenderer.invoke('window:movePet', payload),
   persistPetWindowPosition: (payload: { x: number; y: number }) =>
     ipcRenderer.invoke('window:persistPetPosition', payload),
+  setPetWindowSize: (size: { width: number; height: number }) =>
+    ipcRenderer.invoke('window:setPetWindowSize', size),
   togglePanel: () => ipcRenderer.invoke('window:togglePanel'),
   storeSecret: (key: string, value: string) =>
     ipcRenderer.invoke('secrets:store', { key, value }),

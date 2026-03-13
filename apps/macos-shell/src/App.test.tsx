@@ -206,13 +206,14 @@ describe('hydrateAndReconnectActiveProfile', () => {
 
     expect(screen.getByRole('button', { name: '💬 Chat' })).toHaveClass('panel-tab--active');
 
-    // Display mode and pin are in Gallery; Setup is gateway-only
+    // Display mode and group multi-select are in Gallery; Setup is gateway-only
     fireEvent.click(screen.getByRole('button', { name: '🐾 Gallery' }));
     fireEvent.click(screen.getByRole('radio', { name: 'Group' }));
     expect(screen.getByRole('radio', { name: 'Group' })).toBeChecked();
-    const adsCard = screen.getByRole('heading', { name: 'Ads' }).closest('.gallery-card');
-    expect(adsCard).toBeInTheDocument();
-    fireEvent.click(within(adsCard!).getByTitle('Pin companion to stage'));
+    // Group 模式：点击卡片加入展示组（多选，最多 5 个）
+    const adsCard = screen.getByRole('button', { name: /Ads.*add to group/i });
+    fireEvent.click(adsCard);
+    expect(adsCard).toHaveClass('gallery-card--in-group');
 
     fireEvent.click(screen.getByRole('button', { name: '⚙️ Setup' }));
     expect(screen.getByRole('heading', { name: 'Connection & Gateways' })).toBeInTheDocument();
