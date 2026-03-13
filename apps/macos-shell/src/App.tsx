@@ -5,7 +5,7 @@ import { habitatStore, useHabitatStore } from './features/habitat/store';
 import { getRuntimeDeps } from './runtime/runtime-deps';
 import { getHabitatDesktopApi } from './runtime/habitat-api';
 import type { SshConnectionInput } from './features/settings/SshConnectionForm';
-import { settingsStore, useSettingsStore } from './features/settings/settings-store';
+import { preloadSettingsFromDisk, settingsStore, useSettingsStore } from './features/settings/settings-store';
 import {
   clearGatewaySessionAuth,
   setGatewaySessionAuth
@@ -215,7 +215,11 @@ export function App() {
     void hydrateAndReconnectActiveProfile(
       surface,
       reconnectAttemptedRef.current,
-      hydrateProfileSecrets,
+      async () => {
+        // 先从磁盘恢复设置（含 gateway profiles），再恢复 tokens
+        await preloadSettingsFromDisk();
+        await hydrateProfileSecrets();
+      },
       () => {
         reconnectAttemptedRef.current = true;
       },
@@ -354,6 +358,9 @@ export function App() {
       }}
       onPinnedAgentChange={(agentId) => {
         settingsStore.getState().setPinnedAgentId(agentId);
+      }}
+      onSelectPet={(petId) => {
+        habitatStore.getState().selectPet(petId);
       }}
       onUpdateAppearance={(petId, appearance) => {
         settingsStore.getState().setPetAppearance(petId, appearance);

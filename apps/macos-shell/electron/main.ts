@@ -1,5 +1,7 @@
 import { app, BrowserWindow, ipcMain, screen } from 'electron';
 import { fileURLToPath } from 'node:url';
+import { readFile, writeFile, mkdir } from 'node:fs/promises';
+import { join } from 'node:path';
 import type { GatewayProfile } from '@openclaw-habitat/bridge';
 import type { GatewaySessionAuth } from '../src/runtime/gateway-session-auth';
 import { createHabitatTray } from './tray';
@@ -236,6 +238,32 @@ if (ipcMain?.handle) {
 
   ipcMain.handle('secrets:delete', async (_event, payload: { key: string }) => {
     await deleteSecret(payload.key);
+  });
+
+  /* ---------- Settings file persistence (survives app restarts) ---------- */
+  const settingsDir = app.isReady()
+    ? app.getPath('userData')
+    : '';
+
+  function getSettingsPath() {
+    const dir = settingsDir || app.getPath('userData');
+    return join(dir, 'openclaw-settings.json');
+  }
+
+  ipcMain.handle('settings:read', async () => {
+    try {
+      const raw = await readFile(getSettingsPath(), 'utf-8');
+      return raw;
+    } catch {
+      // 文件不存在时返回 null，让渲染端使用默认值
+      return null;
+    }
+  });
+
+  ipcMain.handle('settings:write', async (_event, payload: { data: string }) => {
+    const filePath = getSettingsPath();
+    await mkdir(join(filePath, '..'), { recursive: true });
+    await writeFile(filePath, payload.data, 'utf-8');
   });
 }
 

@@ -47,12 +47,13 @@ export function GatewayProfiles({
     <section className="gateway-profiles">
       <div className="section-heading">
         <div className="section-heading__copy">
-          <h2>Gateway management</h2>
+          <h2>Connection & Gateways</h2>
           <p>Saved links and SSH setup for this companion.</p>
         </div>
         <button
           type="button"
           disabled={isConnecting}
+          className="settings-btn settings-btn--primary"
           onClick={() => {
             if (isOpen) {
               setIsOpen(false);
@@ -64,7 +65,7 @@ export function GatewayProfiles({
             setIsOpen(true);
           }}
         >
-          {isConnecting ? 'Connecting...' : isOpen ? 'Cancel' : 'Connect Remote'}
+          {isConnecting ? 'Connecting...' : isOpen ? 'Cancel' : 'Add gateway'}
         </button>
       </div>
 

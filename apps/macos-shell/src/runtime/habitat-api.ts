@@ -21,6 +21,8 @@ export interface HabitatDesktopApi {
   storeSecret: (key: string, value: string) => Promise<void>;
   retrieveSecret: (key: string) => Promise<string | null>;
   deleteSecret: (key: string) => Promise<void>;
+  readSettings: () => Promise<string | null>;
+  writeSettings: (data: string) => Promise<void>;
 }
 
 export function getHabitatDesktopApi() {

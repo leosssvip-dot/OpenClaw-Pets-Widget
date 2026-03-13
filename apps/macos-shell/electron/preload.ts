@@ -19,5 +19,9 @@ contextBridge.exposeInMainWorld('habitat', {
   retrieveSecret: (key: string) =>
     ipcRenderer.invoke('secrets:retrieve', { key }) as Promise<string | null>,
   deleteSecret: (key: string) =>
-    ipcRenderer.invoke('secrets:delete', { key })
+    ipcRenderer.invoke('secrets:delete', { key }),
+  readSettings: () =>
+    ipcRenderer.invoke('settings:read') as Promise<string | null>,
+  writeSettings: (data: string) =>
+    ipcRenderer.invoke('settings:write', { data })
 });

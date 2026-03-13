@@ -1,4 +1,4 @@
-import { fireEvent, render, screen } from '@testing-library/react';
+import { fireEvent, render, screen, within } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { hydrateAndReconnectActiveProfile, hydrateProfileSecrets } from './App';
 import { App } from './App';
@@ -198,29 +198,25 @@ describe('hydrateAndReconnectActiveProfile', () => {
       })
     ).not.toBeInTheDocument();
     expect(screen.queryByText('Signal')).not.toBeInTheDocument();
-    expect(screen.getByTestId('settings-pet-hint')).toBeInTheDocument();
     expect(screen.queryByRole('button', { name: 'Switch agent' })).not.toBeInTheDocument();
     expect(screen.queryByRole('button', { name: 'Switch character' })).not.toBeInTheDocument();
     expect(screen.queryByRole('button', { name: 'More settings' })).not.toBeInTheDocument();
     expect(screen.queryByRole('button', { name: 'Agent' })).not.toBeInTheDocument();
     expect(screen.queryByLabelText('Current agent')).not.toBeInTheDocument();
 
-    expect(screen.getByRole('button', { name: 'Display' })).toHaveAttribute('aria-expanded', 'true');
-    expect(screen.getByLabelText('Pinned agent')).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: '💬 Chat' })).toHaveClass('panel-tab--active');
+
+    // Display mode and pin are in Gallery; Setup is gateway-only
+    fireEvent.click(screen.getByRole('button', { name: '🐾 Gallery' }));
     fireEvent.click(screen.getByRole('radio', { name: 'Group' }));
-    fireEvent.change(screen.getByLabelText('Pinned agent'), {
-      target: { value: 'ad-expert' }
-    });
-
     expect(screen.getByRole('radio', { name: 'Group' })).toBeChecked();
-    expect(screen.getByLabelText('Pinned agent')).toHaveValue('ad-expert');
+    const adsCard = screen.getByRole('heading', { name: 'Ads' }).closest('.gallery-card');
+    expect(adsCard).toBeInTheDocument();
+    fireEvent.click(within(adsCard!).getByTitle('Pin companion to stage'));
 
-    fireEvent.click(screen.getByRole('button', { name: 'Connection' }));
-    fireEvent.click(screen.getByRole('button', { name: 'Edit' }));
-
-    expect(screen.getByRole('heading', { name: 'Gateway management' })).toBeInTheDocument();
-
-    fireEvent.click(screen.getByRole('button', { name: 'Connect Remote' }));
+    fireEvent.click(screen.getByRole('button', { name: '⚙️ Setup' }));
+    expect(screen.getByRole('heading', { name: 'Connection & Gateways' })).toBeInTheDocument();
+    fireEvent.click(screen.getByRole('button', { name: 'Add gateway' }));
 
     expect(screen.getByLabelText('Gateway Port')).toBeInTheDocument();
     expect(screen.getByLabelText('Gateway Token')).toBeInTheDocument();
@@ -229,16 +225,13 @@ describe('hydrateAndReconnectActiveProfile', () => {
   it('shows a direct gateway connection action when no companion is connected', async () => {
     render(<App />);
 
-    expect(await screen.findByText('No companion connected')).toBeInTheDocument();
+    expect(await screen.findByText('No companion on stage')).toBeInTheDocument();
     const connectButton = screen.getByRole('button', { name: 'Connect gateway' });
 
     fireEvent.click(connectButton);
 
-    expect(screen.getByRole('button', { name: 'Connection' })).toHaveAttribute(
-      'aria-expanded',
-      'true'
-    );
-    expect(screen.getByRole('button', { name: 'Connect Remote' })).toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: 'System Setup' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Add gateway' })).toBeInTheDocument();
   });
 
   it('reconnects again when the panel remounts with an active profile', async () => {

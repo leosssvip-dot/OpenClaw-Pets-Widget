@@ -6,6 +6,7 @@ import { ConnectionBadge } from '../connection/ConnectionBadge';
 import { ReconnectBanner } from '../connection/ReconnectBanner';
 import type { HabitatPet } from '../habitat/types';
 import { SettingsPanel } from '../settings/SettingsPanel';
+import { GalleryPanel } from '../settings/GalleryPanel';
 import type { SshConnectionInput } from '../settings/SshConnectionForm';
 import {
   PET_ROLE_PACKS,
@@ -34,6 +35,7 @@ export function WidgetPanel({
   onDeleteProfile,
   onDisplayModeChange,
   onPinnedAgentChange,
+  onSelectPet,
   onUpdateAppearance,
   onSubmitQuickPrompt
 }: {
@@ -66,16 +68,15 @@ export function WidgetPanel({
   onDeleteProfile: (profileId: string) => void;
   onDisplayModeChange: (mode: 'pinned' | 'group') => void;
   onPinnedAgentChange: (agentId: string | null) => void;
+  onSelectPet: (petId: string) => void;
   onUpdateAppearance: (petId: string, appearance: PetAppearanceConfig) => void;
   onSubmitQuickPrompt: (value: string) => Promise<void>;
 }) {
-  const [expandedSection, setExpandedSection] = useState<
-    'display' | 'characters' | 'connection' | null
-  >('display');
-  const [isConnectionEditorOpen, setIsConnectionEditorOpen] = useState(false);
   const resolvedAppearance = resolvePetAppearance(currentCompanion?.appearance);
   const currentRolePack = rolePackMeta(resolvedAppearance.rolePack);
   const currentName = currentCompanion?.petName ?? currentCompanion?.agentId ?? 'OpenClaw';
+
+  const [activeTab, setActiveTab] = useState<'chat' | 'pets' | 'settings'>('chat');
 
   return (
     <main className="app-shell app-shell--panel">
@@ -89,75 +90,105 @@ export function WidgetPanel({
       <section className="widget-layout">
         <div className="widget-layout__main">
           <section className="panel-frame panel-frame--unified">
-            <div className="window-bar">
-              <div className="dots" aria-hidden="true">
-                <span />
-                <span />
-                <span />
+            <div className="panel-header">
+              <div className="window-bar">
+                <div className="dots" aria-hidden="true">
+                  <button 
+                    type="button" 
+                    className="dot dot--close" 
+                    aria-label="Close" 
+                    onClick={() => void getHabitatDesktopApi()?.togglePanel()} 
+                  />
+                  <button 
+                    type="button" 
+                    className="dot dot--minimize" 
+                    aria-label="Minimize" 
+                    onClick={() => void getHabitatDesktopApi()?.togglePanel()} 
+                  />
+                </div>
+                <div className="window-bar__actions">
+                  <ConnectionBadge status={connectionStatus} />
+                </div>
               </div>
-              <div className="window-bar__actions">
-                <ConnectionBadge status={connectionStatus} />
-                <button
-                  type="button"
-                  className="app-shell__hide-btn"
-                  title="Hide panel"
-                  onClick={() => void getHabitatDesktopApi()?.togglePanel()}
+
+              <nav className="panel-tabs">
+                <button 
+                  className={`panel-tab ${activeTab === 'chat' ? 'panel-tab--active' : ''}`}
+                  onClick={() => setActiveTab('chat')}
                 >
-                  &minus;
+                  💬 Chat
                 </button>
-              </div>
+                <button 
+                  className={`panel-tab ${activeTab === 'pets' ? 'panel-tab--active' : ''}`}
+                  onClick={() => setActiveTab('pets')}
+                >
+                  🐾 Gallery
+                </button>
+                <button 
+                  className={`panel-tab ${activeTab === 'settings' ? 'panel-tab--active' : ''}`}
+                  onClick={() => setActiveTab('settings')}
+                >
+                  ⚙️ Setup
+                </button>
+              </nav>
             </div>
 
-            {currentCompanion ? (
-              <ChatPanel
-                sessionKey={
-                  activeProfileId && currentCompanion
-                    ? `${activeProfileId}:${currentCompanion.agentId}`
-                    : null
-                }
-                petName={currentName}
-                placeholder={currentRolePack.quickPromptExample}
-                disabled={
-                  connectionStatus === 'connecting' || connectionStatus === 'reconnecting'
-                }
-                onSubmit={onSubmitQuickPrompt}
-              />
-            ) : (
-              <div className="app-shell__empty-state">
-                <strong>No companion connected</strong>
-                <p>Open the connection section and link a gateway to bring a companion on stage.</p>
-                <button
-                  type="button"
-                  className="app-shell__empty-state-action"
-                  onClick={() => {
-                    setExpandedSection('connection');
-                    setIsConnectionEditorOpen(true);
-                  }}
-                >
-                  Connect gateway
-                </button>
-              </div>
-            )}
+            <div className="panel-content">
+              {activeTab === 'chat' && (
+                currentCompanion ? (
+                  <ChatPanel
+                    sessionKey={
+                      activeProfileId && currentCompanion
+                        ? `${activeProfileId}:${currentCompanion.agentId}`
+                        : null
+                    }
+                    petName={currentName}
+                    placeholder={currentRolePack.quickPromptExample}
+                    disabled={
+                      connectionStatus === 'connecting' || connectionStatus === 'reconnecting'
+                    }
+                    onSubmit={onSubmitQuickPrompt}
+                  />
+                ) : (
+                  <div className="app-shell__empty-state">
+                    <strong>No companion on stage</strong>
+                    <p>Go to the Gallery to call a companion, or check Connection.</p>
+                    <button
+                      type="button"
+                      className="app-shell__empty-state-action"
+                      onClick={() => setActiveTab('settings')}
+                    >
+                      Connect gateway
+                    </button>
+                  </div>
+                )
+              )}
 
+              {activeTab === 'pets' && (
+                <GalleryPanel
+                  agentRows={agentRows}
+                  displayMode={displayMode}
+                  onDisplayModeChange={onDisplayModeChange}
+                  onUpdateAppearance={onUpdateAppearance}
+                  onPinnedAgentChange={onPinnedAgentChange}
+                  onCompanionSelect={(agentId, petId) => {
+                    onPinnedAgentChange(agentId);
+                    onSelectPet(petId);
+                  }}
+                  pinnedAgentId={pinnedAgentId}
+                />
+              )}
+
+              {activeTab === 'settings' && (
                 <SettingsPanel
                   connectionStatus={connectionStatus}
                   activeProfileId={activeProfileId}
-                  displayMode={displayMode}
-                  pinnedAgentId={pinnedAgentId}
                   gatewayProfiles={gatewayProfiles}
-                  agentRows={agentRows}
-                  onReconnect={onReconnect}
                   onSaveProfile={onSaveProfile}
                   onDeleteProfile={onDeleteProfile}
-                  onDisplayModeChange={onDisplayModeChange}
-                  onPinnedAgentChange={onPinnedAgentChange}
-                  onUpdateAppearance={onUpdateAppearance}
-                  onSubmitQuickPrompt={onSubmitQuickPrompt}
-                  expandedSection={expandedSection}
-                  onSetExpandedSection={setExpandedSection}
-                  isConnectionEditorOpen={isConnectionEditorOpen}
-                  onSetIsConnectionEditorOpen={setIsConnectionEditorOpen}
                 />
+              )}
+            </div>
           </section>
         </div>
       </section>
