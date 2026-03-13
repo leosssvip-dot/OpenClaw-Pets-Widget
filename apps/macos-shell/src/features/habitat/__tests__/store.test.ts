@@ -80,4 +80,40 @@ describe('createHabitatStore', () => {
 
     expect(store.getState().selectedPetId).toBe('pet-2');
   });
+
+  it('shows assistant chat output in the pet bubble and marks final replies done', () => {
+    const store = createHabitatStore();
+
+    store.getState().seedPets([
+      { id: 'pet-1', agentId: 'researcher', gatewayId: 'remote-1', status: 'thinking' }
+    ]);
+
+    store.getState().applyEvent({
+      kind: 'chat.message',
+      agentId: 'researcher',
+      gatewayId: 'remote-1',
+      petId: 'pet-1',
+      text: '当前这轮会话',
+      final: false
+    });
+
+    expect(store.getState().pets['pet-1']).toMatchObject({
+      status: 'working',
+      bubbleText: '当前这轮会话'
+    });
+
+    store.getState().applyEvent({
+      kind: 'chat.message',
+      agentId: 'researcher',
+      gatewayId: 'remote-1',
+      petId: 'pet-1',
+      text: '当前这轮会话在跑的是 gpt-5.4。',
+      final: true
+    });
+
+    expect(store.getState().pets['pet-1']).toMatchObject({
+      status: 'done',
+      bubbleText: '当前这轮会话在跑的是 gpt-5.4。'
+    });
+  });
 });

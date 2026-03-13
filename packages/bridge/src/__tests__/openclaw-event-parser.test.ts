@@ -43,4 +43,29 @@ describe('parseOpenClawEvent', () => {
       }).kind
     ).toBe('agent.unknown');
   });
+
+  it('normalizes assistant chat delta events', () => {
+    const event = parseOpenClawEvent({
+      type: 'chat',
+      agentId: 'researcher',
+      gatewayId: 'remote-1',
+      petId: 'pet-1',
+      payload: {
+        state: 'delta',
+        message: {
+          role: 'assistant',
+          content: [{ type: 'text', text: '当前这轮' }]
+        }
+      }
+    });
+
+    expect(event).toEqual({
+      kind: 'chat.message',
+      agentId: 'researcher',
+      gatewayId: 'remote-1',
+      petId: 'pet-1',
+      text: '当前这轮',
+      final: false
+    });
+  });
 });

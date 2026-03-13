@@ -1,6 +1,7 @@
 import type {
   AgentBindingSeed,
   BridgeClient,
+  BridgeConnectionState,
   CreateTaskInput,
   HabitatEvent,
   PreparedGatewayConnection,
@@ -35,6 +36,19 @@ interface OpenClawClientOptions {
   openTimeoutMs?: number;
   handshakeTimeoutMs?: number;
   requestTimeoutMs?: number;
+}
+
+function isSocketOpen(socket: WebSocket | null): socket is WebSocket {
+  if (!socket) {
+    return false;
+  }
+
+  if (typeof socket.readyState === 'number') {
+    const openState = typeof socket.OPEN === 'number' ? socket.OPEN : 1;
+    return socket.readyState === openState;
+  }
+
+  return true;
 }
 
 function toMessageText(data: unknown) {
@@ -217,6 +231,28 @@ function formatResponseError(error: unknown): string {
   return String(error);
 }
 
+function createIdempotencyKey() {
+  if (typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function') {
+    return crypto.randomUUID();
+  }
+
+  return `bridge-${Date.now()}-${Math.random().toString(36).slice(2)}`;
+}
+
+function parseAgentIdFromSessionKey(sessionKey: unknown) {
+  if (typeof sessionKey !== 'string') {
+    return null;
+  }
+
+  const parts = sessionKey.split(':');
+
+  if (parts.length < 3 || parts[0] !== 'agent') {
+    return null;
+  }
+
+  return parts[1] || null;
+}
+
 function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === 'object' && value !== null;
 }
@@ -303,6 +339,14 @@ function waitForResponse(socket: WebSocket, requestId: string, timeoutMs: number
 export class OpenClawClient implements BridgeClient {
   private socket: WebSocket | null = null;
   private activeProfile: GatewayProfile | null = null;
+  private sessionMainKey = 'main';
+  private readonly connectionListeners = new Set<(state: BridgeConnectionState) => void>();
+  private connectionState: BridgeConnectionState = {
+    status: 'disconnected',
+    profileId: null,
+    errorMessage: null
+  };
+  private socketLifecycleCleanup: (() => void) | null = null;
 
   constructor(
     private readonly resolveProfile: (profileId: string) => GatewayProfile | undefined,
@@ -327,6 +371,11 @@ export class OpenClawClient implements BridgeClient {
     await this.disconnect();
 
     this.activeProfile = profile;
+    this.setConnectionState({
+      status: 'connecting',
+      profileId: profile.id,
+      errorMessage: null
+    });
 
     try {
       const connection =
@@ -334,12 +383,10 @@ export class OpenClawClient implements BridgeClient {
       console.log('[bridge] connecting to', connection.url);
       const socket = this.socketFactory(connection.url);
       this.socket = socket;
+      this.attachSocketLifecycle(socket);
 
       socket.addEventListener('message', (event) => {
         console.log('[bridge] ← raw', toMessageText(event.data));
-      });
-      socket.addEventListener('close', (event) => {
-        console.log('[bridge] socket closed', event.code, event.reason);
       });
 
       await waitForOpen(socket, this.options.openTimeoutMs ?? 4_000);
@@ -400,6 +447,12 @@ export class OpenClawClient implements BridgeClient {
       }
 
       if (hello.ok === true) {
+        this.updateSessionDefaults(hello.payload);
+        this.setConnectionState({
+          status: 'connected',
+          profileId: profile.id,
+          errorMessage: null
+        });
         return;
       }
 
@@ -407,6 +460,12 @@ export class OpenClawClient implements BridgeClient {
         const errorStr = formatResponseError(hello.error);
 
         if (errorStr.includes('auth') || errorStr.includes('expired')) {
+          await this.disposeCurrentSocket(false);
+          this.setConnectionState({
+            status: 'auth-expired',
+            profileId: profile.id,
+            errorMessage: 'AUTH_EXPIRED'
+          });
           throw new Error('AUTH_EXPIRED');
         }
 
@@ -422,23 +481,39 @@ export class OpenClawClient implements BridgeClient {
         }
 
         if (payloadType === 'auth-expired') {
+          await this.disposeCurrentSocket(false);
+          this.setConnectionState({
+            status: 'auth-expired',
+            profileId: profile.id,
+            errorMessage: 'AUTH_EXPIRED'
+          });
           throw new Error('AUTH_EXPIRED');
         }
       }
 
       throw new Error('Gateway handshake failed');
     } catch (error) {
-      await this.disconnect();
+      const message = error instanceof Error ? error.message : String(error);
+      await this.disposeCurrentSocket(true);
+      if (this.connectionState.status !== 'auth-expired') {
+        this.setConnectionState({
+          status: 'error',
+          profileId: profile.id,
+          errorMessage: message
+        });
+      }
       throw error;
     }
   }
 
   async disconnect(): Promise<void> {
-    const profile = this.activeProfile;
+    await this.disposeCurrentSocket(true);
     this.activeProfile = null;
-    this.socket?.close();
-    this.socket = null;
-    await this.teardownConnection(profile);
+    this.setConnectionState({
+      status: 'disconnected',
+      profileId: null,
+      errorMessage: null
+    });
   }
 
   async listAgents(): Promise<AgentBindingSeed[]> {
@@ -454,6 +529,8 @@ export class OpenClawClient implements BridgeClient {
       throw new Error(`agents.list rejected: ${formatResponseError(result.error)}`);
     }
 
+    this.updateSessionDefaults(result.payload);
+
     return normalizeAgentBindingSeeds(
       result.payload,
       this.activeProfile?.id ?? 'unknown'
@@ -466,16 +543,26 @@ export class OpenClawClient implements BridgeClient {
       const frame = JSON.parse(toMessageText(event.data)) as GatewayFrame;
       const eventName = resolveEventName(frame);
 
-      if (!eventName?.startsWith('agent.')) {
+      if (!eventName || (eventName !== 'chat' && !eventName.startsWith('agent.'))) {
         return;
       }
+
+      const payloadRecord =
+        frame.payload && typeof frame.payload === 'object'
+          ? (frame.payload as Record<string, unknown>)
+          : null;
+      const agentId =
+        frame.agentId ??
+        parseAgentIdFromSessionKey(payloadRecord?.sessionKey) ??
+        'unknown';
+      const petId = frame.petId ?? parseAgentIdFromSessionKey(payloadRecord?.sessionKey) ?? undefined;
 
       listener(
         parseOpenClawEvent({
           type: eventName,
-          agentId: frame.agentId ?? 'unknown',
-          gatewayId: frame.gatewayId ?? 'unknown',
-          petId: frame.petId,
+          agentId,
+          gatewayId: frame.gatewayId ?? this.activeProfile?.id ?? 'unknown',
+          petId,
           payload: frame.payload
         })
       );
@@ -488,10 +575,27 @@ export class OpenClawClient implements BridgeClient {
     };
   }
 
+  subscribeConnection(listener: (state: BridgeConnectionState) => void): () => void {
+    this.connectionListeners.add(listener);
+    listener(this.connectionState);
+
+    return () => {
+      this.connectionListeners.delete(listener);
+    };
+  }
+
+  getConnectionState(): BridgeConnectionState {
+    return this.connectionState;
+  }
+
   async sendMessage(input: SendMessageInput): Promise<void> {
     const socket = this.requireSocket();
-    const requestId = sendRequest(socket, 'agent.message.send', input as unknown as Record<string, unknown>);
-    const res = await waitForResponse(socket, requestId, this.options.requestTimeoutMs ?? 4_000, 'agent.message.send');
+    const requestId = sendRequest(socket, 'chat.send', {
+      sessionKey: this.resolveSessionKey(input.agentId ?? input.petId),
+      message: input.content,
+      idempotencyKey: createIdempotencyKey()
+    });
+    const res = await waitForResponse(socket, requestId, this.options.requestTimeoutMs ?? 4_000, 'chat.send');
 
     if (res.ok === false) {
       throw new Error(`sendMessage rejected: ${formatResponseError(res.error)}`);
@@ -500,8 +604,12 @@ export class OpenClawClient implements BridgeClient {
 
   async createTask(input: CreateTaskInput): Promise<void> {
     const socket = this.requireSocket();
-    const requestId = sendRequest(socket, 'agent.task.create', input as unknown as Record<string, unknown>);
-    const res = await waitForResponse(socket, requestId, this.options.requestTimeoutMs ?? 4_000, 'agent.task.create');
+    const requestId = sendRequest(socket, 'chat.send', {
+      sessionKey: this.resolveSessionKey(input.agentId ?? input.petId),
+      message: input.prompt,
+      idempotencyKey: createIdempotencyKey()
+    });
+    const res = await waitForResponse(socket, requestId, this.options.requestTimeoutMs ?? 4_000, 'chat.send');
 
     if (res.ok === false) {
       throw new Error(`createTask rejected: ${formatResponseError(res.error)}`);
@@ -509,10 +617,119 @@ export class OpenClawClient implements BridgeClient {
   }
 
   private requireSocket() {
-    if (!this.socket) {
+    if (!isSocketOpen(this.socket)) {
+      const profileId = this.activeProfile?.id ?? this.connectionState.profileId;
+      this.socketLifecycleCleanup?.();
+      this.socketLifecycleCleanup = null;
+      this.socket = null;
+      this.setConnectionState({
+        status: 'disconnected',
+        profileId,
+        errorMessage: 'Bridge client is not connected'
+      });
       throw new Error('Bridge client is not connected');
     }
 
     return this.socket;
+  }
+
+  private setConnectionState(state: BridgeConnectionState) {
+    if (
+      this.connectionState.status === state.status &&
+      this.connectionState.profileId === state.profileId &&
+      this.connectionState.errorMessage === state.errorMessage
+    ) {
+      return;
+    }
+
+    this.connectionState = state;
+    for (const listener of this.connectionListeners) {
+      listener(state);
+    }
+  }
+
+  private attachSocketLifecycle(socket: WebSocket) {
+    const onClose = (event: CloseEvent | Event) => {
+      const code =
+        typeof event === 'object' && event && 'code' in event ? String(event.code) : 'unknown';
+      const reason =
+        typeof event === 'object' && event && 'reason' in event && event.reason
+          ? ` ${String(event.reason)}`
+          : '';
+      console.log('[bridge] socket closed', 'code' in event ? event.code : '', 'reason' in event ? event.reason : '');
+      this.socketLifecycleCleanup?.();
+      this.socketLifecycleCleanup = null;
+      if (this.socket === socket) {
+        this.socket = null;
+      }
+      this.setConnectionState({
+        status: 'disconnected',
+        profileId: this.activeProfile?.id ?? this.connectionState.profileId,
+        errorMessage: `Gateway socket closed (${code})${reason}`.trim()
+      });
+    };
+    const onError = () => {
+      console.log('[bridge] socket error');
+      this.socketLifecycleCleanup?.();
+      this.socketLifecycleCleanup = null;
+      if (this.socket === socket) {
+        this.socket = null;
+      }
+      this.setConnectionState({
+        status: 'error',
+        profileId: this.activeProfile?.id ?? this.connectionState.profileId,
+        errorMessage: 'Gateway socket error'
+      });
+    };
+
+    socket.addEventListener('close', onClose);
+    socket.addEventListener('error', onError);
+
+    this.socketLifecycleCleanup = () => {
+      socket.removeEventListener('close', onClose);
+      socket.removeEventListener('error', onError);
+    };
+  }
+
+  private async disposeCurrentSocket(teardownConnection: boolean) {
+    const profile = this.activeProfile;
+    const socket = this.socket;
+
+    this.socketLifecycleCleanup?.();
+    this.socketLifecycleCleanup = null;
+    this.socket = null;
+    socket?.close();
+
+    if (teardownConnection) {
+      await this.teardownConnection(profile);
+    }
+  }
+
+  private updateSessionDefaults(payload: unknown) {
+    if (
+      payload &&
+      typeof payload === 'object' &&
+      'sessionDefaults' in payload &&
+      payload.sessionDefaults &&
+      typeof payload.sessionDefaults === 'object' &&
+      'mainKey' in payload.sessionDefaults &&
+      typeof payload.sessionDefaults.mainKey === 'string'
+    ) {
+      this.sessionMainKey = payload.sessionDefaults.mainKey;
+      return;
+    }
+
+    if (
+      payload &&
+      typeof payload === 'object' &&
+      'mainKey' in payload &&
+      typeof payload.mainKey === 'string'
+    ) {
+      this.sessionMainKey = payload.mainKey;
+    }
+  }
+
+  private resolveSessionKey(agentId: string) {
+    return `agent:${agentId}:${this.sessionMainKey}`;
   }
 }

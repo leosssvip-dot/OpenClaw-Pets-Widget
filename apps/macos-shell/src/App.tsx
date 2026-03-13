@@ -1,6 +1,5 @@
-import { useEffect, useEffectEvent, useRef, useState } from 'react';
-import type { AgentBindingSeed, HabitatEvent } from '@openclaw-habitat/bridge';
-import { useQuickComposer } from './features/composer/useQuickComposer';
+import { useEffect, useRef, useState, useSyncExternalStore } from 'react';
+import type { AgentBindingSeed } from '@openclaw-habitat/bridge';
 import { type ConnectionStatus } from './features/connection/ConnectionBadge';
 import { habitatStore, useHabitatStore } from './features/habitat/store';
 import { getRuntimeDeps } from './runtime/runtime-deps';
@@ -131,15 +130,20 @@ export async function hydrateAndReconnectActiveProfile(
 }
 
 export function App() {
+  const connectionManagerRef = useRef(getRuntimeDeps().connectionManager);
+  const connectionManager = connectionManagerRef.current;
   const [surface, setSurface] = useState<'pet' | 'panel'>(() => {
     return new URLSearchParams(window.location.search).get('surface') === 'pet'
       ? 'pet'
       : 'panel';
   });
-  const [connectionStatus, setConnectionStatus] = useState<ConnectionStatus>('offline');
-  const [connectionError, setConnectionError] = useState<string | null>(null);
-  const bridgeUnsubscribeRef = useRef<(() => void) | null>(null);
   const reconnectAttemptedRef = useRef(false);
+  const connectionSnapshot = useSyncExternalStore(
+    (listener) => connectionManager.subscribe(listener),
+    () => connectionManager.getSnapshot()
+  );
+  const connectionStatus: ConnectionStatus = connectionSnapshot.status;
+  const connectionError = connectionSnapshot.errorMessage;
   const petsById = useHabitatStore((state) => state.pets);
   const agentSnapshotsById = useHabitatStore((state) => state.agentSnapshots);
   const selectedPetId = useHabitatStore((state) => state.selectedPetId);
@@ -187,48 +191,6 @@ export function App() {
   const selectedPetAppearance: PetAppearanceConfig | undefined =
     visiblePetRow?.appearance;
   const currentCompanionPet = visiblePetRow ? petsById[visiblePetRow.petId] ?? null : null;
-  const submitQuickPrompt = useQuickComposer(visiblePetRow?.petId ?? '');
-  const applyBridgeEvent = useEffectEvent((event: HabitatEvent) => {
-    habitatStore.getState().applyEvent(event);
-  });
-  const connectToProfile = useEffectEvent(async (profileId: string) => {
-    const bridge = getRuntimeDeps().bridge;
-
-    setConnectionStatus((status) =>
-      status === 'connected' ? 'reconnecting' : 'connecting'
-    );
-    setConnectionError(null);
-
-    try {
-      bridgeUnsubscribeRef.current?.();
-      bridgeUnsubscribeRef.current = null;
-      await bridge.disconnect();
-      await bridge.connect(profileId);
-      bridgeUnsubscribeRef.current = bridge.subscribe((event) => {
-        applyBridgeEvent(event);
-      });
-
-      const agents = await bridge.listAgents();
-      habitatStore.getState().seedPets(toHabitatPets(agents));
-
-      for (const agent of agents) {
-        settingsStore.getState().bindPetToAgent({
-          petId: agent.id,
-          gatewayId: agent.gatewayId,
-          agentId: agent.agentId
-        });
-      }
-
-      setConnectionStatus('connected');
-      setConnectionError(null);
-    } catch (error) {
-      const message = error instanceof Error ? error.message : String(error);
-      setConnectionError(message);
-      setConnectionStatus(
-        message.includes('AUTH_EXPIRED') ? 'auth-expired' : 'offline'
-      );
-    }
-  });
 
   useEffect(() => {
     document.body.dataset.surface = surface;
@@ -260,23 +222,21 @@ export function App() {
       () => (isActive ? settingsStore.getState().activeProfileId : null),
       async (profileId) => {
         if (isActive) {
-          await connectToProfile(profileId);
+          await connectionManager.connect(profileId);
         }
       }
     );
 
     return () => {
       isActive = false;
-      bridgeUnsubscribeRef.current?.();
-      void getRuntimeDeps().bridge.disconnect();
+      void connectionManager.disconnect();
     };
-  }, [connectToProfile, surface]);
+  }, [connectionManager, surface]);
 
-  const handlePetSendMessage = async (petId: string, text: string) => {
-    const bridge = getRuntimeDeps().bridge;
+  const handlePetSendMessage = async (petId: string, agentId: string, text: string) => {
     habitatStore.getState().markPetAsThinking(petId, text);
     try {
-      await bridge.sendMessage({ petId, content: text });
+      await connectionManager.sendMessage({ petId, agentId, content: text });
     } catch (error) {
       habitatStore.getState().markPetAsBlocked(
         petId,
@@ -285,11 +245,10 @@ export function App() {
     }
   };
 
-  const handlePetCreateTask = async (petId: string, prompt: string) => {
-    const bridge = getRuntimeDeps().bridge;
+  const handlePetCreateTask = async (petId: string, agentId: string, prompt: string) => {
     habitatStore.getState().markPetAsThinking(petId, prompt);
     try {
-      await bridge.createTask({ petId, prompt });
+      await connectionManager.createTask({ petId, agentId, prompt });
     } catch (error) {
       habitatStore.getState().markPetAsBlocked(
         petId,
@@ -315,8 +274,20 @@ export function App() {
           pets={petSlots}
           connectionStatus={connectionStatus}
           activePetId={selectedPetId}
-          onSendMessage={handlePetSendMessage}
-          onCreateTask={handlePetCreateTask}
+          onSendMessage={(petId, text) => {
+            const row = agentRows.find((entry) => entry.petId === petId);
+            if (row) {
+              return handlePetSendMessage(petId, row.agentId, text);
+            }
+            return Promise.resolve();
+          }}
+          onCreateTask={(petId, prompt) => {
+            const row = agentRows.find((entry) => entry.petId === petId);
+            if (row) {
+              return handlePetCreateTask(petId, row.agentId, prompt);
+            }
+            return Promise.resolve();
+          }}
           onSelectPet={(id) => habitatStore.getState().selectPet(id)}
         />
       );
@@ -331,12 +302,12 @@ export function App() {
         petStatus={petDisplayStatus}
         onSendMessage={(text) => {
           if (visiblePetRow) {
-            void handlePetSendMessage(visiblePetRow.petId, text);
+            void handlePetSendMessage(visiblePetRow.petId, visiblePetRow.agentId, text);
           }
         }}
         onCreateTask={(prompt) => {
           if (visiblePetRow) {
-            void handlePetCreateTask(visiblePetRow.petId, prompt);
+            void handlePetCreateTask(visiblePetRow.petId, visiblePetRow.agentId, prompt);
           }
         }}
       />
@@ -356,7 +327,7 @@ export function App() {
       currentCompanionPet={currentCompanionPet}
       onReconnect={() => {
         if (activeProfileId) {
-          void connectToProfile(activeProfileId);
+          void connectionManager.reconnect();
         }
       }}
       onSaveProfile={async (input, profileId) => {
@@ -370,7 +341,7 @@ export function App() {
         settingsStore.getState().selectGatewayProfile(profile.id);
         await storeProfileToken(profile.id, profile.gatewayToken);
         await storeProfilePassword(profile.id, input.password);
-        await connectToProfile(profile.id);
+        await connectionManager.connect(profile.id);
       }}
       onDeleteProfile={(profileId) => {
         clearGatewaySessionAuth(profileId);
@@ -387,7 +358,15 @@ export function App() {
       onUpdateAppearance={(petId, appearance) => {
         settingsStore.getState().setPetAppearance(petId, appearance);
       }}
-      onSubmitQuickPrompt={submitQuickPrompt}
+      onSubmitQuickPrompt={async (value) => {
+        if (visiblePetRow) {
+          await handlePetSendMessage(
+            visiblePetRow.petId,
+            visiblePetRow.agentId,
+            value
+          );
+        }
+      }}
     />
   );
 }

@@ -77,6 +77,10 @@ export function reduceAgentSnapshots(
       nextSnapshot.runtimeStatus = 'blocked';
       nextSnapshot.recentEvent = 'error';
       break;
+    case 'chat.message':
+      nextSnapshot.runtimeStatus = event.final ? 'done' : 'working';
+      nextSnapshot.recentEvent = event.final ? 'task-completed' : 'task-started';
+      break;
     default:
       return snapshots;
   }

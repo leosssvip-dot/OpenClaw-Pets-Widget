@@ -53,6 +53,12 @@ function applyHabitatEvent(
       }));
     }
 
+    case 'chat.message':
+      return updatePet(pets, event.petId, () => ({
+        status: event.final ? 'done' : 'working',
+        bubbleText: event.text
+      }));
+
     default:
       return pets;
   }

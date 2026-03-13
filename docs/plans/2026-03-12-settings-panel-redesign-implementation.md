@@ -312,3 +312,125 @@
 - Verification:
   - `ReadLints` clean
   - `pnpm --filter macos-shell test -- --run src/features/composer/__tests__/useQuickComposer.test.ts src/App.test.tsx` passed
+
+## 2026-03-12 Bridge Reconnect Guard Fix
+
+- User reported runtime errors:
+  - `Bridge client is not connected`
+  - `[bridge] socket closed 1006`
+- Root-cause investigation found a reconnect guard in `App.tsx` was stored as a module-level variable:
+  - `initialReconnectAttempted`
+  - this survives across dev-time remount / HMR flows more easily than intended
+  - once the renderer had already attempted reconnect once, a later remount could disconnect the bridge in cleanup but skip reconnect on the next mount
+  - result: the panel stayed visually available, but message sends failed because the bridge was no longer connected
+- Fix applied:
+  - moved the reconnect-attempt tracking from module scope into an `App` instance `useRef`
+  - this preserves the “once per mounted renderer instance” behavior
+  - but no longer blocks reconnect after a fresh remount of the UI
+- Regression coverage:
+  - added an `App.test.tsx` case verifying the panel reconnects again after remount when an active profile exists
+- Verification:
+  - `ReadLints` clean
+  - `pnpm --filter macos-shell test -- --run src/App.test.tsx src/features/composer/__tests__/useQuickComposer.test.ts` passed
+
+## 2026-03-12 Send Path Bridge Recovery
+
+- User clarified an important runtime symptom:
+  - the panel could still appear connected
+  - but sending a message failed with `Bridge client is not connected`
+  - and logs still showed `[bridge] socket closed 1006`
+- Additional source investigation found:
+  - the send path itself does not call `gateway:prepareConnection` directly
+  - but if the bridge has already fallen out of a healthy connected state, plain `sendMessage` / `createTask` calls will fail immediately
+  - the previous panel behavior only surfaced the error; it did not try to recover the active profile connection in the action path
+- Fix applied in `App.tsx`:
+  - panel quick-prompt sending now uses the same guarded send path as the pet surface
+  - when `sendMessage` / `createTask` fails with recoverable bridge connectivity errors such as:
+    - `Bridge client is not connected`
+    - `socket closed`
+  - the app now reconnects the current active profile and retries the action once
+  - if reconnect or retry still fails, the final error is surfaced in the pet reply state as before
+- Regression coverage:
+  - added an `App.test.tsx` case verifying a failed first send due to disconnected bridge causes:
+    - reconnect of the active profile
+    - a second send attempt
+    - preservation of the outgoing message content
+- Verification:
+  - `ReadLints` clean
+  - `pnpm --filter macos-shell test -- --run src/App.test.tsx` passed
+
+## 2026-03-12 ConnectionManager Refactor
+
+- The connection lifecycle is now split more cleanly across the actual runtime boundaries instead of being patched ad hoc inside `App.tsx`.
+- **Bridge layer (`packages/bridge`)**:
+  - `OpenClawClient` now exposes real connection state via subscription APIs
+  - `requireSocket()` no longer trusts a stale socket object and now rejects non-open sockets
+  - socket `close` / `error` now immediately clear internal socket state and publish `disconnected` / `error`
+  - auth-expired handshake failures now publish explicit `auth-expired` state
+- **Renderer layer (`apps/macos-shell/src/runtime/connection-manager.ts`)**:
+  - added a dedicated `ConnectionManager` as the single source of truth for:
+    - `connect`
+    - `reconnect`
+    - `disconnect`
+    - `sendMessage`
+    - `createTask`
+  - agent bootstrap (`subscribe` + `listAgents` + pet/binding seeding) now happens inside the manager instead of `App.tsx`
+  - recoverable send failures now reconnect through the manager and retry once from one place
+- **App integration**:
+  - `App.tsx` no longer owns its own connection state machine
+  - UI connection badge / banner state now subscribes to manager snapshot state
+  - quick prompt and task sends now go through manager-backed send/createTask paths
+  - `useQuickComposer` now also uses the same manager send entry instead of bypassing it
+
+## 2026-03-12 SSH Runtime Exit Observability
+
+- `SshTunnelRuntime` now distinguishes between:
+  - startup failure before the local port is ready
+  - runtime exit after a tunnel was already healthy
+- A minimal unexpected-exit callback was added so tunnel crashes after readiness are no longer silent.
+- This is intentionally small-scope for now:
+  - no IPC redesign yet
+  - but runtime exit information is now available for the next renderer integration step if needed
+
+## 2026-03-12 Connection Refactor Regression Coverage
+
+- Added / updated regression coverage for the new architecture:
+  - `packages/bridge/src/__tests__/openclaw-client.test.ts`
+    - close/error state cleanup
+    - closed-socket request rejection
+  - `apps/macos-shell/src/runtime/__tests__/connection-manager.test.ts`
+    - manager drops to offline on bridge disconnect
+    - manager reconnects and retries recoverable send failures
+  - `apps/macos-shell/src/App.test.tsx`
+    - existing panel reconnect / send-path coverage now runs through manager-backed runtime deps
+  - `apps/macos-shell/electron/__tests__/ssh-runtime.test.ts`
+    - runtime tunnel exit after readiness now reports a structured error
+- Verification:
+  - `ReadLints` clean on all edited files
+  - `pnpm test -- --run packages/bridge/src/__tests__/openclaw-client.test.ts apps/macos-shell/src/App.test.tsx apps/macos-shell/src/features/composer/__tests__/useQuickComposer.test.ts apps/macos-shell/src/runtime/__tests__/connection-manager.test.ts apps/macos-shell/electron/__tests__/ssh-runtime.test.ts` passed
+
+## 2026-03-12 Send Protocol Compatibility Fix
+
+- New live-gateway debugging showed the latest connection refactor fixed stale/disconnected socket state, but message sending was still using an outdated gateway method.
+- Root cause:
+  - renderer connected successfully
+  - `agents.list` succeeded
+  - but send still called `agent.message.send`
+  - the real gateway rejected it with `missing scope: operator.admin`
+- Direct protocol probing against the running local gateway confirmed the current compatible UI send contract is:
+  - method: `chat.send`
+  - params:
+    - `sessionKey`
+    - `message` (plain string)
+    - `idempotencyKey`
+- Fix applied:
+  - `OpenClawClient.sendMessage()` now uses `chat.send`
+  - `OpenClawClient.createTask()` also routes through the same compatible chat-send contract for now
+  - bridge now tracks `sessionDefaults.mainKey` / `mainKey` and builds session keys as `agent:<agentId>:<mainKey>`
+  - app/composer send paths now pass `agentId` explicitly instead of relying only on `petId`
+- Regression coverage:
+  - added a failing-then-passing bridge test proving send now emits `chat.send` with `sessionKey`, `message`, and `idempotencyKey`
+  - updated App/composer assertions for the explicit `agentId` payload
+- Verification:
+  - `pnpm --filter @openclaw-habitat/bridge test -- --run src/__tests__/openclaw-client.test.ts` passed
+  - `pnpm test -- --run packages/bridge/src/__tests__/openclaw-client.test.ts apps/macos-shell/src/App.test.tsx apps/macos-shell/src/features/composer/__tests__/useQuickComposer.test.ts` passed

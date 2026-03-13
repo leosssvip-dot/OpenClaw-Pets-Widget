@@ -1,6 +1,7 @@
 import type {
   AgentBindingSeed,
   BridgeClient,
+  BridgeConnectionState,
   CreateTaskInput,
   HabitatEvent,
   SendMessageInput
@@ -8,16 +9,27 @@ import type {
 
 export class MockBridgeClient implements BridgeClient {
   private readonly listeners = new Set<(event: HabitatEvent) => void>();
+  private readonly connectionListeners = new Set<(state: BridgeConnectionState) => void>();
   private connectedProfileId: string | null = null;
 
   constructor(private readonly agents: AgentBindingSeed[] = []) {}
 
   async connect(profileId: string): Promise<void> {
     this.connectedProfileId = profileId;
+    this.emitConnectionState({
+      status: 'connected',
+      profileId,
+      errorMessage: null
+    });
   }
 
   async disconnect(): Promise<void> {
     this.connectedProfileId = null;
+    this.emitConnectionState({
+      status: 'disconnected',
+      profileId: null,
+      errorMessage: null
+    });
   }
 
   async listAgents(): Promise<AgentBindingSeed[]> {
@@ -29,6 +41,23 @@ export class MockBridgeClient implements BridgeClient {
 
     return () => {
       this.listeners.delete(listener);
+    };
+  }
+
+  subscribeConnection(listener: (state: BridgeConnectionState) => void): () => void {
+    this.connectionListeners.add(listener);
+    listener(this.getConnectionState());
+
+    return () => {
+      this.connectionListeners.delete(listener);
+    };
+  }
+
+  getConnectionState(): BridgeConnectionState {
+    return {
+      status: this.connectedProfileId ? 'connected' : 'disconnected',
+      profileId: this.connectedProfileId,
+      errorMessage: null
     };
   }
 
@@ -47,6 +76,12 @@ export class MockBridgeClient implements BridgeClient {
   emit(event: HabitatEvent) {
     for (const listener of this.listeners) {
       listener(event);
+    }
+  }
+
+  private emitConnectionState(state: BridgeConnectionState) {
+    for (const listener of this.connectionListeners) {
+      listener(state);
     }
   }
 }

@@ -14,6 +14,8 @@ interface ActiveTunnel {
   child: ChildProcess;
   localPort: number;
   profileId: string;
+  intentionalShutdown: boolean;
+  ready: boolean;
 }
 
 /**
@@ -136,7 +138,10 @@ export class SshTunnelRuntime {
   constructor(
     private readonly spawnProcess: typeof spawn = spawn,
     private readonly reservePort: () => Promise<number> = findOpenPort,
-    private readonly waitForLocalPort: (port: number) => Promise<void> = waitForPort
+    private readonly waitForLocalPort: (port: number) => Promise<void> = waitForPort,
+    private readonly onUnexpectedTunnelExit: (
+      payload: { profileId: string; errorMessage: string }
+    ) => void = () => undefined
   ) {}
 
   async prepareConnection(
@@ -187,13 +192,28 @@ export class SshTunnelRuntime {
     }
 
     let stderrOutput = '';
+    const tunnel: ActiveTunnel = {
+      child,
+      localPort,
+      profileId: profile.id,
+      intentionalShutdown: false,
+      ready: false
+    };
 
     child.stderr?.on('data', (chunk) => {
       stderrOutput += String(chunk);
     });
-    child.on('exit', () => {
-      if (this.activeTunnel?.child === child) {
+    child.on('exit', (code, signal) => {
+      if (this.activeTunnel === tunnel) {
         this.activeTunnel = null;
+      }
+      if (tunnel.ready && !tunnel.intentionalShutdown) {
+        this.onUnexpectedTunnelExit({
+          profileId: tunnel.profileId,
+          errorMessage:
+            stderrOutput.trim() ||
+            `SSH tunnel exited after it became ready (${code ?? signal ?? 'unknown'})`
+        });
       }
     });
 
@@ -217,11 +237,8 @@ export class SshTunnelRuntime {
       throw new Error(raw + hint);
     }
 
-    this.activeTunnel = {
-      child,
-      localPort,
-      profileId: profile.id
-    };
+    tunnel.ready = true;
+    this.activeTunnel = tunnel;
 
     return {
       url: buildLoopbackUrl(localPort),
@@ -231,12 +248,13 @@ export class SshTunnelRuntime {
 
   async disconnect() {
     const tunnel = this.activeTunnel;
-    this.activeTunnel = null;
 
     if (!tunnel) {
       return;
     }
 
+    tunnel.intentionalShutdown = true;
+    this.activeTunnel = null;
     tunnel.child.kill('SIGTERM');
     await once(tunnel.child, 'exit').catch(() => undefined);
   }

@@ -13,12 +13,19 @@ const bridgeMocks = vi.hoisted(() => ({
   connect: vi.fn().mockResolvedValue(undefined),
   disconnect: vi.fn().mockResolvedValue(undefined),
   subscribe: vi.fn(() => () => undefined),
-  listAgents: vi.fn().mockResolvedValue([])
+  listAgents: vi.fn().mockResolvedValue([]),
+  getConnectionState: vi.fn().mockReturnValue({ status: 'disconnected', profileId: null, errorMessage: null }),
+  subscribeConnection: vi.fn(() => () => undefined)
 }));
+
+import { ConnectionManager } from './runtime/connection-manager';
+
+const connectionManagerInstance = new ConnectionManager(bridgeMocks as any);
 
 vi.mock('./runtime/runtime-deps', () => ({
   getRuntimeDeps: () => ({
-    bridge: bridgeMocks
+    bridge: bridgeMocks,
+    connectionManager: connectionManagerInstance
   })
 }));
 
@@ -183,7 +190,7 @@ describe('hydrateAndReconnectActiveProfile', () => {
 
     render(<App />);
 
-    expect(await screen.findByRole('button', { name: 'Send Task' })).toBeInTheDocument();
+    expect(await screen.findByRole('button', { name: 'Send' })).toBeInTheDocument();
     expect(screen.queryByText('Agent Habitat')).not.toBeInTheDocument();
     expect(
       screen.queryByRole('heading', {

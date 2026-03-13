@@ -1,6 +1,7 @@
 import { OpenClawClient } from '@openclaw-habitat/bridge';
 import { settingsStore } from '../features/settings/settings-store';
 import { getHabitatDesktopApi } from './habitat-api';
+import { createConnectionManager } from './connection-manager';
 import { getGatewaySessionAuth } from './gateway-session-auth';
 
 const bridge = new OpenClawClient(
@@ -17,9 +18,11 @@ const bridge = new OpenClawClient(
     await getHabitatDesktopApi()?.teardownGatewayConnection();
   }
 );
+const connectionManager = createConnectionManager(bridge);
 
 export function getRuntimeDeps() {
   return {
-    bridge
+    bridge,
+    connectionManager
   };
 }

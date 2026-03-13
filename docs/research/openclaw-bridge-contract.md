@@ -98,6 +98,12 @@ An operator role with a valid shared token can **skip device identity entirely**
 - Normalize upstream events into stable habitat events before they touch renderer state.
 - Use `type: "req"` envelope for all client→server messages, match responses by `id`.
 
+## Chat history (2026-03-12)
+
+- Gateway protocol docs do not clearly document a `chat.history` RPC method for fetching session transcripts.
+- `sessions_history` is a session tool, not a gateway request method.
+- **Decision**: Use local `localStorage` persistence keyed by `profileId:agentId`. Max 100 messages per session. Enables history across app restarts without Gateway API dependency.
+
 ## Important gap and inference
 
 - Official docs currently document the coarse `event: "agent"` stream and a two-phase `agent` response flow, but they do not publish a literal `agent.task.completed` event name in the pages above.

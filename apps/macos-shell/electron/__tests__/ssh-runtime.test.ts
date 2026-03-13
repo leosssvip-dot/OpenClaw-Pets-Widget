@@ -165,4 +165,40 @@ describe('SshTunnelRuntime', () => {
       })
     ).rejects.toThrow(/re-enter your password/);
   });
+
+  it('reports a runtime error when the tunnel exits after becoming ready', async () => {
+    class FakeChildProcess extends EventEmitter {
+      stderr = new EventEmitter();
+
+      kill = vi.fn();
+    }
+
+    const child = new FakeChildProcess();
+    const onUnexpectedTunnelExit = vi.fn();
+    const runtime = new SshTunnelRuntime(
+      vi.fn(() => child as any) as any,
+      async () => 54072,
+      async () => undefined,
+      onUnexpectedTunnelExit
+    );
+
+    await runtime.prepareConnection({
+      id: 'profile-5',
+      label: 'Studio',
+      transport: 'ssh',
+      host: '10.0.0.52',
+      username: 'chenyang',
+      sshPort: 22,
+      remoteGatewayPort: 18789,
+      gatewayToken: 'secret-token'
+    });
+
+    child.stderr.emit('data', 'ssh: connect to host 10.0.0.52 port 22: Connection reset\n');
+    child.emit('exit', 255, null);
+
+    expect(onUnexpectedTunnelExit).toHaveBeenCalledWith({
+      profileId: 'profile-5',
+      errorMessage: 'ssh: connect to host 10.0.0.52 port 22: Connection reset'
+    });
+  });
 });

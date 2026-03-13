@@ -21,10 +21,7 @@ body {
 }
 
 body[data-surface='panel'] {
-  background:
-    radial-gradient(circle at top left, rgba(255, 211, 186, 0.52), transparent 32%),
-    radial-gradient(circle at top right, rgba(175, 210, 255, 0.42), transparent 26%),
-    linear-gradient(180deg, #fffaf4 0%, #fdf4ef 48%, #f8f2ff 100%);
+  background: transparent;
   overflow-x: hidden;
 }
 
@@ -304,18 +301,26 @@ body[data-surface='pet'] {
   align-items: center;
   justify-content: space-between;
   width: 100%;
-  padding: 11px 14px;
-  border: 1px solid rgba(163, 148, 184, 0.12);
-  border-radius: 16px;
-  background: #fffdfb;
-  color: #5b4d6e;
+  padding: 12px 16px;
+  border: 1px solid rgba(255, 255, 255, 0.4);
+  border-radius: 14px;
+  background: rgba(255, 255, 255, 0.5);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  color: #4a405a;
   font: inherit;
   font-size: 11px;
   font-weight: 700;
   letter-spacing: 0.04em;
   text-transform: uppercase;
   cursor: pointer;
-  box-shadow: 0 8px 24px rgba(119, 99, 145, 0.04);
+  box-shadow: 0 4px 16px rgba(119, 99, 145, 0.06);
+  transition: all 0.2s cubic-bezier(0.2, 0, 0, 1);
+}
+
+.settings-section__toggle:hover {
+  background: rgba(255, 255, 255, 0.7);
+  box-shadow: 0 6px 20px rgba(119, 99, 145, 0.08);
 }
 
 .settings-section__toggle::after {
@@ -341,10 +346,12 @@ body[data-surface='pet'] {
   gap: 0;
   min-width: 0;
   width: 100%;
-  padding: 10px;
-  border-radius: 16px;
-  background: #fffdfb;
-  border: 1px solid rgba(163, 148, 184, 0.12);
+  padding: 12px;
+  border-radius: 14px;
+  background: rgba(255, 255, 255, 0.65);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 255, 255, 0.5);
   box-shadow: 0 8px 24px rgba(119, 99, 145, 0.05);
   margin-top: 6px;
 }
@@ -535,31 +542,47 @@ body[data-surface='pet'] {
 
 /* Buttons */
 .settings-btn {
-  padding: 8px 12px;
+  padding: 8px 14px;
   font-size: 11px;
   font-weight: 600;
   border-radius: 999px;
   border: 0;
   cursor: pointer;
   white-space: nowrap;
+  transition: all 0.2s cubic-bezier(0.2, 0, 0, 1);
 }
 
 .settings-btn--primary {
-  background: #fff5ee;
-  color: #9f614a;
-  box-shadow: inset 0 0 0 1px rgba(227, 192, 171, 0.7);
+  background: linear-gradient(180deg, #ffc0a3, #ffa882);
+  color: #fff;
+  box-shadow: 0 4px 12px rgba(255, 150, 107, 0.3), inset 0 1px 1px rgba(255, 255, 255, 0.4);
+}
+
+.settings-btn--primary:hover {
+  background: linear-gradient(180deg, #ffc8b0, #ffb394);
+  transform: translateY(-1px);
 }
 
 .settings-btn--secondary {
-  background: #fff;
+  background: rgba(255, 255, 255, 0.8);
   color: #5d4f70;
-  box-shadow: inset 0 0 0 1px rgba(163, 148, 184, 0.18);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04), inset 0 0 0 1px rgba(255, 255, 255, 0.8);
+  backdrop-filter: blur(8px);
+}
+
+.settings-btn--secondary:hover {
+  background: #fff;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.06), inset 0 0 0 1px rgba(255, 255, 255, 0.9);
 }
 
 .settings-btn--ghost {
-  background: #fff;
+  background: transparent;
   color: #6f617e;
-  box-shadow: inset 0 0 0 1px rgba(163, 148, 184, 0.12);
+  box-shadow: none;
+}
+
+.settings-btn--ghost:hover {
+  background: rgba(255, 255, 255, 0.5);
 }
 
 .panel-secondary,
@@ -601,13 +624,16 @@ body[data-surface='pet'] {
   gap: 14px;
   min-width: 0;
   width: 100%;
-  padding: 12px;
-  border-radius: 24px;
-  background:
-    radial-gradient(circle at top right, rgba(255, 214, 223, 0.4), transparent 28%),
-    linear-gradient(180deg, rgba(255, 255, 255, 0.96), rgba(255, 247, 239, 0.94));
-  box-shadow: 0 24px 72px rgba(90, 64, 120, 0.14);
-  border: 1px solid rgba(130, 115, 163, 0.08);
+  padding: 16px;
+  border-radius: 28px;
+  background: rgba(250, 245, 245, 0.75);
+  backdrop-filter: blur(24px);
+  -webkit-backdrop-filter: blur(24px);
+  box-shadow: 0 32px 64px rgba(0, 0, 0, 0.12),
+              0 2px 16px rgba(0, 0, 0, 0.06),
+              inset 0 1px 1px rgba(255, 255, 255, 0.8),
+              inset 0 0 0 1px rgba(255, 255, 255, 0.3);
+  border: 1px solid rgba(255, 255, 255, 0.2);
 }
 
 .panel-frame--unified {
@@ -4606,3 +4632,76 @@ button.toggle {
   white-space: pre-wrap;
   word-break: break-word;
 }
+
+/* Modern Chat Input overrides */
+.chat-input {
+  display: flex;
+  gap: 12px;
+  align-items: flex-end;
+  background: rgba(255, 255, 255, 0.75);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  padding: 12px;
+  border-radius: 20px;
+  border: 1px solid rgba(255, 255, 255, 0.5);
+  box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.02),
+              0 8px 24px rgba(119, 99, 145, 0.08);
+}
+
+.chat-input__field {
+  flex: 1;
+  min-width: 0;
+  border: none;
+  background: transparent;
+  resize: none;
+  padding: 4px 6px;
+  font-family: inherit;
+  font-size: 13px;
+  line-height: 1.4;
+  color: #3d314e;
+  outline: none;
+  max-height: 120px;
+}
+
+.chat-input__field::placeholder {
+  color: #ab97b8;
+}
+
+.chat-input__submit {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  border: none;
+  background: linear-gradient(135deg, #ffc0a3, #ffa882);
+  color: #fff;
+  cursor: pointer;
+  box-shadow: 0 4px 12px rgba(255, 150, 107, 0.3);
+  transition: all 0.2s cubic-bezier(0.2, 0, 0, 1);
+  flex-shrink: 0;
+  font-size: 0; /* Hide text, we will add an icon */
+  margin-bottom: 2px;
+}
+
+.chat-input__submit::after {
+  content: '↑';
+  font-size: 18px;
+  font-weight: 800;
+  line-height: 1;
+  transform: translateY(-1px);
+}
+
+.chat-input__submit:hover:not(:disabled) {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 16px rgba(255, 150, 107, 0.4);
+}
+
+.chat-input__submit:disabled {
+  background: #e2dce5;
+  color: #ab97b8;
+  box-shadow: none;
+  cursor: not-allowed;
+}
+

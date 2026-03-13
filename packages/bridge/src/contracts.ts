@@ -10,17 +10,32 @@ export interface AgentBindingSeed {
 
 export interface SendMessageInput {
   petId: string;
+  agentId?: string;
   content: string;
 }
 
 export interface CreateTaskInput {
   petId: string;
+  agentId?: string;
   prompt: string;
 }
 
 export interface PreparedGatewayConnection {
   url: string;
   authToken?: string;
+}
+
+export type BridgeConnectionStatus =
+  | 'disconnected'
+  | 'connecting'
+  | 'connected'
+  | 'auth-expired'
+  | 'error';
+
+export interface BridgeConnectionState {
+  status: BridgeConnectionStatus;
+  profileId: string | null;
+  errorMessage: string | null;
 }
 
 interface BaseHabitatEvent {
@@ -33,6 +48,7 @@ export type HabitatEvent =
   | (BaseHabitatEvent & { kind: 'agent.completed' })
   | (BaseHabitatEvent & { kind: 'agent.error'; message?: string })
   | (BaseHabitatEvent & { kind: 'agent.status'; status: string })
+  | (BaseHabitatEvent & { kind: 'chat.message'; text: string; final: boolean })
   | (BaseHabitatEvent & { kind: 'agent.unknown' });
 
 export interface BridgeClient {
@@ -40,6 +56,8 @@ export interface BridgeClient {
   disconnect(): Promise<void>;
   listAgents(): Promise<AgentBindingSeed[]>;
   subscribe(listener: (event: HabitatEvent) => void): () => void;
+  subscribeConnection(listener: (state: BridgeConnectionState) => void): () => void;
+  getConnectionState(): BridgeConnectionState;
   sendMessage(input: SendMessageInput): Promise<void>;
   createTask(input: CreateTaskInput): Promise<void>;
 }

@@ -7,11 +7,13 @@ export function useQuickComposer(petId: string) {
       return;
     }
 
+    const pet = habitatStore.getState().pets[petId];
     habitatStore.getState().markPetAsThinking(petId, content);
 
     try {
-      await getRuntimeDeps().bridge.sendMessage({
+      await getRuntimeDeps().connectionManager.sendMessage({
         petId,
+        agentId: pet?.agentId,
         content
       });
     } catch (error) {

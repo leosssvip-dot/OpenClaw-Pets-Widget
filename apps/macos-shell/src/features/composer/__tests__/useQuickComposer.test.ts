@@ -18,9 +18,8 @@ describe('useQuickComposer', () => {
   beforeEach(() => {
     sendMessage.mockReset();
     vi.spyOn(runtimeDeps, 'getRuntimeDeps').mockReturnValue({
-      bridge: {
-        sendMessage
-      }
+      connectionManager: { sendMessage } as any,
+      bridge: {} as any
     } as ReturnType<typeof runtimeDeps.getRuntimeDeps>);
     habitatStore.setState({
       pets: {},
@@ -47,6 +46,7 @@ describe('useQuickComposer', () => {
 
     expect(sendMessage).toHaveBeenCalledWith({
       petId: 'pet-1',
+      agentId: 'main',
       content: 'Follow up on the current task'
     });
     expect(habitatStore.getState().pets['pet-1']).toMatchObject({

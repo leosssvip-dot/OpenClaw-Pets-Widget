@@ -1,9 +1,15 @@
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 import { OpenClawClient } from '../openclaw-client';
 import type { GatewayProfile } from '../profile-schema';
 
 class FakeSocket {
+  static readonly CONNECTING = 0;
+  static readonly OPEN = 1;
+  static readonly CLOSED = 3;
+
   sent: string[] = [];
+  readyState = FakeSocket.CONNECTING;
+  OPEN = FakeSocket.OPEN;
   private listeners = new Map<string, Set<(event: any) => void>>();
 
   addEventListener(type: string, listener: (event: any) => void) {
@@ -21,10 +27,17 @@ class FakeSocket {
   }
 
   close() {
+    this.readyState = FakeSocket.CLOSED;
     this.emit('close', {});
   }
 
   emit(type: string, event: any = {}) {
+    if (type === 'open') {
+      this.readyState = FakeSocket.OPEN;
+    }
+    if (type === 'close') {
+      this.readyState = FakeSocket.CLOSED;
+    }
     for (const listener of this.listeners.get(type) ?? []) {
       listener(event);
     }
@@ -242,5 +255,244 @@ describe('OpenClawClient', () => {
         label: 'MelodyWish 社媒运营专家'
       }
     ]);
+  });
+
+  it('publishes connection state updates and clears state on socket close', async () => {
+    const socket = new FakeSocket();
+    const client = new OpenClawClient(
+      (profileId) => (profileId === 'profile-1' ? createProfile() : undefined),
+      () => socket as unknown as WebSocket,
+      async () => undefined,
+      async () => undefined,
+      {
+        openTimeoutMs: 100,
+        handshakeTimeoutMs: 100
+      }
+    );
+    const states = new Array<string>();
+    client.subscribeConnection((state) => {
+      states.push(`${state.status}:${state.profileId ?? 'none'}`);
+    });
+
+    const connectPromise = client.connect('profile-1');
+    await new Promise((resolve) => setTimeout(resolve, 0));
+    socket.emit('open');
+    await new Promise((resolve) => setTimeout(resolve, 0));
+    socket.emit('message', {
+      data: JSON.stringify({
+        type: 'event',
+        event: 'connect.challenge',
+        payload: { nonce: 'abc123' }
+      })
+    });
+    await new Promise((resolve) => setTimeout(resolve, 0));
+    const connectFrame = JSON.parse(socket.sent[0]);
+    socket.emit('message', {
+      data: JSON.stringify({
+        type: 'res',
+        id: connectFrame.id,
+        ok: true,
+        payload: { protocolVersion: 3 }
+      })
+    });
+    await connectPromise;
+
+    socket.emit('close', { code: 1006, reason: '' });
+
+    expect(client.getConnectionState()).toMatchObject({
+      status: 'disconnected',
+      profileId: 'profile-1'
+    });
+    expect(states).toEqual([
+      'disconnected:none',
+      'connecting:profile-1',
+      'connected:profile-1',
+      'disconnected:profile-1'
+    ]);
+  });
+
+  it('rejects requests when the socket has already closed', async () => {
+    const socket = new FakeSocket();
+    const client = new OpenClawClient(
+      (profileId) => (profileId === 'profile-1' ? createProfile() : undefined),
+      () => socket as unknown as WebSocket,
+      async () => undefined,
+      async () => undefined,
+      {
+        openTimeoutMs: 100,
+        handshakeTimeoutMs: 100,
+        requestTimeoutMs: 100
+      }
+    );
+
+    const connectPromise = client.connect('profile-1');
+    await new Promise((resolve) => setTimeout(resolve, 0));
+    socket.emit('open');
+    await new Promise((resolve) => setTimeout(resolve, 0));
+    socket.emit('message', {
+      data: JSON.stringify({
+        type: 'event',
+        event: 'connect.challenge',
+        payload: { nonce: 'abc123' }
+      })
+    });
+    await new Promise((resolve) => setTimeout(resolve, 0));
+    const connectFrame = JSON.parse(socket.sent[0]);
+    socket.emit('message', {
+      data: JSON.stringify({
+        type: 'res',
+        id: connectFrame.id,
+        ok: true,
+        payload: { protocolVersion: 3 }
+      })
+    });
+    await connectPromise;
+
+    socket.emit('close', { code: 1006, reason: '' });
+
+    await expect(
+      client.sendMessage({
+        petId: 'pet-1',
+        content: 'hello'
+      })
+    ).rejects.toThrow('Bridge client is not connected');
+    expect(client.getConnectionState()).toMatchObject({
+      status: 'disconnected',
+      profileId: 'profile-1',
+      errorMessage: 'Bridge client is not connected'
+    });
+  });
+
+  it('sends chat messages through chat.send with a session key and idempotency key', async () => {
+    const socket = new FakeSocket();
+    const client = new OpenClawClient(
+      (profileId) => (profileId === 'profile-1' ? createProfile() : undefined),
+      () => socket as unknown as WebSocket,
+      async () => undefined,
+      async () => undefined,
+      {
+        openTimeoutMs: 100,
+        handshakeTimeoutMs: 100,
+        requestTimeoutMs: 100
+      }
+    );
+
+    const connectPromise = client.connect('profile-1');
+    await new Promise((resolve) => setTimeout(resolve, 0));
+    socket.emit('open');
+    await new Promise((resolve) => setTimeout(resolve, 0));
+    socket.emit('message', {
+      data: JSON.stringify({
+        type: 'event',
+        event: 'connect.challenge',
+        payload: { nonce: 'abc123' }
+      })
+    });
+    await new Promise((resolve) => setTimeout(resolve, 0));
+    const connectFrame = JSON.parse(socket.sent[0]);
+    socket.emit('message', {
+      data: JSON.stringify({
+        type: 'res',
+        id: connectFrame.id,
+        ok: true,
+        payload: {
+          protocolVersion: 3,
+          sessionDefaults: {
+            mainKey: 'main'
+          }
+        }
+      })
+    });
+    await connectPromise;
+
+    const sendPromise = client.sendMessage({
+      petId: 'pet-1',
+      agentId: 'main',
+      content: 'hello'
+    });
+
+    await new Promise((resolve) => setTimeout(resolve, 0));
+    const sendFrame = JSON.parse(socket.sent[1]);
+
+    expect(sendFrame.method).toBe('chat.send');
+    expect(sendFrame.params.sessionKey).toBe('agent:main:main');
+    expect(sendFrame.params.message).toBe('hello');
+    expect(typeof sendFrame.params.idempotencyKey).toBe('string');
+    expect(sendFrame.params.idempotencyKey.length).toBeGreaterThan(0);
+
+    socket.emit('message', {
+      data: JSON.stringify({
+        type: 'res',
+        id: sendFrame.id,
+        ok: true,
+        payload: { runId: 'run-1', status: 'started' }
+      })
+    });
+
+    await expect(sendPromise).resolves.toBeUndefined();
+  });
+
+  it('forwards chat reply events through subscribe()', async () => {
+    const socket = new FakeSocket();
+    const client = new OpenClawClient(
+      (profileId) => (profileId === 'profile-1' ? createProfile() : undefined),
+      () => socket as unknown as WebSocket,
+      async () => undefined,
+      async () => undefined,
+      {
+        openTimeoutMs: 100,
+        handshakeTimeoutMs: 100
+      }
+    );
+
+    const connectPromise = client.connect('profile-1');
+    await new Promise((resolve) => setTimeout(resolve, 0));
+    socket.emit('open');
+    await new Promise((resolve) => setTimeout(resolve, 0));
+    socket.emit('message', {
+      data: JSON.stringify({
+        type: 'event',
+        event: 'connect.challenge',
+        payload: { nonce: 'abc123' }
+      })
+    });
+    await new Promise((resolve) => setTimeout(resolve, 0));
+    const connectFrame = JSON.parse(socket.sent[0]);
+    socket.emit('message', {
+      data: JSON.stringify({
+        type: 'res',
+        id: connectFrame.id,
+        ok: true,
+        payload: { protocolVersion: 3 }
+      })
+    });
+    await connectPromise;
+
+    const listener = vi.fn();
+    client.subscribe(listener);
+
+    socket.emit('message', {
+      data: JSON.stringify({
+        type: 'event',
+        event: 'chat',
+        payload: {
+          sessionKey: 'agent:main:main',
+          state: 'final',
+          message: {
+            role: 'assistant',
+            content: [{ type: 'text', text: '当前这轮会话在跑的是 gpt-5.4。' }]
+          }
+        }
+      })
+    });
+
+    expect(listener).toHaveBeenCalledWith({
+      kind: 'chat.message',
+      agentId: 'main',
+      gatewayId: 'profile-1',
+      petId: 'main',
+      text: '当前这轮会话在跑的是 gpt-5.4。',
+      final: true
+    });
   });
 });
