@@ -4,6 +4,12 @@ import type { GatewaySessionAuth } from '../src/runtime/gateway-session-auth';
 
 contextBridge.exposeInMainWorld('habitat', {
   getRuntimeInfo: () => ipcRenderer.invoke('runtime:getInfo'),
+  sendHabitatSync: (msg: unknown) => ipcRenderer.send('habitat:sync', msg),
+  onHabitatSync: (callback: (msg: unknown) => void) => {
+    const handler = (_event: Electron.IpcRendererEvent, msg: unknown) => callback(msg);
+    ipcRenderer.on('habitat:sync', handler);
+    return () => { ipcRenderer.removeListener('habitat:sync', handler); };
+  },
   prepareGatewayConnection: (input: {
     profile: GatewayProfile;
     sessionAuth?: GatewaySessionAuth;

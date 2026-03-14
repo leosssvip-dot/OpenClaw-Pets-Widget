@@ -27,7 +27,8 @@ export const createChatStore = () =>
     addAssistantMessage: (content, final = true) =>
       set((s) => {
         const last = s.messages[s.messages.length - 1];
-        if (last?.role === 'assistant' && !final) {
+        // 流式或最终：若上一条已是 assistant，只更新该条，避免同一条回复出现两次
+        if (last?.role === 'assistant') {
           return {
             messages: [
               ...s.messages.slice(0, -1),

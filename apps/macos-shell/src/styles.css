@@ -2943,7 +2943,7 @@ button.toggle {
 
 .desktop-pet--role-monk.desktop-pet--state-working .desktop-pet__merit-badge,
 .desktop-pet--role-monk.desktop-pet--activity-working .desktop-pet__merit-badge {
-  animation: monk-merit-pop 0.72s cubic-bezier(0.45, 0, 0.2, 1) infinite;
+  animation: monk-merit-pop 0.42s cubic-bezier(0.45, 0, 0.2, 1) infinite;
 }
 
 .desktop-pet--role-monk.desktop-pet--state-done .desktop-pet__merit-badge,
@@ -2961,12 +2961,16 @@ button.toggle {
   transform: translateY(-1px);
 }
 
-.desktop-pet--role-lobster .desktop-pet__role-art-motion {
-  animation: desktop-lobster-idle 2.3s ease-in-out infinite;
+/* 龙虾：空闲 = 放松摇摆，工作中 = 专注敲键盘 */
+.desktop-pet--role-lobster.desktop-pet--activity-idle .desktop-pet__role-art-motion,
+.desktop-pet--role-lobster.desktop-pet--activity-waiting .desktop-pet__role-art-motion,
+.desktop-pet--role-lobster.desktop-pet--activity-blocked .desktop-pet__role-art-motion,
+.desktop-pet--role-lobster:not([class*="activity-"]) .desktop-pet__role-art-motion {
+  animation: desktop-lobster-idle 2.8s ease-in-out infinite;
 }
 
 .desktop-pet--role-lobster.desktop-pet--activity-working .desktop-pet__role-art-motion {
-  animation: desktop-lobster-work 0.72s ease-in-out infinite alternate;
+  animation: desktop-lobster-work 0.5s ease-in-out infinite alternate;
 }
 
 .desktop-pet--role-lobster.desktop-pet--interaction-hovered .desktop-pet__role-art-motion,
@@ -2974,8 +2978,12 @@ button.toggle {
   animation: desktop-lobster-wave 0.68s ease-in-out infinite alternate;
 }
 
-.desktop-pet--role-cat .desktop-pet__role-art-motion {
-  animation: desktop-cat-idle 2.6s ease-in-out infinite;
+/* 猫：空闲 = 慵懒呼吸，工作中 = 专注点头/看便签 */
+.desktop-pet--role-cat.desktop-pet--activity-idle .desktop-pet__role-art-motion,
+.desktop-pet--role-cat.desktop-pet--activity-waiting .desktop-pet__role-art-motion,
+.desktop-pet--role-cat.desktop-pet--activity-blocked .desktop-pet__role-art-motion,
+.desktop-pet--role-cat:not([class*="activity-"]) .desktop-pet__role-art-motion {
+  animation: desktop-cat-idle 2.8s ease-in-out infinite;
 }
 
 .desktop-pet--role-cat.desktop-pet--activity-thinking .desktop-pet__role-art-motion {
@@ -2983,14 +2991,21 @@ button.toggle {
 }
 
 .desktop-pet--role-cat.desktop-pet--activity-working .desktop-pet__role-art-motion {
-  animation: desktop-cat-work 0.9s ease-in-out infinite alternate;
+  animation: desktop-cat-work 0.6s ease-in-out infinite alternate;
 }
 
-.desktop-pet--role-robot .desktop-pet__role-art-motion {
-  animation: desktop-robot-idle 2.1s ease-in-out infinite;
+/* 机器人：空闲 = 待机呼吸灯，工作中 = 扫描/监控 */
+.desktop-pet--role-robot.desktop-pet--activity-idle .desktop-pet__role-art-motion,
+.desktop-pet--role-robot.desktop-pet--activity-waiting .desktop-pet__role-art-motion,
+.desktop-pet--role-robot.desktop-pet--activity-blocked .desktop-pet__role-art-motion,
+.desktop-pet--role-robot:not([class*="activity-"]) .desktop-pet__role-art-motion {
+  animation: desktop-robot-idle 2.4s ease-in-out infinite;
 }
 
-.desktop-pet--role-robot.desktop-pet--activity-working .desktop-pet__role-art-motion,
+.desktop-pet--role-robot.desktop-pet--activity-working .desktop-pet__role-art-motion {
+  animation: desktop-robot-scan 0.55s ease-in-out infinite alternate;
+}
+
 .desktop-pet--role-robot.desktop-pet--interaction-hovered .desktop-pet__role-art-motion {
   animation: desktop-robot-scan 0.9s ease-in-out infinite alternate;
 }
@@ -3124,13 +3139,13 @@ button.toggle {
 }
 
 @keyframes desktop-lobster-idle {
-  0%, 100% { transform: rotate(-2deg) translateY(0); }
-  50% { transform: rotate(2deg) translateY(-2px); }
+  0%, 100% { transform: rotate(-1.5deg) translateY(0); }
+  50% { transform: rotate(1.5deg) translateY(-1px); }
 }
 
 @keyframes desktop-lobster-work {
-  0% { transform: rotate(-4deg) translate(-1px, 0); }
-  100% { transform: rotate(5deg) translate(2px, -4px); }
+  0% { transform: rotate(-5deg) translate(-2px, 1px); }
+  100% { transform: rotate(6deg) translate(3px, -5px); }
 }
 
 @keyframes desktop-lobster-wave {
@@ -3140,7 +3155,7 @@ button.toggle {
 
 @keyframes desktop-cat-idle {
   0%, 100% { transform: translateY(0) rotate(0); }
-  50% { transform: translateY(-2px) rotate(-1.5deg); }
+  50% { transform: translateY(-1.5px) rotate(-1deg); }
 }
 
 @keyframes desktop-cat-think {
@@ -3149,18 +3164,18 @@ button.toggle {
 }
 
 @keyframes desktop-cat-work {
-  0% { transform: translate(-1px, 0) rotate(-2deg); }
-  100% { transform: translate(2px, -4px) rotate(3deg); }
+  0% { transform: translate(-2px, 0) rotate(-2.5deg); }
+  100% { transform: translate(3px, -5px) rotate(3.5deg); }
 }
 
 @keyframes desktop-robot-idle {
   0%, 100% { transform: translateY(0); filter: brightness(1); }
-  50% { transform: translateY(-2px); filter: brightness(1.06); }
+  50% { transform: translateY(-1.5px); filter: brightness(1.05); }
 }
 
 @keyframes desktop-robot-scan {
-  0% { transform: translateX(-1px) rotate(-1deg); filter: brightness(1); }
-  100% { transform: translateX(2px) rotate(1deg); filter: brightness(1.08); }
+  0% { transform: translateX(-2px) rotate(-1.5deg); filter: brightness(1.02); }
+  100% { transform: translateX(3px) rotate(2deg); filter: brightness(1.1); }
 }
 
 @keyframes desktop-monk-idle {

@@ -1,4 +1,4 @@
-import { app, BrowserWindow, ipcMain, screen } from 'electron';
+import { app, BrowserWindow, ipcMain, screen, type IpcMainEvent } from 'electron';
 import { fileURLToPath } from 'node:url';
 import { readFile, writeFile, mkdir } from 'node:fs/promises';
 import { join } from 'node:path';
@@ -162,6 +162,7 @@ async function createWindow() {
   petWindow = await createPetWidgetWindow();
   panelWindow = await createPanelWindow();
   createHabitatTray();
+  pipeRendererLogs(petWindow);
   pipeRendererLogs(panelWindow);
   petWindow.on('move', alignPanelWindow);
   petWindow.on('closed', () => {
@@ -175,6 +176,21 @@ async function createWindow() {
 }
 
 if (ipcMain?.handle) {
+  // Forward habitat sync messages from panel → pet window
+  ipcMain.on('habitat:sync', (event: IpcMainEvent, msg: unknown) => {
+    const senderId = event.sender.id;
+    const petId = petWindow?.isDestroyed() === false ? petWindow.webContents.id : null;
+    const panelId = panelWindow?.isDestroyed() === false ? panelWindow.webContents.id : null;
+    const target =
+      petWindow && !petWindow.isDestroyed() && senderId !== petWindow.webContents.id
+        ? petWindow
+        : panelWindow && !panelWindow.isDestroyed() && senderId !== panelWindow.webContents.id
+          ? panelWindow
+          : null;
+    console.log(`[bridge] main ipc habitat:sync sender=${senderId} petWin=${petId} panelWin=${panelId} target=${target ? 'found' : 'none'}`);
+    target?.webContents.send('habitat:sync', msg);
+  });
+
   ipcMain.handle('runtime:getInfo', (event) => ({
     platform: process.platform,
     surface: resolveRuntimeSurface(event.sender.id, {

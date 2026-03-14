@@ -9,6 +9,7 @@ import type { ConnectionStatus } from '../features/connection/ConnectionBadge';
 import { chatStore } from '../features/chat/store';
 import { habitatStore } from '../features/habitat/store';
 import { settingsStore } from '../features/settings/settings-store';
+import { createHabitatPublisher } from './habitat-sync';
 
 export interface ConnectionManagerSnapshot {
   status: ConnectionStatus;
@@ -148,15 +149,19 @@ export class ConnectionManager {
 
     try {
       await this.bridge.connect(profileId);
+      const publisher = createHabitatPublisher();
       this.bridgeUnsubscribe = this.bridge.subscribe((event) => {
         habitatStore.getState().applyEvent(event);
+        publisher.publishEvent(event);
         if (event.kind === 'chat.message' && event.petId) {
           chatStore.getState().addAssistantMessage(event.text, event.final);
         }
       });
 
       const agents = await this.bridge.listAgents();
-      habitatStore.getState().seedPets(toHabitatPets(agents));
+      const pets = toHabitatPets(agents);
+      habitatStore.getState().seedPets(pets);
+      publisher.publishSeedPets(pets);
 
       for (const agent of agents) {
         settingsStore.getState().bindPetToAgent({

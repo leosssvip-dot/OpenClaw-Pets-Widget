@@ -112,233 +112,137 @@ function buildMonkIdleTimeline(root: HTMLElement) {
     }
   });
 
+  // Reset all transforms at the start of each cycle to prevent drift
+  const resetProps = { x: 0, y: 0, rotation: 0, scale: 1, autoAlpha: 1 };
+
   timeline
-    .set([impact, echo, malletTrail], {
-      autoAlpha: 0
-    })
-    .set([impact, echo], {
-      scale: 0.3
-    })
-    .set([stage, roleArt, body, head, beads, arm, sleeve, robeFold, mallet, halo], {
-      x: 0,
-      y: 0,
-      rotation: 0,
-      scale: 1,
-      autoAlpha: 1
-    })
+    .set([impact, echo, malletTrail], { autoAlpha: 0 })
+    .set([impact, echo], { scale: 0.3 })
+    .set([stage, roleArt, body, head, beads, sleeve, robeFold, halo], resetProps)
+    .set(arm, { ...resetProps, svgOrigin: MONK_ARM_ORIGIN })
+    .set(mallet, { ...resetProps, svgOrigin: MONK_MALLET_ORIGIN })
     .addLabel('rest', 0)
-    .to(
+    .fromTo(
       [body, head],
-      {
-        duration: 0.62,
-        y: -1.2,
-        ease: 'sine.inOut',
-        yoyo: true,
-        repeat: 1
-      },
+      { y: 0 },
+      { duration: 0.62, y: -1.2, ease: 'sine.inOut', yoyo: true, repeat: 1 },
       'rest'
     )
-    .to(
+    .fromTo(
       halo,
-      {
-        duration: 0.62,
-        autoAlpha: 0.3,
-        scale: 1.06,
-        ease: 'sine.inOut',
-        yoyo: true,
-        repeat: 1
-      },
+      { autoAlpha: 0.18, scale: 1 },
+      { duration: 0.62, autoAlpha: 0.3, scale: 1.06, ease: 'sine.inOut', yoyo: true, repeat: 1 },
       'rest'
     )
-    .to(
+    .fromTo(
       robeFold,
-      {
-        duration: 0.62,
-        x: -0.6,
-        rotation: -1.6,
-        ease: 'sine.inOut',
-        yoyo: true,
-        repeat: 1
-      },
+      { x: 0, rotation: 0 },
+      { duration: 0.62, x: -0.6, rotation: -1.6, ease: 'sine.inOut', yoyo: true, repeat: 1 },
       'rest'
     )
     .addLabel('lift', 0.62)
-    .to(
+    .fromTo(
       [stage, roleArt],
-      {
-        duration: 0.36,
-        y: -1.2,
-        rotation: -0.9,
-        ease: 'power2.out'
-      },
+      { y: 0, rotation: 0 },
+      { duration: 0.36, y: -1.2, rotation: -0.9, ease: 'power2.out' },
       'lift'
     )
-    .to(
+    .fromTo(
       [body, head, beads],
-      {
-        duration: 0.36,
-        x: -0.6,
-        y: -1.5,
-        rotation: -1.6,
-        ease: 'power2.out'
-      },
+      { x: 0, y: 0, rotation: 0 },
+      { duration: 0.36, x: -0.6, y: -1.5, rotation: -1.6, ease: 'power2.out' },
       'lift'
     )
-    .to(
+    .fromTo(
       arm,
-      {
-        duration: 0.36,
-        rotation: -5,
-        svgOrigin: MONK_ARM_ORIGIN,
-        ease: 'power2.out'
-      },
+      { rotation: 0, svgOrigin: MONK_ARM_ORIGIN },
+      { duration: 0.36, rotation: -5, svgOrigin: MONK_ARM_ORIGIN, ease: 'power2.out' },
       'lift'
     )
-    .to(
+    .fromTo(
       mallet,
-      {
-        duration: 0.36,
-        rotation: -42,
-        svgOrigin: MONK_MALLET_ORIGIN,
-        ease: 'power2.out'
-      },
+      { rotation: 0, svgOrigin: MONK_MALLET_ORIGIN },
+      { duration: 0.36, rotation: -42, svgOrigin: MONK_MALLET_ORIGIN, ease: 'power2.out' },
       'lift'
     )
-    .to(
+    .fromTo(
       [sleeve, robeFold],
-      {
-        duration: 0.36,
-        x: -1,
-        rotation: -3,
-        ease: 'power2.out'
-      },
+      { x: 0, rotation: 0 },
+      { duration: 0.36, x: -1, rotation: -3, ease: 'power2.out' },
       'lift'
     )
     .addLabel('strike', 0.98)
-    .to(
+    .fromTo(
       arm,
-      {
-        duration: 0.12,
-        rotation: 0.8,
-        svgOrigin: MONK_ARM_ORIGIN,
-        ease: 'power3.in'
-      },
+      { rotation: -5, svgOrigin: MONK_ARM_ORIGIN },
+      { duration: 0.12, rotation: 0.8, svgOrigin: MONK_ARM_ORIGIN, ease: 'power3.in' },
       'strike'
     )
-    .to(
+    .fromTo(
       mallet,
-      {
-        duration: 0.12,
-        rotation: 3.5,
-        svgOrigin: MONK_MALLET_ORIGIN,
-        ease: 'power3.in'
-      },
+      { rotation: -42, svgOrigin: MONK_MALLET_ORIGIN },
+      { duration: 0.12, rotation: 3.5, svgOrigin: MONK_MALLET_ORIGIN, ease: 'power3.in' },
       'strike'
     )
-    .to(
+    .fromTo(
       [body, head, beads],
-      {
-        duration: 0.12,
-        x: 0.4,
-        y: 0.4,
-        rotation: 0.8,
-        ease: 'power3.in'
-      },
+      { x: -0.6, y: -1.5, rotation: -1.6 },
+      { duration: 0.12, x: 0.4, y: 0.4, rotation: 0.8, ease: 'power3.in' },
       'strike'
     )
-    .to(
+    .fromTo(
       [stage, roleArt],
-      {
-        duration: 0.12,
-        y: 0.5,
-        rotation: 0.6,
-        ease: 'power3.in'
-      },
+      { y: -1.2, rotation: -0.9 },
+      { duration: 0.12, y: 0.5, rotation: 0.6, ease: 'power3.in' },
       'strike'
     )
     .to(
       woodfishShell,
-      {
-        duration: 0.1,
-        scaleX: 0.96,
-        scaleY: 0.92,
-        ease: 'power2.out',
-        yoyo: true,
-        repeat: 1
-      },
+      { duration: 0.1, scaleX: 0.96, scaleY: 0.92, ease: 'power2.out', yoyo: true, repeat: 1 },
       'strike+=0.04'
     )
     .to(
       woodfishSlot,
-      {
-        duration: 0.1,
-        scaleX: 0.94,
-        scaleY: 0.84,
-        autoAlpha: 0.9,
-        ease: 'power2.out',
-        yoyo: true,
-        repeat: 1
-      },
+      { duration: 0.1, scaleX: 0.94, scaleY: 0.84, autoAlpha: 0.9, ease: 'power2.out', yoyo: true, repeat: 1 },
       'strike+=0.04'
     )
     .to(
       impact,
-      {
-        duration: 0.12,
-        autoAlpha: 0.55,
-        scale: 0.84,
-        ease: 'sine.out',
-        yoyo: true,
-        repeat: 1
-      },
+      { duration: 0.12, autoAlpha: 0.55, scale: 0.84, ease: 'sine.out', yoyo: true, repeat: 1 },
       'strike+=0.06'
     )
     .to(
       echo,
-      {
-        duration: 0.2,
-        autoAlpha: 0.18,
-        scale: 1.16,
-        ease: 'sine.out'
-      },
+      { duration: 0.2, autoAlpha: 0.18, scale: 1.16, ease: 'sine.out' },
       'strike+=0.08'
     )
     .to(
       malletTrail,
-      {
-        duration: 0.12,
-        autoAlpha: 0.14,
-        scaleX: 0.96,
-        x: 0.8,
-        y: -0.8,
-        ease: 'power1.out',
-        yoyo: true,
-        repeat: 1
-      },
+      { duration: 0.12, autoAlpha: 0.14, scaleX: 0.96, x: 0.8, y: -0.8, ease: 'power1.out', yoyo: true, repeat: 1 },
       'strike'
     )
     .addLabel('settle', 1.28)
+    // Settle: arm and mallet must use svgOrigin to return to 0, otherwise transform-origin mismatch causes drift
+    .fromTo(
+      arm,
+      { rotation: 0.8, svgOrigin: MONK_ARM_ORIGIN },
+      { duration: 0.5, rotation: 0, svgOrigin: MONK_ARM_ORIGIN, ease: 'sine.out' },
+      'settle'
+    )
+    .fromTo(
+      mallet,
+      { rotation: 3.5, svgOrigin: MONK_MALLET_ORIGIN },
+      { duration: 0.5, rotation: 0, svgOrigin: MONK_MALLET_ORIGIN, ease: 'sine.out' },
+      'settle'
+    )
     .to(
-      [stage, roleArt, body, head, beads, arm, mallet, sleeve, robeFold, halo],
-      {
-        duration: 0.5,
-        x: 0,
-        y: 0,
-        rotation: 0,
-        scale: 1,
-        autoAlpha: 1,
-        ease: 'sine.out'
-      },
+      [stage, roleArt, body, head, beads, sleeve, robeFold, halo],
+      { duration: 0.5, x: 0, y: 0, rotation: 0, scale: 1, autoAlpha: 1, ease: 'sine.out' },
       'settle'
     )
     .to(
       echo,
-      {
-        duration: 0.5,
-        autoAlpha: 0,
-        scale: 1.24,
-        ease: 'sine.out'
-      },
+      { duration: 0.5, autoAlpha: 0, scale: 1.24, ease: 'sine.out' },
       'settle'
     );
 
@@ -392,220 +296,142 @@ function buildMonkWorkingTimeline(root: HTMLElement) {
     }
   });
 
+  // 工作中：敲击节奏更快，lift/strike/recover 整体缩短
+  const liftDur = 0.12;
+  const strikeStart = 0.16;
+  const strikeDur = 0.08;
+  const recoverStart = 0.28;
+  const recoverDur = 0.14;
+
+  // Reset all transforms at the start of each cycle to prevent drift
+  const resetProps = { x: 0, y: 0, rotation: 0, scale: 1, autoAlpha: 1 };
+
   timeline
-    .addLabel('reset')
-    .set([impact, echo], {
-      autoAlpha: 0,
-      scale: 0.35
-    })
+    .set([impact, echo], { autoAlpha: 0, scale: 0.35 })
+    .set([stage, roleArt, body, head, beads, sleeve, robeFold, halo], resetProps)
+    .set(arm, { ...resetProps, svgOrigin: MONK_ARM_ORIGIN })
+    .set(mallet, { ...resetProps, svgOrigin: MONK_MALLET_ORIGIN })
+    .set(malletTrail, { autoAlpha: 0, x: 0, y: 0, scaleX: 1 })
     .addLabel('lift', 0)
-    .to(
+    .fromTo(
       [stage, roleArt],
-      {
-        duration: 0.18,
-        y: -1.5,
-        rotation: -1.4,
-        ease: 'power2.out'
-      },
+      { y: 0, rotation: 0 },
+      { duration: liftDur, y: -1.5, rotation: -1.4, ease: 'power2.out' },
       'lift'
     )
-    .to(
+    .fromTo(
       [body, head, beads],
-      {
-        duration: 0.2,
-        x: -1,
-        y: -1.5,
-        rotation: -2,
-        ease: 'power2.out'
-      },
+      { x: 0, y: 0, rotation: 0 },
+      { duration: liftDur + 0.02, x: -1, y: -1.5, rotation: -2, ease: 'power2.out' },
       'lift'
     )
-    .to(
+    .fromTo(
       arm,
-      {
-        duration: 0.2,
-        rotation: -7,
-        svgOrigin: MONK_ARM_ORIGIN,
-        ease: 'power2.out'
-      },
+      { rotation: 0, svgOrigin: MONK_ARM_ORIGIN },
+      { duration: liftDur + 0.02, rotation: -7, svgOrigin: MONK_ARM_ORIGIN, ease: 'power2.out' },
       'lift'
     )
-    .to(
+    .fromTo(
       mallet,
-      {
-        duration: 0.2,
-        rotation: -52,
-        svgOrigin: MONK_MALLET_ORIGIN,
-        ease: 'power2.out'
-      },
+      { rotation: 0, svgOrigin: MONK_MALLET_ORIGIN },
+      { duration: liftDur + 0.02, rotation: -52, svgOrigin: MONK_MALLET_ORIGIN, ease: 'power2.out' },
       'lift'
     )
-    .to(
+    .fromTo(
       [sleeve, robeFold],
-      {
-        duration: 0.2,
-        x: -1.5,
-        rotation: -4.5,
-        ease: 'power2.out'
-      },
+      { x: 0, rotation: 0 },
+      { duration: liftDur + 0.02, x: -1.5, rotation: -4.5, ease: 'power2.out' },
       'lift'
     )
-    .to(
+    .fromTo(
       halo,
-      {
-        duration: 0.22,
-        autoAlpha: 0.3,
-        scale: 1.05,
-        ease: 'sine.out'
-      },
+      { autoAlpha: 0.18, scale: 1 },
+      { duration: liftDur + 0.04, autoAlpha: 0.3, scale: 1.05, ease: 'sine.out' },
       'lift'
     )
     .to(
       malletTrail,
-      {
-        duration: 0.1,
-        autoAlpha: 0.08,
-        scaleX: 0.88,
-        x: -1,
-        y: -3
-      },
-      'lift+=0.08'
+      { duration: 0.06, autoAlpha: 0.08, scaleX: 0.88, x: -1, y: -3 },
+      'lift+=0.06'
     )
-    .addLabel('strike', 0.24)
-    .to(
+    .addLabel('strike', strikeStart)
+    .fromTo(
       arm,
-      {
-        duration: 0.12,
-        rotation: 2.2,
-        svgOrigin: MONK_ARM_ORIGIN,
-        ease: 'power4.in'
-      },
+      { rotation: -7, svgOrigin: MONK_ARM_ORIGIN },
+      { duration: strikeDur, rotation: 2.2, svgOrigin: MONK_ARM_ORIGIN, ease: 'power4.in' },
       'strike'
     )
-    .to(
+    .fromTo(
       mallet,
-      {
-        duration: 0.12,
-        rotation: 5,
-        svgOrigin: MONK_MALLET_ORIGIN,
-        ease: 'power4.in'
-      },
+      { rotation: -52, svgOrigin: MONK_MALLET_ORIGIN },
+      { duration: strikeDur, rotation: 5, svgOrigin: MONK_MALLET_ORIGIN, ease: 'power4.in' },
       'strike'
     )
-    .to(
+    .fromTo(
       [sleeve, robeFold],
-      {
-        duration: 0.12,
-        x: 1,
-        rotation: 4.5,
-        ease: 'power4.in'
-      },
+      { x: -1.5, rotation: -4.5 },
+      { duration: strikeDur, x: 1, rotation: 4.5, ease: 'power4.in' },
       'strike'
     )
-    .to(
+    .fromTo(
       [body, head, beads],
-      {
-        duration: 0.12,
-        x: 0.8,
-        y: 0.8,
-        rotation: 1.4,
-        ease: 'power4.in'
-      },
+      { x: -1, y: -1.5, rotation: -2 },
+      { duration: strikeDur, x: 0.8, y: 0.8, rotation: 1.4, ease: 'power4.in' },
       'strike'
     )
-    .to(
+    .fromTo(
       [stage, roleArt],
-      {
-        duration: 0.12,
-        y: 0.8,
-        rotation: 1.2,
-        ease: 'power4.in'
-      },
+      { y: -1.5, rotation: -1.4 },
+      { duration: strikeDur, y: 0.8, rotation: 1.2, ease: 'power4.in' },
       'strike'
     )
     .to(
       woodfishShell,
-      {
-        duration: 0.08,
-        scaleX: 0.94,
-        scaleY: 0.88,
-        ease: 'power3.out',
-        yoyo: true,
-        repeat: 1
-      },
-      'strike+=0.05'
+      { duration: 0.06, scaleX: 0.94, scaleY: 0.88, ease: 'power3.out', yoyo: true, repeat: 1 },
+      'strike+=0.03'
     )
     .to(
       woodfishSlot,
-      {
-        duration: 0.08,
-        scaleX: 0.9,
-        scaleY: 0.72,
-        autoAlpha: 0.96,
-        ease: 'power3.out',
-        yoyo: true,
-        repeat: 1
-      },
-      'strike+=0.05'
+      { duration: 0.06, scaleX: 0.9, scaleY: 0.72, autoAlpha: 0.96, ease: 'power3.out', yoyo: true, repeat: 1 },
+      'strike+=0.03'
     )
     .to(
       impact,
-      {
-        duration: 0.1,
-        autoAlpha: 0.82,
-        scale: 0.96,
-        ease: 'power2.out',
-        yoyo: true,
-        repeat: 1
-      },
-      'strike+=0.04'
+      { duration: 0.08, autoAlpha: 0.82, scale: 0.96, ease: 'power2.out', yoyo: true, repeat: 1 },
+      'strike+=0.03'
     )
     .to(
       echo,
-      {
-        duration: 0.18,
-        autoAlpha: 0.26,
-        scale: 1.22,
-        ease: 'sine.out'
-      },
-      'strike+=0.08'
+      { duration: 0.12, autoAlpha: 0.26, scale: 1.22, ease: 'sine.out' },
+      'strike+=0.05'
     )
     .to(
       malletTrail,
-      {
-        duration: 0.14,
-        autoAlpha: 0.28,
-        scaleX: 1,
-        x: 1,
-        y: -1,
-        ease: 'power1.out',
-        yoyo: true,
-        repeat: 1
-      },
+      { duration: 0.1, autoAlpha: 0.28, scaleX: 1, x: 1, y: -1, ease: 'power1.out', yoyo: true, repeat: 1 },
       'strike'
     )
-    .addLabel('recover', 0.48)
+    .addLabel('recover', recoverStart)
+    // Recover: arm and mallet must use svgOrigin to return to 0, otherwise transform-origin mismatch causes drift
+    .fromTo(
+      arm,
+      { rotation: 2.2, svgOrigin: MONK_ARM_ORIGIN },
+      { duration: recoverDur, rotation: 0, svgOrigin: MONK_ARM_ORIGIN, ease: 'sine.out' },
+      'recover'
+    )
+    .fromTo(
+      mallet,
+      { rotation: 5, svgOrigin: MONK_MALLET_ORIGIN },
+      { duration: recoverDur, rotation: 0, svgOrigin: MONK_MALLET_ORIGIN, ease: 'sine.out' },
+      'recover'
+    )
     .to(
-      [stage, roleArt, body, head, beads, arm, mallet, sleeve, robeFold, halo],
-      {
-        duration: 0.24,
-        x: 0,
-        y: 0,
-        rotation: 0,
-        scale: 1,
-        autoAlpha: 1,
-        ease: 'sine.out'
-      },
+      [stage, roleArt, body, head, beads, sleeve, robeFold, halo],
+      { duration: recoverDur, x: 0, y: 0, rotation: 0, scale: 1, autoAlpha: 1, ease: 'sine.out' },
       'recover'
     )
     .to(
       echo,
-      {
-        duration: 0.16,
-        autoAlpha: 0,
-        scale: 1.28,
-        ease: 'sine.out'
-      },
+      { duration: recoverDur, autoAlpha: 0, scale: 1.28, ease: 'sine.out' },
       'recover'
     );
 
@@ -618,7 +444,8 @@ function buildMonkWorkingTimeline(root: HTMLElement) {
 
 const MERIT_INTERVAL: Record<string, number> = {
   idle: 1780,
-  working: 720,
+  thinking: 420,
+  working: 420, // 与和尚 working 敲击周期 ~0.42s 对齐
   waiting: 2100,
   blocked: 2100,
 };
@@ -676,24 +503,27 @@ export function DesktopPet({
     petStatus,
     connectionStatus
   });
+  // Three monk animation states:
+  // - 'working': fast tapping (working/thinking)
+  // - 'idle': slow tapping (idle/waiting/done/collaborating)
+  // - null: no animation (disconnected only)
+  const isDisconnected = connectionStatus === 'offline' || connectionStatus === 'auth-expired';
   const monkGsapMode =
     !resolvedAppearance.avatar && resolvedAppearance.rolePack === 'monk'
-      ? animationState.activity === 'idle'
-        ? 'idle'
-        : animationState.activity === 'working'
+      ? isDisconnected
+        ? null
+        : animationState.activity === 'working' || animationState.activity === 'thinking'
           ? 'working'
-          : null
+          : 'idle'
       : null;
+
   const stageClassName = `desktop-pet__stage${resolvedAppearance.rolePack === 'monk' ? ' desktop-pet__stage--roomy' : ''}`;
 
-  // Merit particles: monk only, during tapping states
+  // Merit particles: monk only, while tapping (all states except disconnected)
   const showMerit =
     !resolvedAppearance.avatar &&
     resolvedAppearance.rolePack === 'monk' &&
-    (animationState.activity === 'idle' ||
-      animationState.activity === 'working' ||
-      animationState.activity === 'waiting' ||
-      animationState.activity === 'blocked');
+    !isDisconnected;
   const meritInterval = MERIT_INTERVAL[animationState.activity] ?? 2100;
   const meritInitialDelay =
     animationState.activity === 'idle'

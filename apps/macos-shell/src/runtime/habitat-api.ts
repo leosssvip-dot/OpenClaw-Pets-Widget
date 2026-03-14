@@ -11,6 +11,8 @@ export interface HabitatDesktopApi {
     platform: string;
     surface?: 'pet' | 'panel';
   }>;
+  sendHabitatSync?: (msg: unknown) => void;
+  onHabitatSync?: (callback: (msg: unknown) => void) => () => void;
   prepareGatewayConnection: (
     input: PrepareGatewayConnectionInput
   ) => Promise<PreparedGatewayConnection | null>;

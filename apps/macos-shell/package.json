@@ -18,6 +18,7 @@
     "@openclaw-habitat/domain": "workspace:*",
     "@rive-app/react-canvas": "^4.27.1",
     "gsap": "^3.14.2",
+    "lottie-web": "^5.13.0",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
     "react-markdown": "^10.0.0",

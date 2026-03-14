@@ -11,9 +11,11 @@ import {
   setGatewaySessionAuth
 } from './runtime/gateway-session-auth';
 import { DesktopPet } from './features/widget/DesktopPet';
+import type { PetSlot } from './features/widget/MultiPetShell';
 import type { PetAppearanceConfig } from './features/widget/pet-appearance';
 import { PetWindowSizeProvider } from './features/widget/PetWindowSizeContext';
 import { WidgetPanel } from './features/widget/WidgetPanel';
+import { createHabitatSubscriber } from './runtime/habitat-sync';
 
 function toHabitatPets(agents: AgentBindingSeed[]) {
   return agents.map((agent) => ({
@@ -138,6 +140,7 @@ export function App() {
       : 'panel';
   });
   const [menuExtraHeight, setMenuExtraHeight] = useState<number | null>(0);
+  const [, setWorkingDisplayTick] = useState(0);
   const reconnectAttemptedRef = useRef(false);
   const connectionSnapshot = useSyncExternalStore(
     (listener) => connectionManager.subscribe(listener),
@@ -147,6 +150,10 @@ export function App() {
   const connectionError = connectionSnapshot.errorMessage;
   const petsById = useHabitatStore((state) => state.pets);
   const agentSnapshotsById = useHabitatStore((state) => state.agentSnapshots);
+  const localStatusByPetId = useHabitatStore((state) => state.localStatusByPetId);
+  const workingUntilByPetId = useHabitatStore((state) => state.workingUntilByPetId);
+  // lastChatMessageAt removed: per-pet workingUntilByPetId handles working extension correctly
+  const clearExpiredWorkingUntil = useHabitatStore((state) => state.clearExpiredWorkingUntil);
   const selectedPetId = useHabitatStore((state) => state.selectedPetId);
   const gatewayProfilesById = useSettingsStore((state) => state.gatewayProfiles);
   const activeProfileId = useSettingsStore((state) => state.activeProfileId);
@@ -154,27 +161,39 @@ export function App() {
   const bindingsByPetId = useSettingsStore((state) => state.bindings);
   const appearancesByPetId = useSettingsStore((state) => state.appearances);
   const gatewayProfiles = Object.values(gatewayProfilesById);
+  const now = Date.now();
   const agentRows = [
-    ...Object.values(petsById).map((pet) => ({
-      petId: pet.id,
-      petName: pet.name,
-      agentId: bindingsByPetId[pet.id]?.agentId ?? pet.agentId,
-      gatewayId: bindingsByPetId[pet.id]?.gatewayId ?? pet.gatewayId,
-      status: pet.status,
-      isSelected: selectedPetId === pet.id,
-      appearance: appearancesByPetId[pet.id]
-    })),
+    ...Object.values(petsById).map((pet) => {
+      const base = localStatusByPetId[pet.id] ?? pet.status;
+      const status: PetSlot['status'] = workingUntilByPetId[pet.id] > now ? 'working' : base;
+      return {
+        petId: pet.id,
+        petName: pet.name,
+        agentId: bindingsByPetId[pet.id]?.agentId ?? pet.agentId,
+        gatewayId: bindingsByPetId[pet.id]?.gatewayId ?? pet.gatewayId,
+        status,
+        isSelected: selectedPetId === pet.id,
+        appearance: appearancesByPetId[pet.id]
+      };
+    }),
     ...Object.values(bindingsByPetId)
       .filter((binding) => !petsById[binding.petId])
-      .map((binding) => ({
-        petId: binding.petId,
-        petName: undefined,
-        agentId: binding.agentId,
-        gatewayId: binding.gatewayId,
-        status: agentSnapshotsById[binding.agentId]?.runtimeStatus ?? 'disconnected',
-        isSelected: false,
-        appearance: appearancesByPetId[binding.petId]
-      }))
+      .map((binding) => {
+        const base =
+          localStatusByPetId[binding.petId] ??
+          agentSnapshotsById[binding.agentId]?.runtimeStatus ??
+          'disconnected';
+        const status: PetSlot['status'] = workingUntilByPetId[binding.petId] > now ? 'working' : (base as PetSlot['status']);
+        return {
+          petId: binding.petId,
+          petName: undefined,
+          agentId: binding.agentId,
+          gatewayId: binding.gatewayId,
+          status,
+          isSelected: false,
+          appearance: appearancesByPetId[binding.petId]
+        };
+      })
   ];
   const visiblePetRow =
     (pinnedAgentId
@@ -199,6 +218,15 @@ export function App() {
       delete document.body.dataset.surface;
     };
   }, [surface]);
+
+  useEffect(() => {
+    const deadlines = Object.values(workingUntilByPetId).filter((t) => t > Date.now());
+    if (deadlines.length === 0) return;
+    const next = Math.min(...deadlines);
+    const delay = Math.max(0, next - Date.now() + 50);
+    const t = window.setTimeout(() => clearExpiredWorkingUntil(), delay);
+    return () => window.clearTimeout(t);
+  }, [workingUntilByPetId, clearExpiredWorkingUntil]);
 
   useEffect(() => {
     const api = getHabitatDesktopApi();
@@ -236,6 +264,25 @@ export function App() {
       void connectionManager.disconnect();
     };
   }, [connectionManager, surface]);
+
+  // Pet window: receive state updates from the panel window via IPC
+  useEffect(() => {
+    console.log('[bridge] App subscriber effect: surface=', surface);
+    if (surface !== 'pet') return;
+
+    const subscriber = createHabitatSubscriber({
+      onSeedPets: (pets) => {
+        console.log('[bridge] pet window seedPets count=', pets.length);
+        habitatStore.getState().seedPets(pets);
+      },
+      onEvent: (event) => {
+        console.log('[bridge] pet window event:', event.kind, 'petId=', event.petId);
+        habitatStore.getState().applyEvent(event);
+      }
+    });
+
+    return () => subscriber.dispose();
+  }, [surface]);
 
   const handlePetSendMessage = async (petId: string, agentId: string, text: string) => {
     habitatStore.getState().markPetAsThinking(petId, text);
@@ -283,7 +330,7 @@ export function App() {
         <DesktopPet
         petName={petDisplayName}
         petId={visiblePetRow?.petId}
-        connectionStatus={connectionStatus}
+        connectionStatus={surface === 'pet' && Object.keys(petsById).length > 0 ? 'connected' : connectionStatus}
         appearance={selectedPetAppearance}
         petStatus={petDisplayStatus}
         onSendMessage={(text) => {

@@ -29,6 +29,7 @@ export interface GalleryPanelProps {
   onPinnedAgentChange: (agentId: string | null) => void;
   /** 点击卡片时切换为该桌宠 */
   onCompanionSelect?: (agentId: string, petId: string) => void;
+  onDebugSetStatus?: (petId: string, status: string) => void;
   pinnedAgentId: string | null;
 }
 
@@ -37,6 +38,7 @@ export function GalleryPanel({
   onUpdateAppearance,
   onPinnedAgentChange,
   onCompanionSelect,
+  onDebugSetStatus,
   pinnedAgentId
 }: GalleryPanelProps) {
 
@@ -148,6 +150,31 @@ export function GalleryPanel({
                     >
                       {isFavorite ? '★' : '☆'}
                     </button>
+
+                    {onDebugSetStatus && (
+                      <button
+                        type="button"
+                        className="gallery-card__pin-btn"
+                        style={{
+                          fontSize: '10px',
+                          padding: '2px 6px',
+                          background: row.status === 'working' ? '#f59e0b' : '#e5e7eb',
+                          color: row.status === 'working' ? '#fff' : '#333',
+                          borderRadius: '4px',
+                          border: 'none',
+                          cursor: 'pointer'
+                        }}
+                        onClick={() =>
+                          onDebugSetStatus(
+                            row.petId,
+                            row.status === 'working' ? 'idle' : 'working'
+                          )
+                        }
+                        title="Debug: toggle working status"
+                      >
+                        {row.status === 'working' ? 'SET IDLE' : 'SET WORKING'}
+                      </button>
+                    )}
                   </div>
                 </div>
               </div>

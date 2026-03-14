@@ -11,11 +11,13 @@ const gsapMocks = vi.hoisted(() => {
     addLabel: vi.fn(),
     set: vi.fn(),
     to: vi.fn(),
+    fromTo: vi.fn(),
     kill: vi.fn()
   };
   timelineApi.addLabel.mockImplementation(() => timelineApi);
   timelineApi.set.mockImplementation(() => timelineApi);
   timelineApi.to.mockImplementation(() => timelineApi);
+  timelineApi.fromTo.mockImplementation(() => timelineApi);
 
   const gsapRevert = vi.fn();
   const gsapTimeline = vi.fn(() => timelineApi);
@@ -91,6 +93,7 @@ describe('DesktopPet', () => {
     gsapMocks.timelineApi.addLabel.mockClear();
     gsapMocks.timelineApi.set.mockClear();
     gsapMocks.timelineApi.to.mockClear();
+    gsapMocks.timelineApi.fromTo.mockClear();
     gsapMocks.timelineApi.kill.mockClear();
   });
 

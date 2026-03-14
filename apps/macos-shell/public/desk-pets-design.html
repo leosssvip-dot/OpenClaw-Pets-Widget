@@ -1,0 +1,210 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>桌宠 · OpenClaw</title>
+  <script src="https://mcp.figma.com/mcp/html-to-design/capture.js" async></script>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; }
+    body {
+      margin: 0;
+      padding: 0;
+      min-height: 100vh;
+      font-family: "SF Pro Text", -apple-system, BlinkMacSystemFont, sans-serif;
+      background: #0f0f12;
+      color: #f4f4f5;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+    }
+    .page {
+      width: 100%;
+      max-width: 640px;
+      padding: 48px 24px;
+    }
+    .title {
+      font-size: 0.75rem;
+      font-weight: 600;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: #71717a;
+      margin-bottom: 32px;
+      text-align: center;
+    }
+    .pets {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 40px 32px;
+    }
+    .pet {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 16px;
+    }
+    .pet__name {
+      font-size: 0.8125rem;
+      font-weight: 500;
+      color: #a1a1aa;
+    }
+    .pet__stage {
+      width: 120px;
+      height: 120px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .pet__stage svg {
+      width: 100%;
+      height: 100%;
+      object-fit: contain;
+    }
+  </style>
+</head>
+<body>
+  <div class="page">
+    <p class="title">Desktop Pets</p>
+    <div class="pets">
+      <!-- 1. Monk -->
+      <div class="pet">
+        <div class="pet__stage">
+          <svg class="desktop-pet__monk-svg" viewBox="0 0 120 120" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+            <g class="desktop-pet__monk-breath-halo">
+              <circle cx="60" cy="68" r="38" fill="#fef3c7" opacity="0.12" />
+            </g>
+            <g class="desktop-pet__monk-cushion">
+              <ellipse cx="60" cy="102" rx="42" ry="10" fill="#78716c" />
+            </g>
+            <g class="desktop-pet__woodfish">
+              <circle class="desktop-pet__woodfish-shell" cx="78" cy="78" r="14" fill="#a16207" />
+              <ellipse class="desktop-pet__woodfish-slot" cx="78" cy="79" rx="6" ry="2.5" fill="#451a03" opacity="0.8" />
+            </g>
+            <g class="desktop-pet__monk-body">
+              <g class="desktop-pet__sleeve">
+                <path d="M32 48 L32 96 Q32 104 60 108 Q88 104 88 96 L88 48 Q60 44 32 48 Z" fill="#d6d3d1" />
+              </g>
+              <g class="desktop-pet__monk-head">
+                <circle cx="60" cy="38" r="24" fill="#e7e5e4" />
+                <ellipse class="desktop-pet__monk-eye desktop-pet__monk-eye--left" cx="50" cy="36" rx="4" ry="5" fill="#1c1917" />
+                <ellipse class="desktop-pet__monk-eye desktop-pet__monk-eye--right" cx="70" cy="36" rx="4" ry="5" fill="#1c1917" />
+                <path class="desktop-pet__monk-mouth" d="M52 48 Q60 52 68 48" stroke="#78716c" stroke-width="2" stroke-linecap="round" fill="none" />
+              </g>
+              <g class="desktop-pet__monk-arm--right">
+                <g class="desktop-pet__mallet">
+                  <line x1="76" y1="52" x2="92" y2="74" stroke="#57534e" stroke-width="4" stroke-linecap="round" />
+                  <circle cx="92" cy="76" r="6" fill="#44403c" />
+                </g>
+              </g>
+            </g>
+          </svg>
+        </div>
+        <span class="pet__name">Monk</span>
+      </div>
+
+      <!-- 2. Lobster -->
+      <div class="pet">
+        <div class="pet__stage">
+          <svg class="desktop-pet__lobster-svg" viewBox="0 0 120 120" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+            <g class="desktop-pet__lobster-tail">
+              <path d="M24 62 L24 88 Q24 96 36 98 L36 62 Z" fill="#dc2626" />
+              <path d="M36 62 L36 98 Q48 100 48 92 L48 62 Z" fill="#b91c1c" />
+              <path d="M48 62 L48 92 Q60 94 60 86 L60 62 Z" fill="#dc2626" />
+            </g>
+            <g class="desktop-pet__lobster-body">
+              <ellipse cx="60" cy="58" rx="36" ry="28" fill="#ef4444" />
+              <ellipse cx="60" cy="38" rx="24" ry="22" fill="#f87171" />
+            </g>
+            <g class="desktop-pet__lobster-claw--left">
+              <path d="M26 36 L14 32 L8 44 L22 46 Z" fill="#dc2626" />
+              <path d="M8 44 L4 50 L6 52 L12 46 Z" fill="#b91c1c" />
+            </g>
+            <g class="desktop-pet__lobster-claw--right">
+              <path d="M94 36 L106 32 L112 44 L98 46 Z" fill="#dc2626" />
+              <path d="M112 44 L116 50 L114 52 L108 46 Z" fill="#b91c1c" />
+            </g>
+            <ellipse class="desktop-pet__lobster-eye desktop-pet__lobster-eye--left" cx="48" cy="34" rx="5" ry="6" fill="#1c1917" />
+            <ellipse class="desktop-pet__lobster-eye desktop-pet__lobster-eye--right" cx="72" cy="34" rx="5" ry="6" fill="#1c1917" />
+            <g class="desktop-pet__lobster-keyboard">
+              <rect x="42" y="88" width="36" height="14" rx="4" fill="#27272a" />
+              <rect x="46" y="92" width="6" height="5" rx="1" fill="#3f3f46" />
+              <rect x="55" y="92" width="6" height="5" rx="1" fill="#3f3f46" />
+              <rect x="64" y="92" width="6" height="5" rx="1" fill="#3f3f46" />
+              <rect x="73" y="92" width="6" height="5" rx="1" fill="#3f3f46" />
+            </g>
+          </svg>
+        </div>
+        <span class="pet__name">Lobster</span>
+      </div>
+
+      <!-- 3. Cat -->
+      <div class="pet">
+        <div class="pet__stage">
+          <svg class="desktop-pet__cat-svg" viewBox="0 0 120 120" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+            <g class="desktop-pet__cat-board">
+              <rect x="72" y="24" width="36" height="44" rx="8" fill="#fafaf9" />
+              <g class="desktop-pet__cat-card--top"><rect x="78" y="30" width="24" height="8" rx="4" fill="#fde047" /></g>
+              <g class="desktop-pet__cat-card--middle"><rect x="78" y="42" width="20" height="8" rx="4" fill="#f9a8d4" /></g>
+              <g class="desktop-pet__cat-card--bottom"><rect x="78" y="54" width="22" height="8" rx="4" fill="#86efac" /></g>
+            </g>
+            <g class="desktop-pet__cat-body">
+              <ellipse cx="52" cy="72" rx="32" ry="26" fill="#93c5fd" />
+            </g>
+            <g class="desktop-pet__cat-head">
+              <path class="desktop-pet__cat-ear desktop-pet__cat-ear--left" d="M32 38 L44 22 L48 38 Z" fill="#7dd3fc" />
+              <path class="desktop-pet__cat-ear desktop-pet__cat-ear--right" d="M72 38 L84 22 L88 38 Z" fill="#7dd3fc" />
+              <circle cx="52" cy="52" r="28" fill="#bfdbfe" />
+              <ellipse class="desktop-pet__cat-eye desktop-pet__cat-eye--left" cx="44" cy="50" rx="6" ry="7" fill="#1c1917" />
+              <ellipse class="desktop-pet__cat-eye desktop-pet__cat-eye--right" cx="60" cy="50" rx="6" ry="7" fill="#1c1917" />
+              <path d="M46 62 Q52 66 58 62" stroke="#1e3a5f" stroke-width="2" stroke-linecap="round" fill="none" />
+            </g>
+            <path class="desktop-pet__cat-tail" d="M80 78 Q100 70 106 56 Q108 48 98 52" stroke="#7dd3fc" stroke-width="14" stroke-linecap="round" fill="none" />
+          </svg>
+        </div>
+        <span class="pet__name">Cat</span>
+      </div>
+
+      <!-- 4. Robot -->
+      <div class="pet">
+        <div class="pet__stage">
+          <svg class="desktop-pet__robot-svg" viewBox="0 0 120 120" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+            <g class="desktop-pet__robot-body">
+              <rect x="28" y="52" width="64" height="48" rx="20" fill="#8b5cf6" />
+            </g>
+            <g class="desktop-pet__robot-head">
+              <rect x="36" y="28" width="48" height="28" rx="14" fill="#a78bfa" />
+            </g>
+            <g class="desktop-pet__robot-antenna">
+              <line x1="60" y1="28" x2="60" y2="12" stroke="#7c3aed" stroke-width="5" stroke-linecap="round" />
+            </g>
+            <g class="desktop-pet__robot-beacon">
+              <circle cx="60" cy="10" r="6" fill="#f43f5e" />
+            </g>
+            <g class="desktop-pet__robot-screen">
+              <rect x="36" y="62" width="48" height="18" rx="8" fill="#4c1d95" />
+            </g>
+            <g class="desktop-pet__robot-status-bar">
+              <rect x="42" y="68" width="12" height="4" rx="2" fill="#34d399" />
+              <rect x="58" y="68" width="12" height="4" rx="2" fill="#34d399" />
+              <rect x="74" y="68" width="8" height="4" rx="2" fill="#fbbf24" />
+            </g>
+            <ellipse class="desktop-pet__robot-eye desktop-pet__robot-eye--left" cx="46" cy="44" rx="6" ry="7" fill="#1c1917" />
+            <ellipse class="desktop-pet__robot-eye desktop-pet__robot-eye--right" cx="74" cy="44" rx="6" ry="7" fill="#1c1917" />
+            <path d="M52 54 Q60 58 68 54" stroke="#4c1d95" stroke-width="1.5" stroke-linecap="round" fill="none" />
+            <g class="desktop-pet__robot-arm desktop-pet__robot-arm--left">
+              <rect x="26" y="88" width="10" height="24" rx="5" fill="#7c3aed" />
+            </g>
+            <g class="desktop-pet__robot-arm desktop-pet__robot-arm--right">
+              <rect x="84" y="88" width="10" height="24" rx="5" fill="#7c3aed" />
+              <path d="M94 76 Q108 74 112 86" stroke="#7c3aed" stroke-width="8" stroke-linecap="round" fill="none" />
+              <circle cx="112" cy="88" r="6" fill="#34d399" />
+            </g>
+          </svg>
+        </div>
+        <span class="pet__name">Robot</span>
+      </div>
+    </div>
+  </div>
+</body>
+</html>

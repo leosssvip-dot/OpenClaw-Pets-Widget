@@ -44,3 +44,9 @@
 - [x] **[当前进度]** (Round 9) Setup 与 Gallery 职责分离：移除 Setup 标签页中的 Display 区块（Mode 单/多 + Pinned 下拉），改为在 Gallery 中统一完成：Gallery 头部增加 Single/Group 显示模式切换，Pin 仍由每张卡片上的星标按钮完成；Setup 仅保留「Gateway Connections」。测试已更新为在 Gallery 中操作显示模式与 Pin，全部通过。
 - [x] **[当前进度]** (Round 10) 桌面端基础修复：解决了 `pnpm dev:desktop` 时由于 node_modules 中缺失 `tsx` 依赖引起的 `sh: tsx: command not found` 报错问题，通过执行工作区根目录下的重新安装确保所有相关基础依赖被正确解析，服务已经可以顺利启动并进入开发模式。
 - [x] **[当前进度]** (Round 11) 删除复杂特性：彻底移除了 Gallery 和 App 中的 Group（多选）展现模式以及 `MultiPetShell` 相关逻辑，现在画廊中仅保留纯粹的单桌宠切换与标记逻辑（Pin），精简了全局的状态机（移除了 `displayMode`，`groupSelectedAgentIds` 等状态），进一步减轻了 UI 的复杂度和心智负担。全部 95 个测试和 Lint 校验通过。
+- [x] **[当前进度]** (Round 12) 为每个形象设计两套动画（工作中 / 空闲中），由既有 `petStatus` → `resolvePetAnimationState()` 的 activity 判断：① 和尚 working 使用 GSAP 时间轴加快敲击节奏（lift/strike/recover 总周期由 ~0.72s 缩至 ~0.42s），功德粒子间隔同步为 420ms；② 龙虾空闲为慢速放松摇摆（2.8s），工作中为更快敲键盘感（0.5s）；③ 猫空闲为慵懒呼吸（2.8s），工作中为专注点头（0.6s）；④ 机器人空闲为待机呼吸（2.4s），工作中为扫描感（0.55s）。猫/机器人/龙虾的 keyframes 区分度增强。
+- [x] 新增 `doc/桌宠三态动画设计.md`：梳理四只桌宠（龙虾/猫/机器人/和尚）在**工作中、空闲、掉线**三态下的动画方案；明确当前实现与缺口，并给出掉线态专用 keyframes 与可选灰化等实现建议。
+- [x] 改进桌宠动画设计：统一为 **SVG + GSAP** 方案（与 monk 一致），重写 `doc/桌宠三态动画设计.md`，为 lobster/cat/robot 设计可动部件 class 与三态 GSAP timeline 思路；**已知问题**：monk 动画长时间运行后手与棍子会偏离位置，待后续修复。
+- [x] 在 `doc/桌宠三态动画设计.md` 中新增 **趣味性与成长体系设计**：仿照 Monk 功德体系，为龙虾（修得/码力）、猫咪（清单点/规划）、机器人（巡检点/运维）设计成长单位、粒子文案、里程碑与庆祝方式，并约定统一技术方案（store、MeritParticles、MeritCelebration 按 role 扩展）；含趣味细节建议（达成时小动画、便签/屏幕进度展示等）。
+- [x] **[当前进度]** 调用 Stitch MCP 完成了 4 个桌宠形象（和尚、龙虾、猫咪、机器人）的视觉设计，涵盖“工作中、空闲、掉线”三态，设计风格统一为现代高级感，且针对 SVG + GSAP 动画进行了分层优化。
+

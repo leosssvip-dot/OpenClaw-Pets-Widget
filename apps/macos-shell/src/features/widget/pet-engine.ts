@@ -1,9 +1,10 @@
 /**
  * Pet Animation Engine — abstraction layer for rendering animated pet characters.
  *
- * Supports two backends:
- *   1. Rive (.riv files with built-in state machines)
- *   2. Legacy SVG + CSS/GSAP (current implementation, used as fallback)
+ * Supports three backends:
+ *   1. Lottie (.json files with per-state animations, free)
+ *   2. Rive (.riv files with built-in state machines)
+ *   3. Legacy SVG + CSS/GSAP (current implementation, used as fallback)
  *
  * The engine exposes a uniform interface so the DesktopPet component
  * doesn't need to know which backend is active.
@@ -47,10 +48,45 @@ export const RIVE_STRIKE_EVENT = 'strike';
 export const RIVE_STATE_MACHINE = 'PetStateMachine';
 
 // ---------------------------------------------------------------------------
+// Lottie per-state animation mapping
+// ---------------------------------------------------------------------------
+
+/**
+ * Maps a PetAnimationActivity to a simplified animation state for Lottie.
+ * Multiple activities can share the same Lottie file.
+ */
+export type LottieAnimationState = 'idle' | 'working' | 'offline';
+
+export function activityToLottieState(activity: PetAnimationActivity): LottieAnimationState {
+  switch (activity) {
+    case 'working':
+    case 'thinking':
+      return 'working';
+    case 'blocked':
+      return 'offline';
+    case 'idle':
+    case 'waiting':
+    case 'done':
+    default:
+      return 'idle';
+  }
+}
+
+/**
+ * Lottie asset manifest — maps a role pack to per-state .json files.
+ * Each state has its own Lottie animation file.
+ */
+export interface LottieAssetSet {
+  idle: string;
+  working: string;
+  offline: string;
+}
+
+// ---------------------------------------------------------------------------
 // Engine type detection
 // ---------------------------------------------------------------------------
 
-export type PetEngineType = 'rive' | 'svg';
+export type PetEngineType = 'rive' | 'lottie' | 'sprite' | 'svg';
 
 /**
  * Character asset manifest — maps a role pack to its .riv file path.
@@ -64,13 +100,64 @@ const RIVE_ASSETS: Partial<Record<PetRolePackId, string>> = {
   // robot: '/assets/pets/robot.riv',
 };
 
+/**
+ * Lottie asset manifest — maps a role pack to per-state .json files.
+ * Uncomment as Lottie animations become available.
+ */
+/**
+ * Sprite (PNG) asset manifest — maps a role pack to a single image file.
+ * The image is animated via whole-body GSAP transforms (float, bob, sway).
+ */
+const SPRITE_ASSETS: Partial<Record<PetRolePackId, string>> = {
+  monk: '/assets/pets/monk.png',
+  // lobster: '/assets/pets/lobster.png',
+  // cat: '/assets/pets/cat.png',
+  // robot: '/assets/pets/robot.png',
+};
+
+const LOTTIE_ASSETS: Partial<Record<PetRolePackId, LottieAssetSet>> = {
+  // monk: {
+  //   idle: '/assets/pets/monk-idle.json',
+  //   working: '/assets/pets/monk-working.json',
+  //   offline: '/assets/pets/monk-offline.json',
+  // },
+  // lobster: {
+  //   idle: '/assets/pets/lobster-idle.json',
+  //   working: '/assets/pets/lobster-working.json',
+  //   offline: '/assets/pets/lobster-offline.json',
+  // },
+  // cat: {
+  //   idle: '/assets/pets/cat-idle.json',
+  //   working: '/assets/pets/cat-working.json',
+  //   offline: '/assets/pets/cat-offline.json',
+  // },
+  // robot: {
+  //   idle: '/assets/pets/robot-idle.json',
+  //   working: '/assets/pets/robot-working.json',
+  //   offline: '/assets/pets/robot-offline.json',
+  // },
+};
+
 export function resolveEngine(rolePack: PetRolePackId): {
   type: PetEngineType;
   riveSrc: string | null;
+  lottieAssets: LottieAssetSet | null;
+  spriteSrc: string | null;
 } {
-  const src = RIVE_ASSETS[rolePack] ?? null;
-  return {
-    type: src ? 'rive' : 'svg',
-    riveSrc: src,
-  };
+  const riveSrc = RIVE_ASSETS[rolePack] ?? null;
+  if (riveSrc) {
+    return { type: 'rive', riveSrc, lottieAssets: null, spriteSrc: null };
+  }
+
+  const lottieAssets = LOTTIE_ASSETS[rolePack] ?? null;
+  if (lottieAssets) {
+    return { type: 'lottie', riveSrc: null, lottieAssets, spriteSrc: null };
+  }
+
+  const spriteSrc = SPRITE_ASSETS[rolePack] ?? null;
+  if (spriteSrc) {
+    return { type: 'sprite', riveSrc: null, lottieAssets: null, spriteSrc };
+  }
+
+  return { type: 'svg', riveSrc: null, lottieAssets: null, spriteSrc: null };
 }

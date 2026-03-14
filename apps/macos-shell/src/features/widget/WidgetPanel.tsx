@@ -5,8 +5,10 @@ import type { ConnectionStatus } from '../connection/ConnectionBadge';
 import { ConnectionBadge } from '../connection/ConnectionBadge';
 import { ReconnectBanner } from '../connection/ReconnectBanner';
 import type { HabitatPet } from '../habitat/types';
+import { habitatStore } from '../habitat/store';
 import { SettingsPanel } from '../settings/SettingsPanel';
 import { GalleryPanel } from '../settings/GalleryPanel';
+import { createHabitatPublisher } from '../../runtime/habitat-sync';
 import type { SshConnectionInput } from '../settings/SshConnectionForm';
 import {
   PET_ROLE_PACKS,
@@ -170,6 +172,27 @@ export function WidgetPanel({
                     onSelectPet(petId);
                   }}
                   pinnedAgentId={pinnedAgentId}
+                  onDebugSetStatus={(petId, status) => {
+                    habitatStore.setState((state) => {
+                      const pet = state.pets[petId];
+                      if (!pet) return state;
+                      return {
+                        pets: { ...state.pets, [petId]: { ...pet, status: status as HabitatPet['status'] } }
+                      };
+                    });
+                    // Also sync to pet window via IPC
+                    const pet = habitatStore.getState().pets[petId];
+                    if (pet) {
+                      const publisher = createHabitatPublisher();
+                      publisher.publishEvent({
+                        kind: 'agent.status',
+                        agentId: pet.agentId,
+                        gatewayId: pet.gatewayId,
+                        petId,
+                        status
+                      });
+                    }
+                  }}
                 />
               )}
 

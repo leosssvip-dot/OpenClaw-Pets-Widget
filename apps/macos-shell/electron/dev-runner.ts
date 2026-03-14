@@ -92,11 +92,11 @@ const shutdown = async () => {
 };
 
 process.on('SIGINT', () => {
-  void shutdown().finally(() => process.exit(130));
+  void shutdown().finally(() => process.exit(0));
 });
 
 process.on('SIGTERM', () => {
-  void shutdown().finally(() => process.exit(143));
+  void shutdown().finally(() => process.exit(0));
 });
 
 electron.on('exit', (code) => {

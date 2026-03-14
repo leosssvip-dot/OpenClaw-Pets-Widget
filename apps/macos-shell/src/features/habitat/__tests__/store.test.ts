@@ -116,4 +116,39 @@ describe('createHabitatStore', () => {
       bubbleText: '当前这轮会话在跑的是 gpt-5.4。'
     });
   });
+
+  it('sets localStatusByPetId to thinking when markPetAsThinking even without pet in store', () => {
+    const store = createHabitatStore();
+    store.getState().markPetAsThinking('pet-1', 'hello');
+    expect(store.getState().localStatusByPetId['pet-1']).toBe('thinking');
+  });
+
+  it('clears localStatusByPetId when applyEvent receives event for that petId', () => {
+    const store = createHabitatStore();
+    store.getState().markPetAsThinking('pet-1', 'hello');
+    expect(store.getState().localStatusByPetId['pet-1']).toBe('thinking');
+    store.getState().applyEvent({
+      kind: 'agent.status',
+      agentId: 'researcher',
+      gatewayId: 'remote-1',
+      petId: 'pet-1',
+      status: 'working'
+    });
+    expect(store.getState().localStatusByPetId['pet-1']).toBeUndefined();
+  });
+
+  it('sets workingUntilByPetId on chat.message so working state extends', () => {
+    const store = createHabitatStore();
+    const before = Date.now();
+    store.getState().applyEvent({
+      kind: 'chat.message',
+      agentId: 'researcher',
+      gatewayId: 'remote-1',
+      petId: 'pet-1',
+      text: 'ok',
+      final: true
+    });
+    const until = store.getState().workingUntilByPetId['pet-1'];
+    expect(until).toBeGreaterThanOrEqual(before + 3000);
+  });
 });
