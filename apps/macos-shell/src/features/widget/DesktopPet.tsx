@@ -6,10 +6,12 @@ import { useWidgetStore, widgetStore } from './widget-store';
 import { resolvePetAppearance, type PetAppearanceConfig } from './pet-appearance';
 import { resolvePetAnimationState } from './pet-animation-state';
 import { DesktopPetIllustration } from './DesktopPetIllustration';
+import { PetRenderer } from './PetRenderer';
 import { MeritParticles } from './MeritParticles';
 import { PetBubble } from './PetBubble';
 import { PetContextMenu } from './PetContextMenu';
 import { usePetWindowSize } from './PetWindowSizeContext';
+import { usePetDrag } from './use-pet-drag';
 
 // ---------------------------------------------------------------------------
 // GSAP monk working timeline (preserved from original)
@@ -65,54 +67,25 @@ function getMonkTimelineTargets(root: HTMLElement) {
   };
 }
 
-function buildMonkIdleTimeline(root: HTMLElement) {
-  const {
-    stage,
-    roleArt,
-    halo,
-    body,
-    head,
-    beads,
-    arm,
-    sleeve,
-    robeFold,
-    mallet,
-    malletTrail,
-    woodfishShell,
-    woodfishSlot,
-    impact,
-    echo
-  } = getMonkTimelineTargets(root);
+function allTargetsPresent(targets: ReturnType<typeof getMonkTimelineTargets>) {
+  return Object.values(targets).every(Boolean);
+}
 
-  if (
-    !stage ||
-    !roleArt ||
-    !halo ||
-    !body ||
-    !head ||
-    !beads ||
-    !arm ||
-    !sleeve ||
-    !robeFold ||
-    !mallet ||
-    !malletTrail ||
-    !woodfishShell ||
-    !woodfishSlot ||
-    !impact ||
-    !echo
-  ) {
-    return null;
-  }
+function buildMonkIdleTimeline(root: HTMLElement) {
+  const targets = getMonkTimelineTargets(root);
+  if (!allTargetsPresent(targets)) return null;
+
+  const {
+    stage, roleArt, halo, body, head, beads, arm, sleeve, robeFold,
+    mallet, malletTrail, woodfishShell, woodfishSlot, impact, echo
+  } = targets;
 
   const timeline = gsap.timeline({
     paused: false,
     repeat: -1,
-    defaults: {
-      ease: 'none'
-    }
+    defaults: { ease: 'none' }
   });
 
-  // Reset all transforms at the start of each cycle to prevent drift
   const resetProps = { x: 0, y: 0, rotation: 0, scale: 1, autoAlpha: 1 };
 
   timeline
@@ -222,7 +195,6 @@ function buildMonkIdleTimeline(root: HTMLElement) {
       'strike'
     )
     .addLabel('settle', 1.28)
-    // Settle: arm and mallet must use svgOrigin to return to 0, otherwise transform-origin mismatch causes drift
     .fromTo(
       arm,
       { rotation: 0.8, svgOrigin: MONK_ARM_ORIGIN },
@@ -250,60 +222,25 @@ function buildMonkIdleTimeline(root: HTMLElement) {
 }
 
 function buildMonkWorkingTimeline(root: HTMLElement) {
-  const {
-    stage,
-    roleArt,
-    halo,
-    body,
-    head,
-    beads,
-    arm,
-    sleeve,
-    robeFold,
-    mallet,
-    malletTrail,
-    woodfishShell,
-    woodfishSlot,
-    impact,
-    echo
-  } = getMonkTimelineTargets(root);
+  const targets = getMonkTimelineTargets(root);
+  if (!allTargetsPresent(targets)) return null;
 
-  if (
-    !stage ||
-    !roleArt ||
-    !halo ||
-    !body ||
-    !head ||
-    !beads ||
-    !arm ||
-    !sleeve ||
-    !robeFold ||
-    !mallet ||
-    !malletTrail ||
-    !woodfishShell ||
-    !woodfishSlot ||
-    !impact ||
-    !echo
-  ) {
-    return null;
-  }
+  const {
+    stage, roleArt, halo, body, head, beads, arm, sleeve, robeFold,
+    mallet, malletTrail, woodfishShell, woodfishSlot, impact, echo
+  } = targets;
 
   const timeline = gsap.timeline({
     paused: false,
     repeat: -1,
-    defaults: {
-      ease: 'none'
-    }
+    defaults: { ease: 'none' }
   });
 
-  // 工作中：敲击节奏更快，lift/strike/recover 整体缩短
   const liftDur = 0.12;
   const strikeStart = 0.16;
   const strikeDur = 0.08;
   const recoverStart = 0.28;
   const recoverDur = 0.14;
-
-  // Reset all transforms at the start of each cycle to prevent drift
   const resetProps = { x: 0, y: 0, rotation: 0, scale: 1, autoAlpha: 1 };
 
   timeline
@@ -411,7 +348,6 @@ function buildMonkWorkingTimeline(root: HTMLElement) {
       'strike'
     )
     .addLabel('recover', recoverStart)
-    // Recover: arm and mallet must use svgOrigin to return to 0, otherwise transform-origin mismatch causes drift
     .fromTo(
       arm,
       { rotation: 2.2, svgOrigin: MONK_ARM_ORIGIN },
@@ -445,7 +381,7 @@ function buildMonkWorkingTimeline(root: HTMLElement) {
 const MERIT_INTERVAL: Record<string, number> = {
   idle: 1780,
   thinking: 420,
-  working: 420, // 与和尚 working 敲击周期 ~0.42s 对齐
+  working: 420,
   waiting: 2100,
   blocked: 2100,
 };
@@ -461,7 +397,8 @@ export function DesktopPet({
   appearance,
   petStatus,
   onSendMessage,
-  onCreateTask
+  onCreateTask,
+  onSwitchCharacter
 }: {
   petName: string;
   petId?: string;
@@ -478,35 +415,24 @@ export function DesktopPet({
     | 'disconnected';
   onSendMessage?: (text: string) => void;
   onCreateTask?: (prompt: string) => void;
+  onSwitchCharacter?: (rolePackId: string) => void;
 }) {
   const isPanelOpen = useWidgetStore((state) => state.isPanelOpen);
   const [isHovered, setIsHovered] = useState(false);
-  const [isPressed, setIsPressed] = useState(false);
   const [isFocused, setIsFocused] = useState(false);
-  const [isDragging, setIsDragging] = useState(false);
   const [isGreeting, setIsGreeting] = useState(false);
   const [bubbleMode, setBubbleMode] = useState<'input' | 'status' | null>(null);
   const [contextMenu, setContextMenu] = useState<{ x: number; y: number } | null>(null);
   const petRef = useRef<HTMLButtonElement | null>(null);
   const petWindowSize = usePetWindowSize();
-  const dragStateRef = useRef({
-    pointerId: null as number | null,
-    startX: 0,
-    startY: 0,
-    isDragging: false,
-    lastWindowX: 0,
-    lastWindowY: 0
-  });
   const greetingTimeoutRef = useRef<number | null>(null);
+  const { isDragging, isPressed, wasDrag, handlers: dragHandlers } = usePetDrag();
+
   const resolvedAppearance = resolvePetAppearance(appearance);
   const animationState = resolvePetAnimationState({
     petStatus,
     connectionStatus
   });
-  // Three monk animation states:
-  // - 'working': fast tapping (working/thinking)
-  // - 'idle': slow tapping (idle/waiting/done/collaborating)
-  // - null: no animation (disconnected only)
   const isDisconnected = connectionStatus === 'offline' || connectionStatus === 'auth-expired';
   const monkGsapMode =
     !resolvedAppearance.avatar && resolvedAppearance.rolePack === 'monk'
@@ -597,7 +523,8 @@ export function DesktopPet({
       } else if (actionId === 'status') {
         setBubbleMode('status');
       } else if (actionId.startsWith('switch:')) {
-        // Character switch is handled upstream via appearance config
+        const rolePackId = actionId.slice('switch:'.length);
+        onSwitchCharacter?.(rolePackId);
       }
       setContextMenu(null);
     },
@@ -644,7 +571,7 @@ export function DesktopPet({
           void togglePanel();
         }}
         onClick={() => {
-          if (!dragStateRef.current.isDragging) {
+          if (!wasDrag()) {
             setBubbleMode((prev) => (prev === 'input' ? null : 'input'));
           }
         }}
@@ -668,96 +595,8 @@ export function DesktopPet({
         }}
         onPointerLeave={() => {
           setIsHovered(false);
-          setIsPressed(false);
         }}
-        onPointerDown={(event) => {
-          setIsPressed(true);
-          dragStateRef.current = {
-            pointerId: event.pointerId,
-            startX: event.clientX,
-            startY: event.clientY,
-            isDragging: false,
-            lastWindowX: 0,
-            lastWindowY: 0
-          };
-          event.currentTarget.setPointerCapture?.(event.pointerId);
-        }}
-        onPointerMove={(event) => {
-          if (dragStateRef.current.pointerId !== event.pointerId) {
-            return;
-          }
-
-          const movedEnough =
-            Math.abs(event.clientX - dragStateRef.current.startX) > 6 ||
-            Math.abs(event.clientY - dragStateRef.current.startY) > 6;
-
-          if (!movedEnough) {
-            return;
-          }
-
-          dragStateRef.current.isDragging = true;
-          setIsDragging(true);
-          dragStateRef.current.lastWindowX = Math.round(
-            event.screenX - dragStateRef.current.startX
-          );
-          dragStateRef.current.lastWindowY = Math.round(
-            event.screenY - dragStateRef.current.startY
-          );
-
-          void getHabitatDesktopApi()?.movePetWindow({
-            x: dragStateRef.current.lastWindowX,
-            y: dragStateRef.current.lastWindowY
-          });
-        }}
-        onPointerUp={(event) => {
-          if (dragStateRef.current.pointerId !== event.pointerId) {
-            return;
-          }
-
-          if (event.currentTarget.hasPointerCapture?.(event.pointerId)) {
-            event.currentTarget.releasePointerCapture?.(event.pointerId);
-          }
-
-          setIsPressed(false);
-          setIsDragging(false);
-
-          if (dragStateRef.current.isDragging) {
-            void getHabitatDesktopApi()?.persistPetWindowPosition({
-              x: dragStateRef.current.lastWindowX,
-              y: dragStateRef.current.lastWindowY
-            });
-          }
-
-          dragStateRef.current = {
-            pointerId: null,
-            startX: 0,
-            startY: 0,
-            isDragging: false,
-            lastWindowX: 0,
-            lastWindowY: 0
-          };
-        }}
-        onPointerCancel={(event) => {
-          if (dragStateRef.current.pointerId !== event.pointerId) {
-            return;
-          }
-
-          if (event.currentTarget.hasPointerCapture?.(event.pointerId)) {
-            event.currentTarget.releasePointerCapture?.(event.pointerId);
-          }
-
-          setIsPressed(false);
-          setIsDragging(false);
-
-          dragStateRef.current = {
-            pointerId: null,
-            startX: 0,
-            startY: 0,
-            isDragging: false,
-            lastWindowX: 0,
-            lastWindowY: 0
-          };
-        }}
+        {...dragHandlers}
       >
         <span className={stageClassName} aria-hidden="true">
           {resolvedAppearance.avatar ? (
@@ -765,11 +604,10 @@ export function DesktopPet({
               <img className="desktop-pet__avatar" src={resolvedAppearance.avatar} alt="" />
             </span>
           ) : (
-            <span
-              className={`desktop-pet__role-art-motion desktop-pet__role-art-motion--${resolvedAppearance.rolePack}`}
-            >
-              <DesktopPetIllustration rolePack={resolvedAppearance.rolePack} />
-            </span>
+            <PetRenderer
+              rolePack={resolvedAppearance.rolePack}
+              activity={isDisconnected ? 'blocked' : animationState.activity}
+            />
           )}
           {/* Legacy merit badge (used by GSAP working timeline) */}
           {resolvedAppearance.rolePack === 'monk' && monkGsapMode === 'working' ? (

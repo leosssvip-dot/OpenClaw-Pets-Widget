@@ -94,6 +94,13 @@ function resolveGatewayConnection(profile: GatewayProfile): PreparedGatewayConne
     };
   }
 
+  if (profile.transport === 'local') {
+    return {
+      url: `ws://127.0.0.1:${profile.gatewayPort ?? 18789}`,
+      authToken: profile.gatewayToken
+    };
+  }
+
   return {
     url: 'ws://127.0.0.1:18789'
   };
@@ -214,7 +221,8 @@ function nextRequestId(method: string) {
 function sendRequest(socket: WebSocket, method: string, params?: Record<string, unknown>) {
   const id = nextRequestId(method);
   const frame = JSON.stringify({ type: 'req', id, method, params });
-  console.log('[bridge] → send', frame);
+  // Truncate log to avoid dumping huge base64 payloads
+  console.log('[bridge] → send', frame.length > 500 ? frame.slice(0, 500) + `... (${frame.length} bytes total)` : frame);
   socket.send(frame);
   return id;
 }
@@ -340,6 +348,7 @@ export class OpenClawClient implements BridgeClient {
   private socket: WebSocket | null = null;
   private activeProfile: GatewayProfile | null = null;
   private sessionMainKey = 'main';
+  private snapshotAgents: unknown[] | null = null;
   private readonly connectionListeners = new Set<(state: BridgeConnectionState) => void>();
   private connectionState: BridgeConnectionState = {
     status: 'disconnected',
@@ -426,9 +435,9 @@ export class OpenClawClient implements BridgeClient {
         const requestId = sendRequest(socket, 'connect', {
           minProtocol: 3,
           maxProtocol: 3,
-          scopes: ['operator.read', 'operator.write'],
+          scopes: ['operator.admin', 'operator.approvals', 'operator.pairing'],
           client: {
-            id: 'gateway-client',
+            id: 'openclaw-control-ui',
             version: '1.0.0',
             platform: 'macos',
             mode: 'ui'
@@ -448,6 +457,8 @@ export class OpenClawClient implements BridgeClient {
 
       if (hello.ok === true) {
         this.updateSessionDefaults(hello.payload);
+        // Extract agents from health snapshot for fallback (avoids scope-gated agents.list RPC)
+        this.snapshotAgents = this.extractSnapshotAgents(hello.payload);
         this.setConnectionState({
           status: 'connected',
           profileId: profile.id,
@@ -517,24 +528,42 @@ export class OpenClawClient implements BridgeClient {
   }
 
   async listAgents(): Promise<AgentBindingSeed[]> {
-    const socket = this.requireSocket();
-    const requestId = sendRequest(socket, 'agents.list');
-    const result = await waitForResponse(
-      socket,
-      requestId,
-      this.options.requestTimeoutMs ?? 4_000,
-      'agents.list'
-    );
-    if (result.ok === false) {
-      throw new Error(`agents.list rejected: ${formatResponseError(result.error)}`);
+    const gatewayId = this.activeProfile?.id ?? 'unknown';
+
+    // Try agents.list RPC first; fall back to snapshot from connect response
+    // (gateway 2026.3.13+ clears scopes for token-only auth without device identity)
+    try {
+      const socket = this.requireSocket();
+      const requestId = sendRequest(socket, 'agents.list');
+      const result = await waitForResponse(
+        socket,
+        requestId,
+        this.options.requestTimeoutMs ?? 4_000,
+        'agents.list'
+      );
+      if (result.ok === false) {
+        throw new Error(formatResponseError(result.error));
+      }
+      this.updateSessionDefaults(result.payload);
+      return normalizeAgentBindingSeeds(result.payload, gatewayId);
+    } catch (err) {
+      if (this.snapshotAgents && this.snapshotAgents.length > 0) {
+        console.log('[bridge] agents.list failed, using snapshot agents:', (err as Error).message);
+        return normalizeAgentBindingSeeds({ agents: this.snapshotAgents }, gatewayId);
+      }
+      throw err;
     }
+  }
 
-    this.updateSessionDefaults(result.payload);
-
-    return normalizeAgentBindingSeeds(
-      result.payload,
-      this.activeProfile?.id ?? 'unknown'
-    );
+  private extractSnapshotAgents(payload: unknown): unknown[] | null {
+    if (!payload || typeof payload !== 'object') return null;
+    const p = payload as Record<string, unknown>;
+    // snapshot.health.agents
+    const snapshot = p.snapshot as Record<string, unknown> | undefined;
+    const health = snapshot?.health as Record<string, unknown> | undefined;
+    const agents = health?.agents;
+    if (Array.isArray(agents) && agents.length > 0) return agents;
+    return null;
   }
 
   subscribe(listener: (event: HabitatEvent) => void): () => void {
@@ -543,7 +572,7 @@ export class OpenClawClient implements BridgeClient {
       const frame = JSON.parse(toMessageText(event.data)) as GatewayFrame;
       const eventName = resolveEventName(frame);
 
-      if (!eventName || (eventName !== 'chat' && !eventName.startsWith('agent.'))) {
+      if (!eventName || (eventName !== 'chat' && eventName !== 'agent' && !eventName.startsWith('agent.'))) {
         return;
       }
 
@@ -590,11 +619,39 @@ export class OpenClawClient implements BridgeClient {
 
   async sendMessage(input: SendMessageInput): Promise<void> {
     const socket = this.requireSocket();
-    const requestId = sendRequest(socket, 'chat.send', {
+    const params: Record<string, unknown> = {
       sessionKey: this.resolveSessionKey(input.agentId ?? input.petId),
       message: input.content,
       idempotencyKey: createIdempotencyKey()
-    });
+    };
+
+    // Convert data-URI images into gateway attachments format
+    if (input.images && input.images.length > 0) {
+      const attachments = input.images
+        .filter((img) => img.url.startsWith('data:'))
+        .map((img) => {
+          // Parse data URI: data:<mimeType>;base64,<data>
+          const match = img.url.match(/^data:([^;]+);base64,(.+)$/s);
+          if (!match) {
+            console.warn('[bridge] attachment: failed to parse data URI, prefix:', img.url.slice(0, 50));
+            return null;
+          }
+          const content = match[2].replace(/\s/g, ''); // strip any whitespace in base64
+          console.log('[bridge] attachment: mimeType=%s base64Length=%d fileName=%s', match[1], content.length, img.alt ?? 'image');
+          return {
+            mimeType: match[1],
+            fileName: img.alt ?? 'image',
+            content
+          };
+        })
+        .filter(Boolean);
+      if (attachments.length > 0) {
+        params.attachments = attachments;
+        console.log('[bridge] sending %d attachment(s) with chat.send', attachments.length);
+      }
+    }
+
+    const requestId = sendRequest(socket, 'chat.send', params);
     const res = await waitForResponse(socket, requestId, this.options.requestTimeoutMs ?? 4_000, 'chat.send');
 
     if (res.ok === false) {

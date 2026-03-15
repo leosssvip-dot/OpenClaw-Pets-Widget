@@ -2,23 +2,40 @@ import { useState } from 'react';
 import type { GatewayProfile } from '@openclaw-habitat/bridge';
 import {
   SshConnectionForm,
+  LocalConnectionForm,
   type SshConnectionDraft,
-  type SshConnectionInput
+  type ConnectionInput
 } from './SshConnectionForm';
+
+type TransportMode = 'ssh' | 'local';
 
 function isSshProfile(profile: GatewayProfile): profile is Extract<GatewayProfile, { transport: 'ssh' }> {
   return profile.transport === 'ssh';
 }
 
-function toDraft(profile: Extract<GatewayProfile, { transport: 'ssh' }>): SshConnectionDraft {
+function isLocalProfile(profile: GatewayProfile): profile is Extract<GatewayProfile, { transport: 'local' }> {
+  return profile.transport === 'local';
+}
+
+function toSshDraft(profile: Extract<GatewayProfile, { transport: 'ssh' }>): SshConnectionDraft {
   return {
     host: profile.host,
     username: profile.username,
     sshPort: profile.sshPort,
-    identityFile: profile.identityFile,
     remoteGatewayPort: profile.remoteGatewayPort,
     gatewayToken: profile.gatewayToken
   };
+}
+
+function profileMeta(profile: GatewayProfile) {
+  switch (profile.transport) {
+    case 'ssh':
+      return `${profile.username}@${profile.host}:${profile.sshPort}`;
+    case 'local':
+      return `localhost:${profile.gatewayPort ?? 18789}`;
+    case 'tailnet':
+      return profile.baseUrl;
+  }
 }
 
 export function GatewayProfiles({
@@ -32,23 +49,33 @@ export function GatewayProfiles({
   activeProfileId: string | null;
   isConnecting?: boolean;
   onSaveProfile: (
-    input: SshConnectionInput,
+    input: ConnectionInput,
     profileId?: string
   ) => Promise<void> | void;
   onDeleteProfile: (profileId: string) => void;
 }) {
   const [isOpen, setIsOpen] = useState(false);
-  const [editingProfile, setEditingProfile] = useState<
-    Extract<GatewayProfile, { transport: 'ssh' }> | null
-  >(null);
+  const [transportMode, setTransportMode] = useState<TransportMode>('ssh');
+  const [editingProfile, setEditingProfile] = useState<GatewayProfile | null>(null);
   const [pendingDeleteId, setPendingDeleteId] = useState<string | null>(null);
+
+  const openNewForm = (mode: TransportMode) => {
+    setEditingProfile(null);
+    setTransportMode(mode);
+    setIsOpen(true);
+  };
+
+  const closeForm = () => {
+    setIsOpen(false);
+    setEditingProfile(null);
+  };
 
   return (
     <section className="gateway-profiles">
       <div className="section-heading">
         <div className="section-heading__copy">
           <h2>Connection & Gateways</h2>
-          <p>Saved links and SSH setup for this companion.</p>
+          <p>Saved links and gateway setup for this companion.</p>
         </div>
         <button
           type="button"
@@ -56,32 +83,62 @@ export function GatewayProfiles({
           className="settings-btn settings-btn--primary"
           onClick={() => {
             if (isOpen) {
-              setIsOpen(false);
-              setEditingProfile(null);
+              closeForm();
               return;
             }
-
-            setEditingProfile(null);
-            setIsOpen(true);
+            openNewForm('ssh');
           }}
         >
           {isConnecting ? 'Connecting...' : isOpen ? 'Cancel' : 'Add gateway'}
         </button>
       </div>
 
-      {isOpen ? (
-        <SshConnectionForm
-          key={editingProfile?.id ?? 'new-profile'}
-          initialValues={editingProfile ? toDraft(editingProfile) : undefined}
-          submitLabel={editingProfile ? 'Save' : 'Connect'}
-          disabled={isConnecting}
-          onSubmit={async (input) => {
-            await onSaveProfile(input, editingProfile?.id);
-            setEditingProfile(null);
-            setIsOpen(false);
-          }}
-        />
-      ) : null}
+      {isOpen && (
+        <>
+          {!editingProfile && (
+            <div className="gateway-profiles__transport-tabs">
+              <button
+                type="button"
+                className={`gateway-profiles__transport-tab ${transportMode === 'ssh' ? 'gateway-profiles__transport-tab--active' : ''}`}
+                onClick={() => setTransportMode('ssh')}
+              >
+                SSH Tunnel
+              </button>
+              <button
+                type="button"
+                className={`gateway-profiles__transport-tab ${transportMode === 'local' ? 'gateway-profiles__transport-tab--active' : ''}`}
+                onClick={() => setTransportMode('local')}
+              >
+                Local
+              </button>
+            </div>
+          )}
+
+          {transportMode === 'ssh' ? (
+            <SshConnectionForm
+              key={editingProfile?.id ?? 'new-ssh'}
+              initialValues={editingProfile && isSshProfile(editingProfile) ? toSshDraft(editingProfile) : undefined}
+              submitLabel={editingProfile ? 'Save' : 'Connect'}
+              disabled={isConnecting}
+              onSubmit={async (input) => {
+                await onSaveProfile({ transport: 'ssh', ...input }, editingProfile?.id);
+                closeForm();
+              }}
+            />
+          ) : (
+            <LocalConnectionForm
+              key={editingProfile?.id ?? 'new-local'}
+              initialValues={editingProfile && isLocalProfile(editingProfile) ? undefined : undefined}
+              submitLabel={editingProfile ? 'Save' : 'Connect'}
+              disabled={isConnecting}
+              onSubmit={async (input) => {
+                await onSaveProfile({ transport: 'local', ...input }, editingProfile?.id);
+                closeForm();
+              }}
+            />
+          )}
+        </>
+      )}
 
       <ul className="gateway-profiles__list">
         {profiles.map((profile) => (
@@ -91,11 +148,7 @@ export function GatewayProfiles({
           >
             <strong>{profile.label}</strong>
             <span className="gateway-profiles__meta">
-              {profile.transport === 'ssh'
-                ? `${profile.username}@${profile.host}:${profile.sshPort}`
-                : profile.transport === 'tailnet'
-                  ? profile.baseUrl
-                  : profile.transport}
+              {profileMeta(profile)}
             </span>
             <div className="gateway-profiles__actions">
               {isSshProfile(profile) ? (
@@ -105,6 +158,7 @@ export function GatewayProfiles({
                   disabled={isConnecting}
                   onClick={() => {
                     setEditingProfile(profile);
+                    setTransportMode('ssh');
                     setIsOpen(true);
                   }}
                 >
@@ -120,8 +174,7 @@ export function GatewayProfiles({
                       onDeleteProfile(profile.id);
                       setPendingDeleteId(null);
                       if (editingProfile?.id === profile.id) {
-                        setEditingProfile(null);
-                        setIsOpen(false);
+                        closeForm();
                       }
                     }}
                   >

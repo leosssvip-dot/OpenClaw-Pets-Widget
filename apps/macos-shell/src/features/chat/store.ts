@@ -1,12 +1,14 @@
 import { createStore } from 'zustand/vanilla';
-import type { ChatMessage } from './types';
+import type { ChatMessage, ChatImage } from './types';
 
 export interface ChatState {
   messages: ChatMessage[];
-  addUserMessage: (content: string) => void;
+  typing: boolean;
+  addUserMessage: (content: string, images?: ChatImage[]) => void;
   addAssistantMessage: (content: string, final?: boolean) => void;
   replaceMessages: (messages: ChatMessage[]) => void;
   clearMessages: () => void;
+  setTyping: (typing: boolean) => void;
 }
 
 let messageId = 0;
@@ -17,11 +19,19 @@ function nextId() {
 export const createChatStore = () =>
   createStore<ChatState>((set) => ({
     messages: [],
-    addUserMessage: (content) =>
+    typing: false,
+    addUserMessage: (content, images) =>
       set((s) => ({
+        typing: true,
         messages: [
           ...s.messages,
-          { id: nextId(), role: 'user', content, timestamp: Date.now() }
+          {
+            id: nextId(),
+            role: 'user',
+            content,
+            ...(images && images.length > 0 ? { images } : {}),
+            timestamp: Date.now(),
+          }
         ]
       })),
     addAssistantMessage: (content, final = true) =>
@@ -30,6 +40,7 @@ export const createChatStore = () =>
         // 流式或最终：若上一条已是 assistant，只更新该条，避免同一条回复出现两次
         if (last?.role === 'assistant') {
           return {
+            typing: !final,
             messages: [
               ...s.messages.slice(0, -1),
               { ...last, content }
@@ -37,6 +48,7 @@ export const createChatStore = () =>
           };
         }
         return {
+          typing: !final,
           messages: [
             ...s.messages,
             { id: nextId(), role: 'assistant', content, timestamp: Date.now() }
@@ -44,7 +56,8 @@ export const createChatStore = () =>
         };
       }),
     replaceMessages: (messages) => set({ messages }),
-    clearMessages: () => set({ messages: [] })
+    clearMessages: () => set({ messages: [], typing: false }),
+    setTyping: (typing) => set({ typing }),
   }));
 
 export const chatStore = createChatStore();

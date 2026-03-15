@@ -4,13 +4,21 @@ export interface SshConnectionInput {
   host: string;
   username: string;
   sshPort: number;
-  identityFile?: string;
   password?: string;
   remoteGatewayPort: number;
   gatewayToken: string;
 }
 
 export type SshConnectionDraft = Omit<SshConnectionInput, 'password'>;
+
+export interface LocalConnectionInput {
+  gatewayPort: number;
+  gatewayToken?: string;
+}
+
+export type ConnectionInput =
+  | ({ transport: 'ssh' } & SshConnectionInput)
+  | ({ transport: 'local' } & LocalConnectionInput);
 
 export function SshConnectionForm({
   onSubmit,
@@ -26,27 +34,39 @@ export function SshConnectionForm({
   const [host, setHost] = useState(initialValues?.host ?? '');
   const [username, setUsername] = useState(initialValues?.username ?? '');
   const [sshPort, setSshPort] = useState(String(initialValues?.sshPort ?? 22));
-  const [identityFile, setIdentityFile] = useState(initialValues?.identityFile ?? '');
   const [password, setPassword] = useState('');
   const [remoteGatewayPort, setRemoteGatewayPort] = useState(
     String(initialValues?.remoteGatewayPort ?? 18789)
   );
   const [gatewayToken, setGatewayToken] = useState(initialValues?.gatewayToken ?? '');
+  const [submitting, setSubmitting] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  const isValid = host.trim() !== '' && username.trim() !== '' && gatewayToken.trim() !== '';
+  const isBusy = disabled || submitting;
 
   return (
     <form
       className="gateway-profiles__form"
-      onSubmit={(event) => {
+      onSubmit={async (event) => {
         event.preventDefault();
-        void onSubmit({
-          host,
-          username,
-          sshPort: Number(sshPort || '22'),
-          identityFile: identityFile.trim() || undefined,
-          password: password || undefined,
-          remoteGatewayPort: Number(remoteGatewayPort || '18789'),
-          gatewayToken
-        });
+        if (!isValid || isBusy) return;
+        setError(null);
+        setSubmitting(true);
+        try {
+          await onSubmit({
+            host,
+            username,
+            sshPort: Number(sshPort || '22'),
+            password: password || undefined,
+            remoteGatewayPort: Number(remoteGatewayPort || '18789'),
+            gatewayToken
+          });
+        } catch (err) {
+          setError(err instanceof Error ? err.message : String(err));
+        } finally {
+          setSubmitting(false);
+        }
       }}
     >
       <label>
@@ -57,6 +77,7 @@ export function SshConnectionForm({
           onChange={(event) => setHost(event.target.value)}
           placeholder="studio.internal"
           required
+          disabled={isBusy}
         />
       </label>
       <label>
@@ -67,6 +88,7 @@ export function SshConnectionForm({
           onChange={(event) => setUsername(event.target.value)}
           placeholder="chenyang"
           required
+          disabled={isBusy}
         />
       </label>
       <label>
@@ -77,15 +99,7 @@ export function SshConnectionForm({
           min="1"
           value={sshPort}
           onChange={(event) => setSshPort(event.target.value)}
-        />
-      </label>
-      <label>
-        Identity File
-        <input
-          aria-label="Identity File"
-          value={identityFile}
-          onChange={(event) => setIdentityFile(event.target.value)}
-          placeholder="Leave blank to use ~/.ssh/config or ssh-agent"
+          disabled={isBusy}
         />
       </label>
       <label>
@@ -96,6 +110,7 @@ export function SshConnectionForm({
           value={password}
           onChange={(event) => setPassword(event.target.value)}
           placeholder="Optional if your SSH key already works"
+          disabled={isBusy}
         />
       </label>
       <label>
@@ -106,6 +121,7 @@ export function SshConnectionForm({
           min="1"
           value={remoteGatewayPort}
           onChange={(event) => setRemoteGatewayPort(event.target.value)}
+          disabled={isBusy}
         />
       </label>
       <label>
@@ -116,14 +132,97 @@ export function SshConnectionForm({
           value={gatewayToken}
           onChange={(event) => setGatewayToken(event.target.value)}
           required
+          disabled={isBusy}
         />
       </label>
       <p className="gateway-profiles__hint">
-        Leave Identity File blank to reuse your system SSH config and loaded keys.
-        SSH Password is securely cached for reconnects.
+        Uses your system SSH config and loaded keys.
+        Password is securely cached for reconnects.
       </p>
-      <button type="submit" disabled={disabled}>
-        {disabled ? 'Connecting...' : submitLabel}
+      {error && (
+        <p className="gateway-profiles__error" role="alert">
+          {error}
+        </p>
+      )}
+      <button type="submit" disabled={isBusy || !isValid}>
+        {submitting ? 'Connecting...' : submitLabel}
+      </button>
+    </form>
+  );
+}
+
+export function LocalConnectionForm({
+  onSubmit,
+  initialValues,
+  submitLabel = 'Connect',
+  disabled
+}: {
+  onSubmit: (input: LocalConnectionInput) => Promise<void> | void;
+  initialValues?: Partial<LocalConnectionInput>;
+  submitLabel?: string;
+  disabled?: boolean;
+}) {
+  const [gatewayPort, setGatewayPort] = useState(
+    String(initialValues?.gatewayPort ?? 18789)
+  );
+  const [gatewayToken, setGatewayToken] = useState(initialValues?.gatewayToken ?? '');
+  const [submitting, setSubmitting] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  const isBusy = disabled || submitting;
+
+  return (
+    <form
+      className="gateway-profiles__form"
+      onSubmit={async (event) => {
+        event.preventDefault();
+        if (isBusy) return;
+        setError(null);
+        setSubmitting(true);
+        try {
+          await onSubmit({
+            gatewayPort: Number(gatewayPort || '18789'),
+            gatewayToken: gatewayToken.trim() || undefined
+          });
+        } catch (err) {
+          setError(err instanceof Error ? err.message : String(err));
+        } finally {
+          setSubmitting(false);
+        }
+      }}
+    >
+      <label>
+        Gateway Port
+        <input
+          aria-label="Gateway Port"
+          type="number"
+          min="1"
+          value={gatewayPort}
+          onChange={(event) => setGatewayPort(event.target.value)}
+          disabled={isBusy}
+        />
+      </label>
+      <label>
+        Gateway Token
+        <input
+          aria-label="Gateway Token"
+          type="password"
+          value={gatewayToken}
+          onChange={(event) => setGatewayToken(event.target.value)}
+          placeholder="Optional"
+          disabled={isBusy}
+        />
+      </label>
+      <p className="gateway-profiles__hint">
+        Connects directly to an OpenClaw gateway running on this machine at ws://127.0.0.1:{gatewayPort || '18789'}.
+      </p>
+      {error && (
+        <p className="gateway-profiles__error" role="alert">
+          {error}
+        </p>
+      )}
+      <button type="submit" disabled={isBusy}>
+        {submitting ? 'Connecting...' : submitLabel}
       </button>
     </form>
   );

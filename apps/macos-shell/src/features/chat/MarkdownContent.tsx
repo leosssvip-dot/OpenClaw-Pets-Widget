@@ -1,3 +1,4 @@
+import { memo, useMemo } from 'react';
 import type { Components } from 'react-markdown';
 import ReactMarkdown from 'react-markdown';
 
@@ -26,6 +27,11 @@ const components: Components = {
   ul: ({ children }) => <ul className="chat-message__md-ul">{children}</ul>,
   ol: ({ children }) => <ol className="chat-message__md-ol">{children}</ol>,
   li: ({ children }) => <li className="chat-message__md-li">{children}</li>,
+  img: ({ src, alt }) => (
+    <a href={src} target="_blank" rel="noopener noreferrer" className="chat-message__image-link">
+      <img src={src} alt={alt ?? 'image'} className="chat-message__image" loading="lazy" />
+    </a>
+  ),
   pre: ({ children }) => <pre className="chat-message__md-pre">{children}</pre>,
   code: ({ className, children, ...props }) => {
     const isBlock = typeof className === 'string' && /^language-/.test(className);
@@ -44,11 +50,11 @@ const components: Components = {
   },
 };
 
-export function MarkdownContent({ content }: { content: string }) {
-  const linkified = linkifyRawUrls(content);
+export const MarkdownContent = memo(function MarkdownContent({ content }: { content: string }) {
+  const linkified = useMemo(() => linkifyRawUrls(content), [content]);
   return (
     <div className="chat-message__content chat-message__content--md">
       <ReactMarkdown components={components}>{linkified}</ReactMarkdown>
     </div>
   );
-}
+});

@@ -4,7 +4,9 @@ export const gatewayProfileSchema = z.discriminatedUnion('transport', [
   z.object({
     id: z.string(),
     label: z.string(),
-    transport: z.literal('local')
+    transport: z.literal('local'),
+    gatewayPort: z.number().int().positive().default(18789),
+    gatewayToken: z.string().optional()
   }),
   z.object({
     id: z.string(),

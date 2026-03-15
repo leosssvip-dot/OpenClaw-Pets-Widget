@@ -1,10 +1,11 @@
 import { useEffect, useRef, useState, useSyncExternalStore } from 'react';
 import type { AgentBindingSeed } from '@openclaw-habitat/bridge';
 import { type ConnectionStatus } from './features/connection/ConnectionBadge';
+import { chatStore } from './features/chat/store';
 import { habitatStore, useHabitatStore } from './features/habitat/store';
 import { getRuntimeDeps } from './runtime/runtime-deps';
 import { getHabitatDesktopApi } from './runtime/habitat-api';
-import type { SshConnectionInput } from './features/settings/SshConnectionForm';
+import type { ConnectionInput } from './features/settings/SshConnectionForm';
 import { preloadSettingsFromDisk, settingsStore, useSettingsStore } from './features/settings/settings-store';
 import {
   clearGatewaySessionAuth,
@@ -27,15 +28,26 @@ function toHabitatPets(agents: AgentBindingSeed[]) {
   }));
 }
 
-function toGatewayProfile(input: SshConnectionInput, profileId?: string) {
+function toGatewayProfile(input: ConnectionInput, profileId?: string) {
+  const id = profileId ?? `gateway-${Date.now()}`;
+
+  if (input.transport === 'local') {
+    return {
+      id,
+      label: `localhost:${input.gatewayPort}`,
+      transport: 'local' as const,
+      gatewayPort: input.gatewayPort,
+      gatewayToken: input.gatewayToken
+    };
+  }
+
   return {
-    id: profileId ?? `gateway-${Date.now()}`,
+    id,
     label: input.host,
     transport: 'ssh' as const,
     host: input.host,
     username: input.username,
     sshPort: input.sshPort,
-    identityFile: input.identityFile,
     remoteGatewayPort: input.remoteGatewayPort,
     gatewayToken: input.gatewayToken
   };
@@ -284,11 +296,17 @@ export function App() {
     return () => subscriber.dispose();
   }, [surface]);
 
-  const handlePetSendMessage = async (petId: string, agentId: string, text: string) => {
+  const handlePetSendMessage = async (
+    petId: string,
+    agentId: string,
+    text: string,
+    images?: Array<{ url: string; alt?: string }>,
+  ) => {
     habitatStore.getState().markPetAsThinking(petId, text);
     try {
-      await connectionManager.sendMessage({ petId, agentId, content: text });
+      await connectionManager.sendMessage({ petId, agentId, content: text, images });
     } catch (error) {
+      chatStore.getState().setTyping(false);
       habitatStore.getState().markPetAsBlocked(
         petId,
         error instanceof Error ? error.message : String(error)
@@ -343,6 +361,11 @@ export function App() {
             void handlePetCreateTask(visiblePetRow.petId, visiblePetRow.agentId, prompt);
           }
         }}
+        onSwitchCharacter={(rolePackId) => {
+          if (visiblePetRow) {
+            settingsStore.getState().setPetAppearance(visiblePetRow.petId, { rolePack: rolePackId as import('./features/widget/pet-appearance').PetRolePackId });
+          }
+        }}
       />
       </PetWindowSizeProvider>
     );
@@ -365,15 +388,23 @@ export function App() {
       }}
       onSaveProfile={async (input, profileId) => {
         const profile = toGatewayProfile(input, profileId);
-        if (input.password !== undefined || !profileId) {
-          setGatewaySessionAuth(profile.id, {
-            password: input.password
-          });
-        }
         settingsStore.getState().saveGatewayProfile(profile);
         settingsStore.getState().selectGatewayProfile(profile.id);
-        await storeProfileToken(profile.id, profile.gatewayToken);
-        await storeProfilePassword(profile.id, input.password);
+
+        if (input.transport === 'ssh') {
+          if (input.password !== undefined || !profileId) {
+            setGatewaySessionAuth(profile.id, {
+              password: input.password
+            });
+          }
+          await storeProfileToken(profile.id, input.gatewayToken);
+          await storeProfilePassword(profile.id, input.password);
+        } else if (input.transport === 'local') {
+          if (input.gatewayToken) {
+            await storeProfileToken(profile.id, input.gatewayToken);
+          }
+        }
+
         await connectionManager.connect(profile.id);
       }}
       onDeleteProfile={(profileId) => {
@@ -391,12 +422,13 @@ export function App() {
       onUpdateAppearance={(petId, appearance) => {
         settingsStore.getState().setPetAppearance(petId, appearance);
       }}
-      onSubmitQuickPrompt={async (value) => {
+      onSubmitQuickPrompt={async (value, images) => {
         if (visiblePetRow) {
           await handlePetSendMessage(
             visiblePetRow.petId,
             visiblePetRow.agentId,
-            value
+            value,
+            images,
           );
         }
       }}

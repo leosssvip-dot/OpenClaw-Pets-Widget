@@ -56,12 +56,12 @@ describe('GatewayProfiles', () => {
 
     expect(onSaveProfile).toHaveBeenCalledWith(
       expect.objectContaining({
+        transport: 'ssh',
         host: '10.0.0.52',
         username: 'chenyang',
         sshPort: 2200,
         remoteGatewayPort: 18789,
         gatewayToken: 'secret-token',
-        identityFile: undefined,
         password: undefined
       }),
       'remote-1'

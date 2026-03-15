@@ -29,12 +29,11 @@ describe('SshConnectionForm', () => {
         sshPort: 22,
         remoteGatewayPort: 18789,
         gatewayToken: 'secret-token',
-        identityFile: undefined,
         password: 'hunter2'
       })
     );
     expect(
-      screen.getByText(/SSH Password is securely cached for reconnects/i)
+      screen.getByText(/Password is securely cached for reconnects/i)
     ).toBeInTheDocument();
   });
 });

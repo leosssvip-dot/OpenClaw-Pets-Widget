@@ -1,14 +1,35 @@
-
 import {
   PET_ROLE_PACKS,
   resolvePetAppearance,
   type PetAppearanceConfig,
   type PetRolePackId
 } from '../widget/pet-appearance';
-import { DesktopPetIllustration } from '../widget/DesktopPetIllustration';
+import { PetRenderer } from '../widget/PetRenderer';
+import type { PetAnimationActivity } from '../widget/pet-animation-state';
 
 function statusLabel(status: string) {
   return status.replace(/-/g, ' ');
+}
+
+function statusToActivity(status: string): PetAnimationActivity {
+  switch (status) {
+    case 'working':
+    case 'collaborating':
+      return 'working';
+    case 'thinking':
+      return 'thinking';
+    case 'waiting':
+      return 'waiting';
+    case 'done':
+      return 'done';
+    case 'blocked':
+    case 'error':
+    case 'offline':
+    case 'disconnected':
+      return 'blocked';
+    default:
+      return 'idle';
+  }
 }
 
 function rolePackMeta(rolePack: PetRolePackId) {
@@ -27,9 +48,7 @@ export interface GalleryPanelProps {
   }>;
   onUpdateAppearance: (petId: string, appearance: PetAppearanceConfig) => void;
   onPinnedAgentChange: (agentId: string | null) => void;
-  /** 点击卡片时切换为该桌宠 */
   onCompanionSelect?: (agentId: string, petId: string) => void;
-  onDebugSetStatus?: (petId: string, status: string) => void;
   pinnedAgentId: string | null;
 }
 
@@ -38,7 +57,6 @@ export function GalleryPanel({
   onUpdateAppearance,
   onPinnedAgentChange,
   onCompanionSelect,
-  onDebugSetStatus,
   pinnedAgentId
 }: GalleryPanelProps) {
 
@@ -57,11 +75,12 @@ export function GalleryPanel({
           </div>
         </div>
       </header>
-      
+
       {agentRows.length === 0 ? (
         <div className="app-shell__empty-state" style={{ marginTop: '20px' }}>
+          <div className="app-shell__empty-state-icon" aria-hidden="true">🐾</div>
           <strong>No companions available</strong>
-          <p>Please connect to a gateway first to load your available companions.</p>
+          <p>Connect to a gateway first to load your available companions.</p>
         </div>
       ) : (
         <div className="gallery-grid">
@@ -92,38 +111,29 @@ export function GalleryPanel({
                 }}
               >
                 <div className={`gallery-card__avatar gallery-card__avatar--${rowRolePack}`}>
-                  {/* Provide the desktop-pet context so that styles.css can apply animation states */}
                   <div
                     className={`desktop-pet desktop-pet--role-${rowRolePack} desktop-pet--activity-${
-                      row.status === 'offline' ? 'disconnected' : row.status === 'error' ? 'blocked' : row.status
-                    }`}
-                    style={{
-                      transform: 'scale(0.8)',
-                      transformOrigin: 'center center',
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      width: '100%',
-                      height: '100%'
-                    }}
+                      statusToActivity(row.status)
+                    } gallery-card__pet-preview`}
                   >
-                    <div className={`desktop-pet__role-art-motion desktop-pet__role-art-motion--${rowRolePack}`}>
-                      <DesktopPetIllustration rolePack={rowRolePack} />
-                    </div>
+                    <PetRenderer
+                      rolePack={rowRolePack}
+                      activity={statusToActivity(row.status)}
+                      className="gallery-card__pet-renderer"
+                    />
                   </div>
                 </div>
-                
+
                 <div className="gallery-card__content">
                   <div className="gallery-card__head">
                     <h4 className="gallery-card__name">{row.petName ?? row.agentId}</h4>
-                    {/* 小圆点表示 agent 运行状态：idle=绿、working=橙、offline=灰、error=红，与是否选中无关 */}
                     <span
                       className={`status-dot status-dot--${row.status}`}
                       title={`Status: ${statusLabel(row.status)}`}
                     />
                   </div>
                   <p className="gallery-card__role">{rowRoleMeta.roleLabel}</p>
-                  
+
                   <div className="gallery-card__actions" onClick={(e) => e.stopPropagation()}>
                     <select
                       className="settings-character-item__select"
@@ -151,30 +161,6 @@ export function GalleryPanel({
                       {isFavorite ? '★' : '☆'}
                     </button>
 
-                    {onDebugSetStatus && (
-                      <button
-                        type="button"
-                        className="gallery-card__pin-btn"
-                        style={{
-                          fontSize: '10px',
-                          padding: '2px 6px',
-                          background: row.status === 'working' ? '#f59e0b' : '#e5e7eb',
-                          color: row.status === 'working' ? '#fff' : '#333',
-                          borderRadius: '4px',
-                          border: 'none',
-                          cursor: 'pointer'
-                        }}
-                        onClick={() =>
-                          onDebugSetStatus(
-                            row.petId,
-                            row.status === 'working' ? 'idle' : 'working'
-                          )
-                        }
-                        title="Debug: toggle working status"
-                      >
-                        {row.status === 'working' ? 'SET IDLE' : 'SET WORKING'}
-                      </button>
-                    )}
                   </div>
                 </div>
               </div>

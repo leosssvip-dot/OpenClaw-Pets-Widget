@@ -88,7 +88,7 @@ describe('OpenClawClient', () => {
     expect(sentFrame.type).toBe('req');
     expect(sentFrame.method).toBe('connect');
     expect(sentFrame.params.client).toEqual({
-      id: 'gateway-client',
+      id: 'openclaw-control-ui',
       version: '1.0.0',
       platform: 'macos',
       mode: 'ui'

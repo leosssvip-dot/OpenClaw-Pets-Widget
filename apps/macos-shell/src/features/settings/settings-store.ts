@@ -121,6 +121,8 @@ function stripProfileTokens(profiles: Record<string, GatewayProfile>): Record<st
       stripped[id] = { ...profile, gatewayToken: '' };
     } else if (profile.transport === 'tailnet') {
       stripped[id] = { ...profile, token: '' };
+    } else if (profile.transport === 'local') {
+      stripped[id] = { ...profile, gatewayToken: undefined };
     } else {
       stripped[id] = profile;
     }
@@ -225,6 +227,15 @@ export const createSettingsStore = () =>
                 gatewayProfiles: {
                   ...state.gatewayProfiles,
                   [profileId]: { ...profile, token }
+                }
+              };
+            }
+
+            if (profile.transport === 'local') {
+              return {
+                gatewayProfiles: {
+                  ...state.gatewayProfiles,
+                  [profileId]: { ...profile, gatewayToken: token }
                 }
               };
             }

@@ -83,5 +83,32 @@ export function parseOpenClawEvent(
     };
   }
 
+  // Handle raw agent stream events (event: "agent" with stream/data payload)
+  if (input.type === 'agent') {
+    const p = input.payload as Record<string, unknown> | undefined;
+    const stream = p?.stream as string | undefined;
+    const data = p?.data as Record<string, unknown> | undefined;
+
+    if (stream === 'assistant' && data && typeof data.text === 'string') {
+      return {
+        ...base,
+        kind: 'chat.message',
+        text: data.text,
+        final: false
+      };
+    }
+
+    if (stream === 'lifecycle' && data) {
+      if (data.phase === 'end') {
+        return { ...base, kind: 'agent.completed' };
+      }
+      if (data.phase === 'error' && typeof data.error === 'string') {
+        return { ...base, kind: 'agent.error', message: data.error };
+      }
+    }
+
+    return { ...base, kind: 'agent.unknown' };
+  }
+
   return { ...base, kind: 'agent.unknown' };
 }

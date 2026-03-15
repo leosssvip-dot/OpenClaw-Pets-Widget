@@ -1,13 +1,14 @@
 import type { GatewayProfile } from '@openclaw-habitat/bridge';
 import type { ConnectionStatus } from '../connection/ConnectionBadge';
+import { ConnectionBadge } from '../connection/ConnectionBadge';
 import { GatewayProfiles } from './GatewayProfiles';
-import type { SshConnectionInput } from './SshConnectionForm';
+import type { ConnectionInput } from './SshConnectionForm';
 
 export interface SettingsPanelProps {
   connectionStatus: ConnectionStatus;
   activeProfileId: string | null;
   gatewayProfiles: GatewayProfile[];
-  onSaveProfile: (input: SshConnectionInput, profileId?: string) => Promise<void>;
+  onSaveProfile: (input: ConnectionInput, profileId?: string) => Promise<void>;
   onDeleteProfile: (profileId: string) => void;
 }
 
@@ -28,6 +29,7 @@ export function SettingsPanel({
               Gateway Connections
             </span>
           </div>
+          <ConnectionBadge status={connectionStatus} />
         </div>
       </header>
       <div className="settings-drawer__body">

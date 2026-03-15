@@ -86,7 +86,7 @@ export interface LottieAssetSet {
 // Engine type detection
 // ---------------------------------------------------------------------------
 
-export type PetEngineType = 'rive' | 'lottie' | 'sprite' | 'svg';
+export type PetEngineType = 'rive' | 'lottie' | 'svg-bone' | 'sprite' | 'svg';
 
 /**
  * Character asset manifest — maps a role pack to its .riv file path.
@@ -108,6 +108,14 @@ const RIVE_ASSETS: Partial<Record<PetRolePackId, string>> = {
  * Sprite (PNG) asset manifest — maps a role pack to a single image file.
  * The image is animated via whole-body GSAP transforms (float, bob, sway).
  */
+/**
+ * SVG Bone asset manifest — maps a role pack to a grouped SVG file.
+ * The SVG must contain named <g> groups for each body part.
+ */
+const SVG_BONE_ASSETS: Partial<Record<PetRolePackId, string>> = {
+  monk: '/assets/pets/monk-4.svg',
+};
+
 const SPRITE_ASSETS: Partial<Record<PetRolePackId, string>> = {
   monk: '/assets/pets/monk.png',
   // lobster: '/assets/pets/lobster.png',
@@ -143,21 +151,27 @@ export function resolveEngine(rolePack: PetRolePackId): {
   riveSrc: string | null;
   lottieAssets: LottieAssetSet | null;
   spriteSrc: string | null;
+  svgBoneSrc: string | null;
 } {
   const riveSrc = RIVE_ASSETS[rolePack] ?? null;
   if (riveSrc) {
-    return { type: 'rive', riveSrc, lottieAssets: null, spriteSrc: null };
+    return { type: 'rive', riveSrc, lottieAssets: null, spriteSrc: null, svgBoneSrc: null };
   }
 
   const lottieAssets = LOTTIE_ASSETS[rolePack] ?? null;
   if (lottieAssets) {
-    return { type: 'lottie', riveSrc: null, lottieAssets, spriteSrc: null };
+    return { type: 'lottie', riveSrc: null, lottieAssets, spriteSrc: null, svgBoneSrc: null };
+  }
+
+  const svgBoneSrc = SVG_BONE_ASSETS[rolePack] ?? null;
+  if (svgBoneSrc) {
+    return { type: 'svg-bone', riveSrc: null, lottieAssets: null, spriteSrc: null, svgBoneSrc };
   }
 
   const spriteSrc = SPRITE_ASSETS[rolePack] ?? null;
   if (spriteSrc) {
-    return { type: 'sprite', riveSrc: null, lottieAssets: null, spriteSrc };
+    return { type: 'sprite', riveSrc: null, lottieAssets: null, spriteSrc, svgBoneSrc: null };
   }
 
-  return { type: 'svg', riveSrc: null, lottieAssets: null, spriteSrc: null };
+  return { type: 'svg', riveSrc: null, lottieAssets: null, spriteSrc: null, svgBoneSrc: null };
 }

@@ -156,6 +156,9 @@ export class ConnectionManager {
         if (event.kind === 'chat.message' && event.petId) {
           chatStore.getState().addAssistantMessage(event.text, event.final);
         }
+        if (event.kind === 'agent.completed') {
+          chatStore.getState().setTyping(false);
+        }
       });
 
       const agents = await this.bridge.listAgents();

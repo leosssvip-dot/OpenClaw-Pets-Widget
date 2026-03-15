@@ -5,11 +5,9 @@ import type { ConnectionStatus } from '../connection/ConnectionBadge';
 import { ConnectionBadge } from '../connection/ConnectionBadge';
 import { ReconnectBanner } from '../connection/ReconnectBanner';
 import type { HabitatPet } from '../habitat/types';
-import { habitatStore } from '../habitat/store';
 import { SettingsPanel } from '../settings/SettingsPanel';
 import { GalleryPanel } from '../settings/GalleryPanel';
-import { createHabitatPublisher } from '../../runtime/habitat-sync';
-import type { SshConnectionInput } from '../settings/SshConnectionForm';
+import type { ConnectionInput } from '../settings/SshConnectionForm';
 import {
   PET_ROLE_PACKS,
   resolvePetAppearance,
@@ -63,12 +61,12 @@ export function WidgetPanel({
   } | null;
   currentCompanionPet: HabitatPet | null;
   onReconnect: () => void;
-  onSaveProfile: (input: SshConnectionInput, profileId?: string) => Promise<void>;
+  onSaveProfile: (input: ConnectionInput, profileId?: string) => Promise<void>;
   onDeleteProfile: (profileId: string) => void;
   onPinnedAgentChange: (agentId: string | null) => void;
   onSelectPet: (petId: string) => void;
   onUpdateAppearance: (petId: string, appearance: PetAppearanceConfig) => void;
-  onSubmitQuickPrompt: (value: string) => Promise<void>;
+  onSubmitQuickPrompt: (value: string, images?: Array<{ url: string; alt?: string }>) => Promise<void>;
 }) {
   const resolvedAppearance = resolvePetAppearance(currentCompanion?.appearance);
   const currentRolePack = rolePackMeta(resolvedAppearance.rolePack);
@@ -149,15 +147,25 @@ export function WidgetPanel({
                   />
                 ) : (
                   <div className="app-shell__empty-state">
+                    <div className="app-shell__empty-state-icon" aria-hidden="true">🦞</div>
                     <strong>No companion on stage</strong>
-                    <p>Go to the Gallery to call a companion, or check Connection.</p>
-                    <button
-                      type="button"
-                      className="app-shell__empty-state-action"
-                      onClick={() => setActiveTab('settings')}
-                    >
-                      Connect gateway
-                    </button>
+                    <p>Pick a companion from the Gallery, or connect a gateway first.</p>
+                    <div className="app-shell__empty-state-actions">
+                      <button
+                        type="button"
+                        className="app-shell__empty-state-action"
+                        onClick={() => setActiveTab('pets')}
+                      >
+                        Browse Gallery
+                      </button>
+                      <button
+                        type="button"
+                        className="app-shell__empty-state-action app-shell__empty-state-action--secondary"
+                        onClick={() => setActiveTab('settings')}
+                      >
+                        Connect gateway
+                      </button>
+                    </div>
                   </div>
                 )
               )}
@@ -172,27 +180,6 @@ export function WidgetPanel({
                     onSelectPet(petId);
                   }}
                   pinnedAgentId={pinnedAgentId}
-                  onDebugSetStatus={(petId, status) => {
-                    habitatStore.setState((state) => {
-                      const pet = state.pets[petId];
-                      if (!pet) return state;
-                      return {
-                        pets: { ...state.pets, [petId]: { ...pet, status: status as HabitatPet['status'] } }
-                      };
-                    });
-                    // Also sync to pet window via IPC
-                    const pet = habitatStore.getState().pets[petId];
-                    if (pet) {
-                      const publisher = createHabitatPublisher();
-                      publisher.publishEvent({
-                        kind: 'agent.status',
-                        agentId: pet.agentId,
-                        gatewayId: pet.gatewayId,
-                        petId,
-                        status
-                      });
-                    }
-                  }}
                 />
               )}
 

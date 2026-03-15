@@ -12,6 +12,8 @@ export interface SendMessageInput {
   petId: string;
   agentId?: string;
   content: string;
+  /** Optional image attachments as data-URIs or remote URLs. */
+  images?: Array<{ url: string; alt?: string }>;
 }
 
 export interface CreateTaskInput {

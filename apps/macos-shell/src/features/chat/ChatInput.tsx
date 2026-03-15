@@ -1,4 +1,5 @@
-import { useState, useRef, useMemo } from 'react';
+import { useState, useRef, useMemo, useCallback, useEffect } from 'react';
+import type { ChatImage } from './types';
 
 /* ------------------------------------------------------------------ */
 /*  Public types                                                       */
@@ -7,6 +8,33 @@ import { useState, useRef, useMemo } from 'react';
 export interface SlashCommand {
   command: string;
   description: string;
+}
+
+/* ------------------------------------------------------------------ */
+/*  Image helpers                                                      */
+/* ------------------------------------------------------------------ */
+
+const ACCEPTED_IMAGE_TYPES = ['image/png', 'image/jpeg', 'image/gif', 'image/webp', 'image/svg+xml'];
+const MAX_IMAGE_SIZE = 5 * 1024 * 1024; // 5 MB
+
+function fileToDataUri(file: File): Promise<string> {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => resolve(reader.result as string);
+    reader.onerror = () => reject(new Error('Failed to read file'));
+    reader.readAsDataURL(file);
+  });
+}
+
+async function processImageFiles(files: FileList | File[]): Promise<ChatImage[]> {
+  const results: ChatImage[] = [];
+  for (const file of Array.from(files)) {
+    if (!ACCEPTED_IMAGE_TYPES.includes(file.type)) continue;
+    if (file.size > MAX_IMAGE_SIZE) continue;
+    const url = await fileToDataUri(file);
+    results.push({ url, alt: file.name });
+  }
+  return results;
 }
 
 /* ------------------------------------------------------------------ */
@@ -39,12 +67,15 @@ export function ChatInput({
 }: {
   placeholder?: string;
   disabled?: boolean;
-  onSubmit: (text: string) => void | Promise<void>;
+  onSubmit: (text: string, images?: ChatImage[]) => void | Promise<void>;
   /** Additional commands to show in autocomplete (e.g. from gateway). */
   extraCommands?: SlashCommand[];
 }) {
   const [value, setValue] = useState('');
+  const [activeIndex, setActiveIndex] = useState(-1);
+  const [pendingImages, setPendingImages] = useState<ChatImage[]>([]);
   const inputRef = useRef<HTMLTextAreaElement>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const commands = useMemo(() => {
     const map = new Map<string, SlashCommand>();
@@ -59,16 +90,103 @@ export function ChatInput({
     ? commands.filter((c) => c.command.includes(value.toLowerCase()))
     : [];
 
+  // Reset active index when filtered list changes
+  useEffect(() => {
+    setActiveIndex(-1);
+  }, [filteredCommands.length]);
+
+  /* ---------- auto-resize textarea ---------- */
+  const autoResize = useCallback(() => {
+    const el = inputRef.current;
+    if (!el) return;
+    el.style.height = 'auto';
+    el.style.height = `${Math.min(el.scrollHeight, 120)}px`;
+  }, []);
+
+  useEffect(() => {
+    autoResize();
+  }, [value, autoResize]);
+
+  /* ---------- image handling ---------- */
+  const addImages = useCallback(async (files: FileList | File[]) => {
+    const images = await processImageFiles(files);
+    if (images.length > 0) {
+      setPendingImages((prev) => [...prev, ...images]);
+    }
+  }, []);
+
+  const removeImage = useCallback((index: number) => {
+    setPendingImages((prev) => prev.filter((_, i) => i !== index));
+  }, []);
+
+  const handleFileChange = useCallback(
+    (e: React.ChangeEvent<HTMLInputElement>) => {
+      if (e.target.files && e.target.files.length > 0) {
+        void addImages(e.target.files);
+      }
+      // Reset so re-selecting the same file triggers onChange
+      e.target.value = '';
+    },
+    [addImages],
+  );
+
+  /** Handle paste: intercept images from clipboard */
+  const handlePaste = useCallback(
+    (e: React.ClipboardEvent) => {
+      const items = e.clipboardData?.items;
+      if (!items) return;
+      const imageFiles: File[] = [];
+      for (const item of Array.from(items)) {
+        if (item.kind === 'file' && item.type.startsWith('image/')) {
+          const file = item.getAsFile();
+          if (file) imageFiles.push(file);
+        }
+      }
+      if (imageFiles.length > 0) {
+        e.preventDefault();
+        void addImages(imageFiles);
+      }
+    },
+    [addImages],
+  );
+
   /* ---------- submit ---------- */
   const handleSubmit = (e?: React.FormEvent) => {
     if (e) e.preventDefault();
     const text = value.trim();
-    if (!text || disabled) return;
-    setValue(''); // 先清空，保证每次发送后输入框都清空
-    void onSubmit(text);
+    const hasImages = pendingImages.length > 0;
+    if ((!text && !hasImages) || disabled) return;
+    const images = hasImages ? [...pendingImages] : undefined;
+    setValue('');
+    setPendingImages([]);
+    void onSubmit(text, images);
   };
 
   const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
+    // Autocomplete keyboard navigation
+    if (showAutocomplete && filteredCommands.length > 0) {
+      if (e.key === 'ArrowDown') {
+        e.preventDefault();
+        setActiveIndex((i) => (i + 1) % filteredCommands.length);
+        return;
+      }
+      if (e.key === 'ArrowUp') {
+        e.preventDefault();
+        setActiveIndex((i) => (i <= 0 ? filteredCommands.length - 1 : i - 1));
+        return;
+      }
+      if ((e.key === 'Enter' || e.key === 'Tab') && activeIndex >= 0) {
+        e.preventDefault();
+        handleCommandClick(filteredCommands[activeIndex]);
+        return;
+      }
+      if (e.key === 'Escape') {
+        // Clear autocomplete by clearing the slash prefix
+        setValue('');
+        return;
+      }
+    }
+
     if (e.key === 'Enter' && !e.shiftKey) {
       e.preventDefault();
       handleSubmit();
@@ -89,12 +207,12 @@ export function ChatInput({
       {/* ---- Autocomplete (command list) ---- */}
       {showAutocomplete && filteredCommands.length > 0 && (
         <div className="chat-command-popup">
-          <ul className="chat-command-list">
-            {filteredCommands.map((cmd) => (
-              <li key={cmd.command}>
+          <ul className="chat-command-list" role="listbox">
+            {filteredCommands.map((cmd, i) => (
+              <li key={cmd.command} role="option" aria-selected={i === activeIndex}>
                 <button
                   type="button"
-                  className="chat-command-item"
+                  className={`chat-command-item${i === activeIndex ? ' chat-command-item--active' : ''}`}
                   onClick={() => handleCommandClick(cmd)}
                 >
                   <strong>{cmd.command}</strong>
@@ -106,8 +224,47 @@ export function ChatInput({
         </div>
       )}
 
+      {/* ---- Image previews ---- */}
+      {pendingImages.length > 0 && (
+        <div className="chat-input-images">
+          <p className="chat-input-images__hint">Images will be sent as attachments to the AI model.</p>
+          {pendingImages.map((img, i) => (
+            <div key={i} className="chat-input-images__item">
+              <img src={img.url} alt={img.alt ?? 'attachment'} className="chat-input-images__thumb" />
+              <button
+                type="button"
+                className="chat-input-images__remove"
+                onClick={() => removeImage(i)}
+                aria-label="Remove image"
+              >
+                ×
+              </button>
+            </div>
+          ))}
+        </div>
+      )}
+
       {/* ---- Text input ---- */}
       <div className="chat-input" style={{ position: 'relative' }}>
+        <input
+          ref={fileInputRef}
+          type="file"
+          accept="image/*"
+          multiple
+          className="chat-input__file-hidden"
+          onChange={handleFileChange}
+          tabIndex={-1}
+        />
+        <button
+          type="button"
+          className="chat-input__attach"
+          onClick={() => fileInputRef.current?.click()}
+          disabled={disabled}
+          aria-label="Attach image"
+          title="Attach image"
+        >
+          📎
+        </button>
         <textarea
           ref={inputRef}
           className="chat-input__field"
@@ -116,13 +273,14 @@ export function ChatInput({
           value={value}
           onChange={(e) => setValue(e.target.value)}
           onKeyDown={handleKeyDown}
+          onPaste={handlePaste}
           disabled={disabled}
-          rows={2}
+          rows={1}
         />
         <button
           type="submit"
           className="chat-input__submit"
-          disabled={disabled || !value.trim()}
+          disabled={disabled || (!value.trim() && pendingImages.length === 0)}
         >
           Send
         </button>
