@@ -7,7 +7,12 @@ import { ChatInput, type SlashCommand } from './ChatInput';
 import type { ChatImage } from './types';
 
 const PERSIST_DEBOUNCE_MS = 300;
-const TYPING_TIMEOUT_MS = 30_000;
+/**
+ * Hard safety timeout — only kicks in if pendingResponse was never cleared
+ * (e.g. bridge disconnected silently). Under normal flow, typing is driven
+ * by pendingResponse + streaming state so this rarely fires.
+ */
+const TYPING_HARD_TIMEOUT_MS = 300_000; // 5 min
 
 export function ChatPanel({
   sessionKey,
@@ -27,24 +32,31 @@ export function ChatPanel({
 }) {
   const messages = useStore(chatStore, (s) => s.messages);
   const typing = useStore(chatStore, (s) => s.typing);
+  const pendingResponse = useStore(chatStore, (s) => s.pendingResponse);
   const addUserMessage = useStore(chatStore, (s) => s.addUserMessage);
   const replaceMessages = useStore(chatStore, (s) => s.replaceMessages);
   const persistTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const typingTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const sessionKeyRef = useRef(sessionKey);
-  sessionKeyRef.current = sessionKey;
+  const prevSessionKeyRef = useRef(sessionKey);
 
-  // Safety timeout: reset typing if no response within TYPING_TIMEOUT_MS
+  // Show typing indicator as long as we're waiting for ANY response.
+  // `typing` is driven by addAssistantMessage(final); pendingResponse covers
+  // the gap between send and first chunk arriving.
+  const showTyping = typing || pendingResponse;
+
+  // Hard safety timeout — clears both flags if bridge goes silent
   useEffect(() => {
     if (typingTimerRef.current) {
       clearTimeout(typingTimerRef.current);
       typingTimerRef.current = null;
     }
-    if (typing) {
+    if (showTyping) {
       typingTimerRef.current = setTimeout(() => {
         chatStore.getState().setTyping(false);
+        chatStore.setState({ pendingResponse: false });
         typingTimerRef.current = null;
-      }, TYPING_TIMEOUT_MS);
+      }, TYPING_HARD_TIMEOUT_MS);
     }
     return () => {
       if (typingTimerRef.current) {
@@ -52,9 +64,36 @@ export function ChatPanel({
         typingTimerRef.current = null;
       }
     };
-  }, [typing]);
+  }, [showTyping]);
+
+  // Keep chatStore.activeSession in sync with sessionKey so the
+  // connection-manager knows which agent's chat is currently visible.
+  useEffect(() => {
+    if (sessionKey) {
+      const colonIdx = sessionKey.indexOf(':');
+      const profileId = colonIdx > 0 ? sessionKey.slice(0, colonIdx) : null;
+      const agentId = colonIdx > 0 ? sessionKey.slice(colonIdx + 1) : null;
+      chatStore.getState().setActiveSession(profileId, agentId);
+    } else {
+      chatStore.getState().setActiveSession(null, null);
+    }
+  }, [sessionKey]);
 
   useEffect(() => {
+    const prevKey = prevSessionKeyRef.current;
+    // Flush the old session's pending messages before switching
+    if (prevKey && prevKey !== sessionKey) {
+      if (persistTimerRef.current) {
+        clearTimeout(persistTimerRef.current);
+        persistTimerRef.current = null;
+      }
+      const msgs = chatStore.getState().messages;
+      if (msgs.length > 0) {
+        saveChatHistory(prevKey, msgs);
+      }
+    }
+    prevSessionKeyRef.current = sessionKey;
+    sessionKeyRef.current = sessionKey;
     if (sessionKey) {
       replaceMessages(loadChatHistory(sessionKey));
     }
@@ -113,7 +152,7 @@ export function ChatPanel({
 
   return (
     <section className="chat-panel" aria-label={`Chat with ${petName}`}>
-      <ChatMessageList messages={messages} typing={typing} agentName={petName} onAction={handleAction} />
+      <ChatMessageList messages={messages} typing={showTyping} agentName={petName} onAction={handleAction} />
       <ChatInput
         placeholder={inputPlaceholder}
         disabled={disabled}

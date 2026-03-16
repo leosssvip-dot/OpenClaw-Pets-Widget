@@ -5469,7 +5469,7 @@ button.toggle {
   font-weight: 700;
 }
 
-/* --- Chat tab hover dropdown for agent selection --- */
+/* --- Chat tab click dropdown for agent selection --- */
 .panel-tab-container {
   position: relative;
   flex: 1;
@@ -5481,39 +5481,38 @@ button.toggle {
   width: 100%;
 }
 
-/* Chevron indicator when dropdown exists */
-.panel-tab-container .panel-tab-chevron {
-  display: inline-block;
-  width: 8px;
-  height: 8px;
-  margin-left: 3px;
-  vertical-align: middle;
-  transition: transform 0.2s;
+/* Chevron inside the Chat tab pill */
+.panel-tab-chevron {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  margin-left: 2px;
+  opacity: 0.5;
+  transition: transform 0.2s, opacity 0.15s;
+  cursor: pointer;
 }
 
-.panel-tab-container:hover .panel-tab-chevron {
+.panel-tab-chevron:hover {
+  opacity: 1;
+}
+
+.panel-tab-chevron--open {
   transform: rotate(180deg);
+  opacity: 0.8;
 }
 
 .panel-tab-dropdown {
   display: none;
   position: absolute;
-  top: 100%;
+  top: calc(100% + 4px);
   left: 0;
-  padding-top: 4px; /* invisible bridge for hover continuity */
   z-index: 100;
   flex-direction: column;
   -webkit-app-region: no-drag;
 }
 
-/* Extend hover hitbox so mouse can travel from tab to dropdown */
-.panel-tab-dropdown::before {
-  content: '';
-  position: absolute;
-  top: -4px;
-  left: -8px;
-  right: -8px;
-  height: 12px;
+.panel-tab-dropdown--open {
+  display: flex;
 }
 
 .panel-tab-dropdown__menu {
@@ -5528,10 +5527,6 @@ button.toggle {
   padding: 4px;
   display: flex;
   flex-direction: column;
-}
-
-.panel-tab-container:hover .panel-tab-dropdown {
-  display: flex;
 }
 
 .panel-tab-dropdown__item {

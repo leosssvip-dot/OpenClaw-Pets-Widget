@@ -27,11 +27,25 @@ export interface MessageAction {
  * @param triggerCommand  The slash command from the preceding user message (e.g. "/think").
  *                        Used as template when the response has no explicit "Use:" hint.
  */
+/** Commands whose responses may contain selectable action buttons. */
+const ACTIONABLE_COMMANDS = new Set(['/models', '/think', '/verbose', '/compact']);
+
 export function parseMessageActions(
   content: string,
   triggerCommand?: string | null,
 ): MessageAction[] {
   const lines = content.split('\n').map((l) => l.trim());
+
+  // Only parse actions when:
+  // 1. The response contains an explicit "Use:" / "Switch:" template (gateway opt-in), OR
+  // 2. The preceding user message was a known interactive slash command.
+  // Normal chat messages (no triggerCommand) should never produce action buttons.
+  const hasExplicitTemplate = !!findTemplate(lines);
+  if (!hasExplicitTemplate) {
+    if (!triggerCommand || !ACTIONABLE_COMMANDS.has(triggerCommand)) {
+      return [];
+    }
+  }
 
   // --- Strategy 1: bullet list + "Use:" / "Switch:" hint ---
   const listItems: { raw: string; detail?: string }[] = [];

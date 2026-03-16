@@ -569,7 +569,12 @@ export class OpenClawClient implements BridgeClient {
   subscribe(listener: (event: HabitatEvent) => void): () => void {
     const socket = this.requireSocket();
     const onMessage = (event: MessageEvent) => {
-      const frame = JSON.parse(toMessageText(event.data)) as GatewayFrame;
+      let frame: GatewayFrame;
+      try {
+        frame = JSON.parse(toMessageText(event.data)) as GatewayFrame;
+      } catch {
+        return;
+      }
       const eventName = resolveEventName(frame);
 
       if (!eventName || (eventName !== 'chat' && eventName !== 'agent' && !eventName.startsWith('agent.'))) {
@@ -586,12 +591,15 @@ export class OpenClawClient implements BridgeClient {
         'unknown';
       const petId = frame.petId ?? parseAgentIdFromSessionKey(payloadRecord?.sessionKey) ?? undefined;
 
+      const sessionKey = typeof payloadRecord?.sessionKey === 'string' ? payloadRecord.sessionKey : undefined;
+
       listener(
         parseOpenClawEvent({
           type: eventName,
           agentId,
           gatewayId: frame.gatewayId ?? this.activeProfile?.id ?? 'unknown',
           petId,
+          sessionKey,
           payload: frame.payload
         })
       );
@@ -786,7 +794,11 @@ export class OpenClawClient implements BridgeClient {
     }
   }
 
-  private resolveSessionKey(agentId: string) {
+  getSessionKey(agentId: string): string {
     return `agent:${agentId}:${this.sessionMainKey}`;
+  }
+
+  private resolveSessionKey(agentId: string) {
+    return this.getSessionKey(agentId);
   }
 }

@@ -5,6 +5,7 @@ export interface RawOpenClawEvent {
   agentId: string;
   gatewayId: string;
   petId?: string;
+  sessionKey?: string;
   payload?: unknown;
 }
 
@@ -40,7 +41,8 @@ export function parseOpenClawEvent(
   const base = {
     agentId: input.agentId,
     gatewayId: input.gatewayId,
-    petId: input.petId
+    petId: input.petId,
+    sessionKey: input.sessionKey
   };
 
   if (input.type === 'agent.task.completed') {

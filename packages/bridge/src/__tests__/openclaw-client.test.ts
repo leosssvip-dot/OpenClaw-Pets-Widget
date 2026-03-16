@@ -491,6 +491,7 @@ describe('OpenClawClient', () => {
       agentId: 'main',
       gatewayId: 'profile-1',
       petId: 'main',
+      sessionKey: 'agent:main:main',
       text: '当前这轮会话在跑的是 gpt-5.4。',
       final: true
     });

@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import type { GatewayProfile } from '@openclaw-habitat/bridge';
 import { ChatPanel } from '../chat/ChatPanel';
 import type { ConnectionStatus } from '../connection/ConnectionBadge';
@@ -75,6 +75,21 @@ export function WidgetPanel({
   const currentName = currentCompanion?.petName ?? currentCompanion?.agentId ?? 'OpenClaw';
 
   const [activeTab, setActiveTab] = useState<'chat' | 'pets' | 'settings'>('chat');
+  const [agentDropdownOpen, setAgentDropdownOpen] = useState(false);
+  const dropdownRef = useRef<HTMLDivElement>(null);
+
+  // Close dropdown on click outside
+  useEffect(() => {
+    if (!agentDropdownOpen) return;
+    function handleClick(e: MouseEvent) {
+      if (dropdownRef.current && !dropdownRef.current.contains(e.target as Node)) {
+        setAgentDropdownOpen(false);
+      }
+    }
+    document.addEventListener('mousedown', handleClick);
+    return () => document.removeEventListener('mousedown', handleClick);
+  }, [agentDropdownOpen]);
+
 
   return (
     <main className="app-shell app-shell--panel">
@@ -110,20 +125,30 @@ export function WidgetPanel({
               </div>
 
               <nav className="panel-tabs">
-                <div className="panel-tab-container">
+                <div className="panel-tab-container" ref={dropdownRef}>
                   <button
-                    className={`panel-tab ${activeTab === 'chat' ? 'panel-tab--active' : ''}`}
-                    onClick={() => setActiveTab('chat')}
+                    className={`panel-tab ${activeTab === 'chat' ? 'panel-tab--active' : ''}${agentRows.length > 1 ? ' panel-tab--has-dropdown' : ''}`}
+                    onClick={() => {
+                      if (activeTab === 'chat' && agentRows.length > 1) {
+                        // Already on Chat tab — toggle the agent dropdown
+                        setAgentDropdownOpen((v) => !v);
+                      } else {
+                        setActiveTab('chat');
+                        setAgentDropdownOpen(false);
+                      }
+                    }}
                   >
                     💬 Chat
                     {agentRows.length > 1 && (
-                      <svg className="panel-tab-chevron" width="8" height="8" viewBox="0 0 8 5" fill="none" xmlns="http://www.w3.org/2000/svg">
-                        <path d="M1 1l3 3 3-3" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
-                      </svg>
+                      <span className={`panel-tab-chevron${agentDropdownOpen ? ' panel-tab-chevron--open' : ''}`}>
+                        <svg width="8" height="5" viewBox="0 0 8 5" fill="none">
+                          <path d="M1 1l3 3 3-3" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+                        </svg>
+                      </span>
                     )}
                   </button>
-                  {agentRows.length > 1 && (
-                    <div className="panel-tab-dropdown">
+                  {agentDropdownOpen && agentRows.length > 1 && (
+                    <div className="panel-tab-dropdown panel-tab-dropdown--open">
                       <div className="panel-tab-dropdown__menu">
                         {agentRows.map((row) => (
                           <button
@@ -134,6 +159,7 @@ export function WidgetPanel({
                               onPinnedAgentChange(row.agentId);
                               onSelectPet(row.petId);
                               setActiveTab('chat');
+                              setAgentDropdownOpen(false);
                             }}
                           >
                             {row.petName || row.agentId}

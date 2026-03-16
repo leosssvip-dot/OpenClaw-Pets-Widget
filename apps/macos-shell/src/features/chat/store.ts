@@ -4,11 +4,19 @@ import type { ChatMessage, ChatImage } from './types';
 export interface ChatState {
   messages: ChatMessage[];
   typing: boolean;
+  /** Tracks whether we are still waiting for the first chunk of a response. */
+  pendingResponse: boolean;
+  /** The agentId whose chat is currently displayed. */
+  activeAgentId: string | null;
+  /** The gateway profile id for building session keys. */
+  activeProfileId: string | null;
   addUserMessage: (content: string, images?: ChatImage[]) => void;
   addAssistantMessage: (content: string, final?: boolean) => void;
   replaceMessages: (messages: ChatMessage[]) => void;
   clearMessages: () => void;
   setTyping: (typing: boolean) => void;
+  /** Set which agent/profile session is currently displayed. */
+  setActiveSession: (profileId: string | null, agentId: string | null) => void;
 }
 
 let messageId = 0;
@@ -20,9 +28,13 @@ export const createChatStore = () =>
   createStore<ChatState>((set) => ({
     messages: [],
     typing: false,
+    pendingResponse: false,
+    activeAgentId: null,
+    activeProfileId: null,
     addUserMessage: (content, images) =>
       set((s) => ({
         typing: true,
+        pendingResponse: true,
         messages: [
           ...s.messages,
           {
@@ -41,6 +53,7 @@ export const createChatStore = () =>
         if (last?.role === 'assistant') {
           return {
             typing: !final,
+            pendingResponse: false,
             messages: [
               ...s.messages.slice(0, -1),
               { ...last, content }
@@ -49,6 +62,7 @@ export const createChatStore = () =>
         }
         return {
           typing: !final,
+          pendingResponse: false,
           messages: [
             ...s.messages,
             { id: nextId(), role: 'assistant', content, timestamp: Date.now() }
@@ -56,8 +70,9 @@ export const createChatStore = () =>
         };
       }),
     replaceMessages: (messages) => set({ messages }),
-    clearMessages: () => set({ messages: [], typing: false }),
+    clearMessages: () => set({ messages: [], typing: false, pendingResponse: false }),
     setTyping: (typing) => set({ typing }),
+    setActiveSession: (profileId, agentId) => set({ activeProfileId: profileId, activeAgentId: agentId }),
   }));
 
 export const chatStore = createChatStore();

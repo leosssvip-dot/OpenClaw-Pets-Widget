@@ -44,6 +44,8 @@ interface BaseHabitatEvent {
   agentId: string;
   gatewayId: string;
   petId?: string;
+  /** The session key echoed back by the gateway (e.g. "agent:main:main"). */
+  sessionKey?: string;
 }
 
 export type HabitatEvent =
@@ -62,4 +64,6 @@ export interface BridgeClient {
   getConnectionState(): BridgeConnectionState;
   sendMessage(input: SendMessageInput): Promise<void>;
   createTask(input: CreateTaskInput): Promise<void>;
+  /** Return the session key the client would use for the given agentId. */
+  getSessionKey(agentId: string): string;
 }

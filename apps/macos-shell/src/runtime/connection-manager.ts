@@ -3,10 +3,13 @@ import type {
   BridgeClient,
   BridgeConnectionState,
   CreateTaskInput,
+  HabitatEvent,
   SendMessageInput
 } from '@openclaw-habitat/bridge';
 import type { ConnectionStatus } from '../features/connection/ConnectionBadge';
 import { chatStore } from '../features/chat/store';
+import { saveChatHistory, loadChatHistory } from '../features/chat/persistence';
+import type { ChatMessage } from '../features/chat/types';
 import { habitatStore } from '../features/habitat/store';
 import { settingsStore } from '../features/settings/settings-store';
 import { createHabitatPublisher } from './habitat-sync';
@@ -27,6 +30,65 @@ function toHabitatPets(agents: AgentBindingSeed[]) {
     status: agent.status ?? 'idle',
     name: agent.label
   }));
+}
+
+/**
+ * Resolve the agentId from the event, falling back to chatStore.activeAgentId
+ * when the gateway doesn't provide one (agentId is 'unknown').
+ */
+function resolveEventAgentId(event: HabitatEvent): string | null {
+  if (event.agentId && event.agentId !== 'unknown') {
+    return event.agentId;
+  }
+  // Gateway didn't tell us — assume it belongs to the agent we last talked to
+  return chatStore.getState().activeAgentId;
+}
+
+function isActiveAgent(agentId: string | null): boolean {
+  if (!agentId) return true; // can't determine, accept
+
+  const activeAgentId = chatStore.getState().activeAgentId;
+  if (!activeAgentId) return true; // nothing active, accept all
+
+  return agentId === activeAgentId;
+}
+
+/**
+ * Check if the event's sessionKey matches the desktop app's session for the
+ * given agent. Events from other channels (e.g. Feishu) will have a different
+ * sessionKey and should not be displayed in the desktop chat UI.
+ */
+function isDesktopSession(event: HabitatEvent, bridge: BridgeClient, agentId: string | null): boolean {
+  // No sessionKey on the event — can't filter, accept (backwards-compat)
+  if (!event.sessionKey) return true;
+  // No active agent to compare against — accept
+  if (!agentId) return true;
+
+  const desktopSessionKey = bridge.getSessionKey(agentId);
+  return event.sessionKey === desktopSessionKey;
+}
+
+/**
+ * Append an assistant message to a different agent's persisted chat history.
+ * This ensures messages arriving for a non-visible agent are not lost.
+ */
+let backgroundMsgId = 0;
+function appendToBackgroundSession(profileId: string, agentId: string, content: string) {
+  const sessionKey = `${profileId}:${agentId}`;
+  const history = loadChatHistory(sessionKey);
+  const last = history[history.length - 1];
+  if (last?.role === 'assistant') {
+    // Update in-progress streaming message
+    history[history.length - 1] = { ...last, content };
+  } else {
+    history.push({
+      id: `bg-${Date.now()}-${++backgroundMsgId}`,
+      role: 'assistant',
+      content,
+      timestamp: Date.now(),
+    });
+  }
+  saveChatHistory(sessionKey, history);
 }
 
 function isRecoverableBridgeError(message: string) {
@@ -153,11 +215,23 @@ export class ConnectionManager {
       this.bridgeUnsubscribe = this.bridge.subscribe((event) => {
         habitatStore.getState().applyEvent(event);
         publisher.publishEvent(event);
-        if (event.kind === 'chat.message' && event.petId) {
-          chatStore.getState().addAssistantMessage(event.text, event.final);
+
+        const eventAgentId = resolveEventAgentId(event);
+
+        if (event.kind === 'chat.message') {
+          if (isActiveAgent(eventAgentId) && isDesktopSession(event, this.bridge, eventAgentId)) {
+            chatStore.getState().addAssistantMessage(event.text, event.final);
+          } else if (eventAgentId) {
+            // Different agent or different channel — persist in background
+            const activeProfileId = chatStore.getState().activeProfileId ?? profileId;
+            appendToBackgroundSession(activeProfileId, eventAgentId, event.text);
+          }
         }
         if (event.kind === 'agent.completed') {
-          chatStore.getState().setTyping(false);
+          if (isActiveAgent(eventAgentId) && isDesktopSession(event, this.bridge, eventAgentId)) {
+            chatStore.getState().setTyping(false);
+            chatStore.setState({ pendingResponse: false });
+          }
         }
       });
 

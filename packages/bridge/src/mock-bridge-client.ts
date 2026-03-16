@@ -73,6 +73,10 @@ export class MockBridgeClient implements BridgeClient {
     }
   }
 
+  getSessionKey(agentId: string): string {
+    return `agent:${agentId}:main`;
+  }
+
   emit(event: HabitatEvent) {
     for (const listener of this.listeners) {
       listener(event);

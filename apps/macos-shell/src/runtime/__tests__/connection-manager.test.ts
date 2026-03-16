@@ -70,6 +70,10 @@ class FakeBridgeClient implements BridgeClient {
 
   createTask = vi.fn(async (_input: CreateTaskInput) => undefined);
 
+  getSessionKey(agentId: string): string {
+    return `agent:${agentId}:main`;
+  }
+
   emitConnectionState(state: BridgeConnectionState) {
     this.connectionState = state;
     for (const listener of this.connectionListeners) {
