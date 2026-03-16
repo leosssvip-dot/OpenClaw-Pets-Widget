@@ -761,7 +761,8 @@ body[data-surface='pet'] {
 .panel-frame--unified {
   gap: 0;
   padding: 0;
-  overflow: hidden;
+  /* overflow moved to panel-content so header dropdown can escape */
+  overflow: visible;
   /* flex column 布局：header 固定 + content 填满剩余空间 */
   display: flex;
   flex-direction: column;
@@ -2978,20 +2979,22 @@ button.toggle {
 }
 
 .desktop-pet__label {
-  max-width: 160px;
+  max-width: 140px;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
   margin-top: 150px;
-  padding: 4px 10px;
-  border-radius: 999px;
-  background: rgba(255, 255, 255, 0.74);
-  backdrop-filter: blur(8px);
-  font-size: 14px;
-  font-weight: 800;
-  letter-spacing: 0.01em;
-  color: #1d4565;
-  text-shadow: 0 1px 10px rgba(255, 255, 255, 0.7);
+  padding: 2px 10px;
+  border-radius: 6px;
+  background: rgba(0, 0, 0, 0.45);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  font-size: 11px;
+  font-weight: 500;
+  letter-spacing: 0.02em;
+  color: rgba(255, 255, 255, 0.92);
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
 }
 
 .desktop-pet--role-monk .desktop-pet__label {
@@ -3037,7 +3040,8 @@ button.toggle {
 
 .desktop-pet--interaction-hovered .desktop-pet__label,
 .desktop-pet--interaction-focused .desktop-pet__label {
-  color: #173f63;
+  color: #ffffff;
+  background: rgba(0, 0, 0, 0.55);
   transform: translateY(-1px);
 }
 
@@ -4914,6 +4918,8 @@ button.toggle {
 
 .chat-message__content--md {
   white-space: normal;
+  word-break: break-word;
+  overflow-wrap: break-word;
 }
 
 .chat-message__content--md .chat-message__md-p {
@@ -5398,12 +5404,14 @@ button.toggle {
               0 1px 1px rgba(255, 255, 255, 0.8);
   border: 1px solid rgba(163, 148, 184, 0.1);
   margin-bottom: 0;
+  overflow: visible;
 }
 
 /* Header 常驻顶部：不参与滚动，固定高度由内容撑开 */
 .panel-header {
   flex-shrink: 0;
   z-index: 20;
+  position: relative;
   display: flex;
   flex-direction: column;
   gap: 12px;
@@ -5412,6 +5420,8 @@ button.toggle {
   backdrop-filter: blur(24px);
   -webkit-backdrop-filter: blur(24px);
   border-bottom: 1px solid rgba(163, 148, 184, 0.08);
+  border-radius: 28px 28px 0 0;
+  overflow: visible;
 }
 
 /* Content 区域占满剩余空间，各 tab 自行管理滚动 */
@@ -5423,6 +5433,7 @@ button.toggle {
   display: flex;
   flex-direction: column;
   position: relative;
+  border-radius: 0 0 28px 28px;
 }
 
 /* panel-content children 不需要额外 z-index，drag 由 app-shell--panel 统一管理 */
@@ -5438,6 +5449,11 @@ button.toggle {
   color: #7f728f;
   cursor: pointer;
   transition: all 0.2s cubic-bezier(0.2, 0, 0, 1);
+  white-space: nowrap;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
 }
 
 .panel-tab:hover:not(.panel-tab--active) {
@@ -5451,6 +5467,97 @@ button.toggle {
   box-shadow: 0 4px 12px rgba(235, 71, 126, 0.08),
               inset 0 0 0 1px rgba(255, 255, 255, 1);
   font-weight: 700;
+}
+
+/* --- Chat tab hover dropdown for agent selection --- */
+.panel-tab-container {
+  position: relative;
+  flex: 1;
+  display: flex;
+  -webkit-app-region: no-drag;
+}
+
+.panel-tab-container > .panel-tab {
+  width: 100%;
+}
+
+/* Chevron indicator when dropdown exists */
+.panel-tab-container .panel-tab-chevron {
+  display: inline-block;
+  width: 8px;
+  height: 8px;
+  margin-left: 3px;
+  vertical-align: middle;
+  transition: transform 0.2s;
+}
+
+.panel-tab-container:hover .panel-tab-chevron {
+  transform: rotate(180deg);
+}
+
+.panel-tab-dropdown {
+  display: none;
+  position: absolute;
+  top: 100%;
+  left: 0;
+  padding-top: 4px; /* invisible bridge for hover continuity */
+  z-index: 100;
+  flex-direction: column;
+  -webkit-app-region: no-drag;
+}
+
+/* Extend hover hitbox so mouse can travel from tab to dropdown */
+.panel-tab-dropdown::before {
+  content: '';
+  position: absolute;
+  top: -4px;
+  left: -8px;
+  right: -8px;
+  height: 12px;
+}
+
+.panel-tab-dropdown__menu {
+  min-width: 180px;
+  max-width: 260px;
+  background: rgba(255, 255, 255, 0.95);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid rgba(163, 148, 184, 0.15);
+  border-radius: 10px;
+  box-shadow: 0 8px 24px rgba(48, 36, 71, 0.12), 0 2px 6px rgba(48, 36, 71, 0.06);
+  padding: 4px;
+  display: flex;
+  flex-direction: column;
+}
+
+.panel-tab-container:hover .panel-tab-dropdown {
+  display: flex;
+}
+
+.panel-tab-dropdown__item {
+  border: none;
+  background: transparent;
+  padding: 7px 12px;
+  border-radius: 7px;
+  font-size: 12.5px;
+  font-family: inherit;
+  color: #5d4f70;
+  cursor: pointer;
+  text-align: left;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  transition: background 0.15s;
+}
+
+.panel-tab-dropdown__item:hover {
+  background: rgba(235, 71, 126, 0.08);
+  color: #eb477e;
+}
+
+.panel-tab-dropdown__item--active {
+  color: #eb477e;
+  font-weight: 600;
 }
 
 /* --- Gallery Grid UI --- */

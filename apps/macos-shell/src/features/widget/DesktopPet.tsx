@@ -3,14 +3,12 @@ import { gsap } from 'gsap';
 import type { ConnectionStatus } from '../connection/ConnectionBadge';
 import { getHabitatDesktopApi } from '../../runtime/habitat-api';
 import { useWidgetStore, widgetStore } from './widget-store';
-import { resolvePetAppearance, type PetAppearanceConfig } from './pet-appearance';
+import { resolvePetAppearance, PET_ROLE_PACKS, type PetAppearanceConfig } from './pet-appearance';
 import { resolvePetAnimationState } from './pet-animation-state';
 import { DesktopPetIllustration } from './DesktopPetIllustration';
 import { PetRenderer } from './PetRenderer';
 import { MeritParticles } from './MeritParticles';
 import { PetBubble } from './PetBubble';
-import { PetContextMenu } from './PetContextMenu';
-import { usePetWindowSize } from './PetWindowSizeContext';
 import { usePetDrag } from './use-pet-drag';
 
 // ---------------------------------------------------------------------------
@@ -422,9 +420,8 @@ export function DesktopPet({
   const [isFocused, setIsFocused] = useState(false);
   const [isGreeting, setIsGreeting] = useState(false);
   const [bubbleMode, setBubbleMode] = useState<'input' | 'status' | null>(null);
-  const [contextMenu, setContextMenu] = useState<{ x: number; y: number } | null>(null);
+  const contextMenuOpenRef = useRef(false);
   const petRef = useRef<HTMLButtonElement | null>(null);
-  const petWindowSize = usePetWindowSize();
   const greetingTimeoutRef = useRef<number | null>(null);
   const { isDragging, isPressed, wasDrag, handlers: dragHandlers } = usePetDrag();
 
@@ -509,27 +506,38 @@ export function DesktopPet({
     widgetStore.getState().togglePanel();
   }
 
-  const handleContextMenu = useCallback((event: React.MouseEvent) => {
+  const handleContextMenu = useCallback(async (event: React.MouseEvent) => {
     event.preventDefault();
-    setContextMenu({ x: event.clientX, y: event.clientY });
-  }, []);
+    if (contextMenuOpenRef.current) return;
+    const api = getHabitatDesktopApi();
+    if (!api?.showPetContextMenu) return;
 
-  const handleContextAction = useCallback(
-    (actionId: string) => {
-      if (actionId === 'chat') {
-        setBubbleMode('input');
-      } else if (actionId === 'task') {
+    contextMenuOpenRef.current = true;
+    try {
+      const items = [
+        { id: 'chat', label: 'Send Message' },
+        { id: 'task', label: 'Assign Task' },
+        { id: 'status', label: 'View Status' },
+        { id: 'sep1', label: '', type: 'separator' as const },
+        ...PET_ROLE_PACKS.map((pack) => ({
+          id: `switch:${pack.id}`,
+          label: pack.label,
+          checked: pack.id === resolvedAppearance.rolePack,
+        })),
+      ];
+      const actionId = await api.showPetContextMenu(items);
+      if (actionId === 'chat' || actionId === 'task') {
         setBubbleMode('input');
       } else if (actionId === 'status') {
         setBubbleMode('status');
-      } else if (actionId.startsWith('switch:')) {
+      } else if (actionId?.startsWith('switch:')) {
         const rolePackId = actionId.slice('switch:'.length);
         onSwitchCharacter?.(rolePackId);
       }
-      setContextMenu(null);
-    },
-    []
-  );
+    } finally {
+      contextMenuOpenRef.current = false;
+    }
+  }, [resolvedAppearance.rolePack, onSwitchCharacter]);
 
   const handleBubbleSend = useCallback(
     (text: string) => {
@@ -624,20 +632,7 @@ export function DesktopPet({
         <span className="desktop-pet__label">{petName}</span>
       </button>
 
-      {/* Right-click context menu */}
-      {contextMenu ? (
-        <PetContextMenu
-          x={contextMenu.x}
-          y={contextMenu.y}
-          currentRole={resolvedAppearance.rolePack}
-          onAction={handleContextAction}
-          onClose={() => {
-            setContextMenu(null);
-            petWindowSize?.setMenuExtraHeight(null);
-          }}
-          onMeasured={(height) => petWindowSize?.setMenuExtraHeight(height)}
-        />
-      ) : null}
+      {/* Context menu is now native (Electron Menu.popup) — no React overlay needed */}
     </main>
   );
 }

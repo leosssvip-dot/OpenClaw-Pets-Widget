@@ -110,12 +110,39 @@ export function WidgetPanel({
               </div>
 
               <nav className="panel-tabs">
-                <button 
-                  className={`panel-tab ${activeTab === 'chat' ? 'panel-tab--active' : ''}`}
-                  onClick={() => setActiveTab('chat')}
-                >
-                  💬 Chat
-                </button>
+                <div className="panel-tab-container">
+                  <button
+                    className={`panel-tab ${activeTab === 'chat' ? 'panel-tab--active' : ''}`}
+                    onClick={() => setActiveTab('chat')}
+                  >
+                    💬 Chat
+                    {agentRows.length > 1 && (
+                      <svg className="panel-tab-chevron" width="8" height="8" viewBox="0 0 8 5" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <path d="M1 1l3 3 3-3" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+                      </svg>
+                    )}
+                  </button>
+                  {agentRows.length > 1 && (
+                    <div className="panel-tab-dropdown">
+                      <div className="panel-tab-dropdown__menu">
+                        {agentRows.map((row) => (
+                          <button
+                            key={row.petId}
+                            type="button"
+                            className={`panel-tab-dropdown__item${row.petId === currentCompanion?.petId ? ' panel-tab-dropdown__item--active' : ''}`}
+                            onClick={() => {
+                              onPinnedAgentChange(row.agentId);
+                              onSelectPet(row.petId);
+                              setActiveTab('chat');
+                            }}
+                          >
+                            {row.petName || row.agentId}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                </div>
                 <button 
                   className={`panel-tab ${activeTab === 'pets' ? 'panel-tab--active' : ''}`}
                   onClick={() => setActiveTab('pets')}

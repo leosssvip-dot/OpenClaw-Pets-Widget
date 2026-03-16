@@ -10,6 +10,16 @@ function linkifyRawUrls(text: string): string {
   );
 }
 
+/**
+ * Preserve single newlines as hard breaks.
+ * Markdown normally collapses `\n` to a space; appending two trailing spaces
+ * before each `\n` turns them into `<br>` so status/command output keeps its
+ * intended line structure.
+ */
+function preserveLineBreaks(text: string): string {
+  return text.replace(/(?<! {2})\n/g, '  \n');
+}
+
 const components: Components = {
   a: ({ href, children, ...props }) => (
     <a
@@ -51,7 +61,7 @@ const components: Components = {
 };
 
 export const MarkdownContent = memo(function MarkdownContent({ content }: { content: string }) {
-  const linkified = useMemo(() => linkifyRawUrls(content), [content]);
+  const linkified = useMemo(() => linkifyRawUrls(preserveLineBreaks(content)), [content]);
   return (
     <div className="chat-message__content chat-message__content--md">
       <ReactMarkdown components={components}>{linkified}</ReactMarkdown>

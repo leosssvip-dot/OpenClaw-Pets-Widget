@@ -1,4 +1,4 @@
-import { app, BrowserWindow, ipcMain, screen, type IpcMainEvent } from 'electron';
+import { app, BrowserWindow, ipcMain, Menu, MenuItem, screen, type IpcMainEvent } from 'electron';
 import { fileURLToPath } from 'node:url';
 import { readFile, writeFile, mkdir } from 'node:fs/promises';
 import { join } from 'node:path';
@@ -229,6 +229,33 @@ if (ipcMain?.handle) {
     panelWindow.focus();
     return { isOpen: true };
   });
+
+  ipcMain.handle(
+    'window:showPetContextMenu',
+    (_event, payload: { items: Array<{ id: string; label: string; type?: 'separator' | 'normal'; enabled?: boolean; checked?: boolean }> }) => {
+      return new Promise<string | null>((resolve) => {
+        const menu = new Menu();
+        for (const item of payload.items) {
+          if (item.type === 'separator') {
+            menu.append(new MenuItem({ type: 'separator' }));
+          } else {
+            menu.append(new MenuItem({
+              label: item.label,
+              type: item.checked != null ? 'checkbox' : 'normal',
+              checked: item.checked ?? false,
+              enabled: item.enabled ?? true,
+              click: () => resolve(item.id),
+            }));
+          }
+        }
+        menu.once('menu-will-close', () => {
+          // Resolve null if nothing was clicked (after a tick so click handler runs first)
+          setTimeout(() => resolve(null), 50);
+        });
+        menu.popup({ window: petWindow ?? undefined });
+      });
+    }
+  );
 
   ipcMain.handle(
     'gateway:prepareConnection',

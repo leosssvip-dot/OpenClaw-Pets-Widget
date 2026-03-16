@@ -22,6 +22,8 @@ contextBridge.exposeInMainWorld('habitat', {
   setPetWindowSize: (size: { width: number; height: number }) =>
     ipcRenderer.invoke('window:setPetWindowSize', size),
   togglePanel: () => ipcRenderer.invoke('window:togglePanel'),
+  showPetContextMenu: (items: Array<{ id: string; label: string; type?: string; enabled?: boolean; checked?: boolean }>) =>
+    ipcRenderer.invoke('window:showPetContextMenu', { items }) as Promise<string | null>,
   storeSecret: (key: string, value: string) =>
     ipcRenderer.invoke('secrets:store', { key, value }),
   retrieveSecret: (key: string) =>
