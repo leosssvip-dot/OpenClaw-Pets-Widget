@@ -21,6 +21,7 @@ export interface HabitatDesktopApi {
   persistPetWindowPosition: (payload: { x: number; y: number }) => Promise<void>;
   setPetWindowSize?: (size: { width: number; height: number }) => Promise<void>;
   togglePanel: () => Promise<{ isOpen: boolean }>;
+  showPanel: () => Promise<{ isOpen: boolean }>;
   showPetContextMenu?: (items: Array<{ id: string; label: string; type?: 'separator' | 'normal'; enabled?: boolean; checked?: boolean }>) => Promise<string | null>;
   storeSecret: (key: string, value: string) => Promise<void>;
   retrieveSecret: (key: string) => Promise<string | null>;

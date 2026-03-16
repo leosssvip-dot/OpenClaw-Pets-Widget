@@ -53,6 +53,7 @@ function mockHabitatDesktopApi(api: Record<string, unknown>) {
     movePetWindow: vi.fn().mockResolvedValue(undefined),
     persistPetWindowPosition: vi.fn().mockResolvedValue(undefined),
     togglePanel: vi.fn().mockResolvedValue({ isOpen: false }),
+    showPanel: vi.fn().mockResolvedValue({ isOpen: true }),
     snapPetWindow: vi.fn().mockResolvedValue({ side: 'left' }),
     storeSecret: vi.fn(),
     retrieveSecret: vi.fn(),

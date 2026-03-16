@@ -113,11 +113,11 @@ const RIVE_ASSETS: Partial<Record<PetRolePackId, string>> = {
  * The SVG must contain named <g> groups for each body part.
  */
 const SVG_BONE_ASSETS: Partial<Record<PetRolePackId, string>> = {
-  monk: '/assets/pets/monk-4.svg',
+  monk: './assets/pets/monk-4.svg',
 };
 
 const SPRITE_ASSETS: Partial<Record<PetRolePackId, string>> = {
-  monk: '/assets/pets/monk.png',
+  monk: './assets/pets/monk.png',
   // lobster: '/assets/pets/lobster.png',
   // cat: '/assets/pets/cat.png',
   // robot: '/assets/pets/robot.png',

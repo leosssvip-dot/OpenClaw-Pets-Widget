@@ -1,4 +1,5 @@
 import { fileURLToPath } from 'node:url';
+import { join } from 'node:path';
 import type { BrowserWindowConstructorOptions } from 'electron';
 
 /** 单只桌宠时的窗口宽高 */
@@ -19,7 +20,13 @@ function resolvePreloadPath() {
   try {
     return fileURLToPath(new URL('./preload.cjs', import.meta.url));
   } catch {
-    return './preload.cjs';
+    // Fallback for asar packaging
+    try {
+      const { app } = require('electron') as typeof import('electron');
+      return join(app.getAppPath(), '.electron-build', 'preload.cjs');
+    } catch {
+      return './preload.cjs';
+    }
   }
 }
 
@@ -34,6 +41,7 @@ export function buildPetWidgetWindowOptions(): BrowserWindowConstructorOptions {
     fullscreenable: false,
     skipTaskbar: true,
     hasShadow: false,
+    show: false,
     webPreferences: {
       preload: resolvePreloadPath(),
       contextIsolation: true

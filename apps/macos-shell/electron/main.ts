@@ -1,7 +1,7 @@
-import { app, BrowserWindow, ipcMain, Menu, MenuItem, screen, type IpcMainEvent } from 'electron';
+import { app, BrowserWindow, dialog, ipcMain, Menu, MenuItem, screen, session, type IpcMainEvent } from 'electron';
 import { fileURLToPath } from 'node:url';
 import { readFile, writeFile, mkdir } from 'node:fs/promises';
-import { join } from 'node:path';
+import { join, dirname } from 'node:path';
 import type { GatewayProfile } from '@openclaw-habitat/bridge';
 import type { GatewaySessionAuth } from '../src/runtime/gateway-session-auth';
 import { createHabitatTray } from './tray';
@@ -131,18 +131,38 @@ const petWindowPositionController = createPetWindowPositionController({
 async function loadWindow(window: BrowserWindow, surface: 'pet' | 'panel') {
   const search = `surface=${surface}`;
 
-  if (process.env.VITE_DEV_SERVER_URL) {
-    await window.loadURL(`${process.env.VITE_DEV_SERVER_URL}?${search}`);
-    return;
-  }
-
-  await window.loadFile(fileURLToPath(new URL('../dist/index.html', import.meta.url)), {
-    search
+  // Log renderer errors to main process stdout for debugging
+  window.webContents.on('did-fail-load', (_e, code, desc) => {
+    console.error(`[openclaw] ${surface} window failed to load: ${code} ${desc}`);
   });
+  window.webContents.on('render-process-gone', (_e, details) => {
+    console.error(`[openclaw] ${surface} renderer crashed:`, details.reason);
+  });
+
+  try {
+    if (process.env.VITE_DEV_SERVER_URL) {
+      await window.loadURL(`${process.env.VITE_DEV_SERVER_URL}?${search}`);
+      return;
+    }
+
+    // Resolve path relative to the main script location.
+    // import.meta.url works in ESM; fallback to app.getAppPath() for asar.
+    let htmlPath: string;
+    try {
+      htmlPath = fileURLToPath(new URL('../dist/index.html', import.meta.url));
+    } catch {
+      htmlPath = join(app.getAppPath(), 'dist', 'index.html');
+    }
+    console.log(`[openclaw] loading ${surface}: ${htmlPath}`);
+    await window.loadFile(htmlPath, { search });
+  } catch (err) {
+    console.error(`[openclaw] ${surface} loadFile error:`, err);
+    dialog.showErrorBox(`OpenClaw: ${surface} failed to load`, String(err));
+  }
 }
 
 function alignPanelWindow() {
-  if (!petWindow || !panelWindow) {
+  if (!petWindow || petWindow.isDestroyed() || !panelWindow || panelWindow.isDestroyed()) {
     return;
   }
 
@@ -159,6 +179,16 @@ function pipeRendererLogs(window: BrowserWindow) {
 }
 
 async function createWindow() {
+  // Override Origin header for WebSocket connections so the gateway accepts
+  // local connections from the Electron renderer (whose origin is file:// or null).
+  session.defaultSession.webRequest.onBeforeSendHeaders(
+    { urls: ['ws://127.0.0.1:*/*', 'ws://localhost:*/*'] },
+    (details, callback) => {
+      details.requestHeaders['Origin'] = `http://127.0.0.1`;
+      callback({ requestHeaders: details.requestHeaders });
+    }
+  );
+
   petWindow = await createPetWidgetWindow();
   panelWindow = await createPanelWindow();
   createHabitatTray();
@@ -167,11 +197,26 @@ async function createWindow() {
   petWindow.on('move', alignPanelWindow);
   petWindow.on('closed', () => {
     petWindow = null;
-    panelWindow?.close();
+    if (panelWindow && !panelWindow.isDestroyed()) {
+      panelWindow.close();
+    }
   });
+
+  // Place pet window at a visible default position (bottom-right of primary display)
+  const primaryDisplay = screen.getPrimaryDisplay();
+  const { width: screenW, height: screenH } = primaryDisplay.workAreaSize;
+  const { x: workX, y: workY } = primaryDisplay.workArea;
+  petWindow.setPosition(
+    workX + screenW - 250,
+    workY + screenH - 280
+  );
+
   petWindowPositionController.restore();
   await loadWindow(petWindow, 'pet');
   await loadWindow(panelWindow, 'panel');
+
+  // Ensure pet window is visible after content loads
+  petWindow.showInactive();
   alignPanelWindow();
 }
 
@@ -194,8 +239,8 @@ if (ipcMain?.handle) {
   ipcMain.handle('runtime:getInfo', (event) => ({
     platform: process.platform,
     surface: resolveRuntimeSurface(event.sender.id, {
-      petWindowId: petWindow?.webContents.id ?? null,
-      panelWindowId: panelWindow?.webContents.id ?? null
+      petWindowId: petWindow && !petWindow.isDestroyed() ? petWindow.webContents.id : null,
+      panelWindowId: panelWindow && !panelWindow.isDestroyed() ? panelWindow.webContents.id : null
     })
   }));
 
@@ -215,7 +260,7 @@ if (ipcMain?.handle) {
   });
 
   ipcMain.handle('window:togglePanel', () => {
-    if (!panelWindow) {
+    if (!panelWindow || panelWindow.isDestroyed()) {
       return { isOpen: false };
     }
 
@@ -226,6 +271,19 @@ if (ipcMain?.handle) {
 
     alignPanelWindow();
     panelWindow.show();
+    panelWindow.focus();
+    return { isOpen: true };
+  });
+
+  ipcMain.handle('window:showPanel', () => {
+    if (!panelWindow || panelWindow.isDestroyed()) {
+      return { isOpen: false };
+    }
+
+    if (!panelWindow.isVisible()) {
+      alignPanelWindow();
+      panelWindow.show();
+    }
     panelWindow.focus();
     return { isOpen: true };
   });
@@ -252,7 +310,7 @@ if (ipcMain?.handle) {
           // Resolve null if nothing was clicked (after a tick so click handler runs first)
           setTimeout(() => resolve(null), 50);
         });
-        menu.popup({ window: petWindow ?? undefined });
+        menu.popup({ window: petWindow && !petWindow.isDestroyed() ? petWindow : undefined });
       });
     }
   );
@@ -324,5 +382,7 @@ if (app?.on) {
 }
 
 if (app?.whenReady) {
-  void app.whenReady().then(createWindow);
+  void app.whenReady().then(createWindow).catch((err) => {
+    dialog.showErrorBox('OpenClaw Startup Error', String(err?.stack ?? err));
+  });
 }

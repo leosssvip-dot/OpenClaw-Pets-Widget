@@ -30,6 +30,8 @@ export function usePetDrag() {
   const wasDrag = useCallback(() => dragRef.current.isDragging, []);
 
   const onPointerDown = useCallback((event: React.PointerEvent) => {
+    // Only drag with primary button (left click), ignore right-click
+    if (event.button !== 0) return;
     setIsPressed(true);
     dragRef.current = {
       pointerId: event.pointerId,

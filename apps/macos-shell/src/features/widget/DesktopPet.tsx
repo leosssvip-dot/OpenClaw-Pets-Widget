@@ -516,8 +516,6 @@ export function DesktopPet({
     try {
       const items = [
         { id: 'chat', label: 'Send Message' },
-        { id: 'task', label: 'Assign Task' },
-        { id: 'status', label: 'View Status' },
         { id: 'sep1', label: '', type: 'separator' as const },
         ...PET_ROLE_PACKS.map((pack) => ({
           id: `switch:${pack.id}`,
@@ -526,10 +524,10 @@ export function DesktopPet({
         })),
       ];
       const actionId = await api.showPetContextMenu(items);
-      if (actionId === 'chat' || actionId === 'task') {
-        setBubbleMode('input');
-      } else if (actionId === 'status') {
-        setBubbleMode('status');
+      if (actionId === 'chat') {
+        // Open panel and switch to chat tab
+        api.sendHabitatSync?.({ type: 'openTab', tab: 'chat' });
+        await api.showPanel?.();
       } else if (actionId?.startsWith('switch:')) {
         const rolePackId = actionId.slice('switch:'.length);
         onSwitchCharacter?.(rolePackId);

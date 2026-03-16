@@ -1,8 +1,9 @@
 {
   "name": "@openclaw-habitat/macos-shell",
   "private": true,
-  "version": "0.0.0",
+  "version": "0.1.0",
   "type": "module",
+  "main": ".electron-build/main.js",
   "scripts": {
     "dev": "vite",
     "dev:renderer": "vite --host 127.0.0.1 --port 5173 --strictPort",
@@ -10,8 +11,44 @@
     "build": "vite build && pnpm run build:electron",
     "build:electron": "esbuild electron/main.ts --bundle --platform=node --format=esm --outfile=.electron-build/main.js --external:electron --sourcemap && esbuild electron/preload.ts --bundle --platform=node --format=cjs --outfile=.electron-build/preload.cjs --external:electron --sourcemap",
     "start:desktop": "pnpm run build && electron .electron-build/main.js",
+    "pack": "pnpm run build && electron-builder --dir",
+    "dist": "pnpm run build && electron-builder",
+    "dist:mac": "pnpm run build && electron-builder --mac",
     "test": "vitest",
     "lint": "tsc --noEmit -p tsconfig.json"
+  },
+  "build": {
+    "appId": "com.openclaw.habitat",
+    "productName": "OpenClaw",
+    "directories": {
+      "output": "release"
+    },
+    "files": [
+      ".electron-build/**/*",
+      "dist/**/*",
+      "!node_modules"
+    ],
+    "nodeGypRebuild": false,
+    "npmRebuild": false,
+    "mac": {
+      "category": "public.app-category.productivity",
+      "target": [
+        {
+          "target": "dmg",
+          "arch": ["universal"]
+        },
+        {
+          "target": "zip",
+          "arch": ["universal"]
+        }
+      ]
+    },
+    "dmg": {
+      "contents": [
+        { "x": 130, "y": 220 },
+        { "x": 410, "y": 220, "type": "link", "path": "/Applications" }
+      ]
+    }
   },
   "dependencies": {
     "@openclaw-habitat/bridge": "workspace:*",
@@ -33,6 +70,7 @@
     "@types/react-dom": "^19.0.4",
     "@vitejs/plugin-react": "^4.4.1",
     "electron": "^35.0.0",
+    "electron-builder": "^26.0.0",
     "esbuild": "^0.25.1",
     "jsdom": "^26.0.0",
     "tsx": "^4.19.3",

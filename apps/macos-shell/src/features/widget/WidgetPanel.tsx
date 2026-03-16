@@ -78,6 +78,20 @@ export function WidgetPanel({
   const [agentDropdownOpen, setAgentDropdownOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
 
+  // Listen for openTab sync messages from the pet window
+  useEffect(() => {
+    const api = getHabitatDesktopApi();
+    if (!api?.onHabitatSync) return;
+    return api.onHabitatSync((msg: unknown) => {
+      if (msg && typeof msg === 'object' && 'type' in msg && (msg as { type: string }).type === 'openTab') {
+        const tab = (msg as { tab?: string }).tab;
+        if (tab === 'chat' || tab === 'pets' || tab === 'settings') {
+          setActiveTab(tab);
+        }
+      }
+    });
+  }, []);
+
   // Close dropdown on click outside
   useEffect(() => {
     if (!agentDropdownOpen) return;

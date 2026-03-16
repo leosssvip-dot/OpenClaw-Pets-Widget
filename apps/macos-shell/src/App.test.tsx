@@ -64,6 +64,7 @@ beforeEach(() => {
     movePetWindow: vi.fn(),
     persistPetWindowPosition: vi.fn(),
     togglePanel: vi.fn().mockResolvedValue({ isOpen: false }),
+    showPanel: vi.fn().mockResolvedValue({ isOpen: true }),
     storeSecret: vi.fn(),
     retrieveSecret: vi.fn(),
     deleteSecret: vi.fn()

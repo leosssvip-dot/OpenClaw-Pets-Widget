@@ -2,9 +2,7 @@
  * PetContextMenu — right-click context menu for the desktop pet.
  *
  * Actions:
- *   - Send message (opens chat bubble)
- *   - Assign task
- *   - View status
+ *   - Send message (opens panel chat tab)
  *   - Switch character
  */
 
@@ -31,8 +29,6 @@ interface PetContextMenuProps {
 
 const MENU_ACTIONS: PetContextMenuAction[] = [
   { id: 'chat', label: 'Send Message' },
-  { id: 'task', label: 'Assign Task' },
-  { id: 'status', label: 'View Status' },
 ];
 
 export function PetContextMenu({

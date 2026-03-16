@@ -86,7 +86,7 @@ export function SshConnectionForm({
           aria-label="SSH User"
           value={username}
           onChange={(event) => setUsername(event.target.value)}
-          placeholder="chenyang"
+          placeholder="users"
           required
           disabled={isBusy}
         />
@@ -109,7 +109,7 @@ export function SshConnectionForm({
           type="password"
           value={password}
           onChange={(event) => setPassword(event.target.value)}
-          placeholder="Optional if your SSH key already works"
+          placeholder="Password"
           disabled={isBusy}
         />
       </label>
