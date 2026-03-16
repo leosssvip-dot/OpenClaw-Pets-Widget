@@ -7,7 +7,7 @@ export function buildPanelWindowOptions(): BrowserWindowConstructorOptions {
   return {
     ...petOptions,
     width: 360,
-    height: 520,
+    height: 720,
     minWidth: 320,
     minHeight: 400,
     resizable: true,

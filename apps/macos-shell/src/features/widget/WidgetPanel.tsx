@@ -31,6 +31,7 @@ export function WidgetPanel({
   currentCompanionPet,
   onReconnect,
   onSaveProfile,
+  onConnectProfile,
   onDeleteProfile,
   onPinnedAgentChange,
   onSelectPet,
@@ -62,6 +63,7 @@ export function WidgetPanel({
   currentCompanionPet: HabitatPet | null;
   onReconnect: () => void;
   onSaveProfile: (input: ConnectionInput, profileId?: string) => Promise<void>;
+  onConnectProfile: (profileId: string) => void;
   onDeleteProfile: (profileId: string) => void;
   onPinnedAgentChange: (agentId: string | null) => void;
   onSelectPet: (petId: string) => void;
@@ -189,6 +191,7 @@ export function WidgetPanel({
                   activeProfileId={activeProfileId}
                   gatewayProfiles={gatewayProfiles}
                   onSaveProfile={onSaveProfile}
+                  onConnectProfile={onConnectProfile}
                   onDeleteProfile={onDeleteProfile}
                 />
               )}

@@ -5,6 +5,7 @@ import { GatewayProfiles } from '../GatewayProfiles';
 describe('GatewayProfiles', () => {
   it('prefills an existing profile for editing and forwards delete actions', async () => {
     const onSaveProfile = vi.fn();
+    const onConnectProfile = vi.fn();
     const onDeleteProfile = vi.fn();
 
     render(
@@ -33,6 +34,7 @@ describe('GatewayProfiles', () => {
         ]}
         activeProfileId="remote-1"
         onSaveProfile={onSaveProfile}
+        onConnectProfile={onConnectProfile}
         onDeleteProfile={onDeleteProfile}
       />
     );

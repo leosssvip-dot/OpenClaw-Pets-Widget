@@ -34,8 +34,7 @@ export const PET_ROLE_PACKS: Array<{
     panelDescription:
       'Every main-panel variant should read like a clear work role first. This one is here to code, patch, and fix.',
     signalLabel: 'typing bugfix',
-    quickPromptExample:
-      'Fix the panel layout bug, keep the companion visible, and show me the smallest safe patch.'
+    quickPromptExample: 'Ask to fix, refactor, or patch...'
   },
   {
     id: 'cat',
@@ -47,8 +46,7 @@ export const PET_ROLE_PACKS: Array<{
     panelDescription:
       'This character turns fuzzy asks into clear task cards, scoped steps, and visible priority decisions.',
     signalLabel: 'task mapping',
-    quickPromptExample:
-      'Break this feature into the smallest milestones and tell me what to ship first.'
+    quickPromptExample: 'Plan tasks, set priorities...'
   },
   {
     id: 'robot',
@@ -60,8 +58,7 @@ export const PET_ROLE_PACKS: Array<{
     panelDescription:
       'This character exists to keep the bridge stable, surface connection health, and catch system drift early.',
     signalLabel: 'runtime watch',
-    quickPromptExample:
-      'Check the gateway health, summarize the warning signs, and tell me the next safe recovery step.'
+    quickPromptExample: 'Check status, diagnose issues...'
   },
   {
     id: 'monk',
@@ -73,8 +70,7 @@ export const PET_ROLE_PACKS: Array<{
     panelDescription:
       'This character is for deep work. It narrows the next action, keeps momentum, and marks steady progress.',
     signalLabel: 'working-time tapping',
-    quickPromptExample:
-      'Start the next focused task, keep it narrow, and guide me through execution without context switching.'
+    quickPromptExample: 'Focus on the next task...'
   }
 ];
 

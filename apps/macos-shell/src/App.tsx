@@ -128,6 +128,8 @@ export async function hydrateAndReconnectActiveProfile(
   hydrateTokens: () => Promise<void>,
   markReconnectAttempted: () => void,
   getActiveProfileId: () => string | null,
+  getFirstProfileId: () => string | null,
+  selectProfile: (profileId: string) => void,
   reconnectProfile: (profileId: string) => Promise<void>
 ) {
   if (surface !== 'panel' || alreadyAttempted) {
@@ -136,7 +138,15 @@ export async function hydrateAndReconnectActiveProfile(
 
   markReconnectAttempted();
   await hydrateTokens();
-  const profileId = getActiveProfileId();
+  let profileId = getActiveProfileId();
+
+  // 没有 activeProfileId 但有已保存的 profile，选中第一个
+  if (!profileId) {
+    profileId = getFirstProfileId();
+    if (profileId) {
+      selectProfile(profileId);
+    }
+  }
 
   if (profileId) {
     await reconnectProfile(profileId);
@@ -240,10 +250,10 @@ export function App() {
     return () => window.clearTimeout(t);
   }, [workingUntilByPetId, clearExpiredWorkingUntil]);
 
+  // Resolve surface from IPC (one-time)
   useEffect(() => {
     const api = getHabitatDesktopApi();
     let isActive = true;
-
     void api
       ?.getRuntimeInfo()
       .then((info) => {
@@ -251,31 +261,42 @@ export function App() {
           setSurface(info.surface);
         }
       });
+    return () => { isActive = false; };
+  }, []);
 
-    void hydrateAndReconnectActiveProfile(
-      surface,
-      reconnectAttemptedRef.current,
-      async () => {
-        // 先从磁盘恢复设置（含 gateway profiles），再恢复 tokens
+  // Auto-reconnect on panel mount (runs once)
+  useEffect(() => {
+    // Only the panel window manages connections; URL param is authoritative
+    const urlSurface = new URLSearchParams(window.location.search).get('surface');
+    if (urlSurface === 'pet') return;
+    if (reconnectAttemptedRef.current) return;
+    reconnectAttemptedRef.current = true;
+
+    void (async () => {
+      try {
         await preloadSettingsFromDisk();
         await hydrateProfileSecrets();
-      },
-      () => {
-        reconnectAttemptedRef.current = true;
-      },
-      () => (isActive ? settingsStore.getState().activeProfileId : null),
-      async (profileId) => {
-        if (isActive) {
+
+        let profileId = settingsStore.getState().activeProfileId;
+
+        if (!profileId) {
+          const profiles = Object.keys(settingsStore.getState().gatewayProfiles);
+          profileId = profiles.length > 0 ? profiles[0] : null;
+          if (profileId) {
+            settingsStore.getState().selectGatewayProfile(profileId);
+          }
+        }
+
+        if (profileId) {
+          console.log('[bridge] auto-reconnect: connecting to', profileId);
           await connectionManager.connect(profileId);
         }
+      } catch (err) {
+        console.error('[bridge] auto-reconnect failed:', err);
       }
-    );
-
-    return () => {
-      isActive = false;
-      void connectionManager.disconnect();
-    };
-  }, [connectionManager, surface]);
+    })();
+    // No cleanup — the connection should persist across re-renders
+  }, [connectionManager]);
 
   // Pet window: receive state updates from the panel window via IPC
   useEffect(() => {
@@ -406,6 +427,10 @@ export function App() {
         }
 
         await connectionManager.connect(profile.id);
+      }}
+      onConnectProfile={(profileId) => {
+        settingsStore.getState().selectGatewayProfile(profileId);
+        void connectionManager.connect(profileId);
       }}
       onDeleteProfile={(profileId) => {
         clearGatewaySessionAuth(profileId);

@@ -84,6 +84,8 @@ describe('hydrateAndReconnectActiveProfile', () => {
       hydrateTokens,
       markReconnectAttempted,
       getActiveProfileId,
+      () => null,
+      vi.fn(),
       reconnectProfile
     );
 
@@ -107,6 +109,8 @@ describe('hydrateAndReconnectActiveProfile', () => {
       hydrateTokens,
       markReconnectAttempted,
       () => null,
+      () => null,
+      vi.fn(),
       reconnectProfile
     );
 
@@ -126,6 +130,8 @@ describe('hydrateAndReconnectActiveProfile', () => {
       hydrateTokens,
       markReconnectAttempted,
       () => 'remote-1',
+      () => null,
+      vi.fn(),
       reconnectProfile
     );
 
@@ -145,6 +151,8 @@ describe('hydrateAndReconnectActiveProfile', () => {
       hydrateTokens,
       markReconnectAttempted,
       () => 'remote-1',
+      () => null,
+      vi.fn(),
       reconnectProfile
     );
 

@@ -43,6 +43,7 @@ export function GatewayProfiles({
   activeProfileId,
   isConnecting,
   onSaveProfile,
+  onConnectProfile,
   onDeleteProfile
 }: {
   profiles: GatewayProfile[];
@@ -52,6 +53,7 @@ export function GatewayProfiles({
     input: ConnectionInput,
     profileId?: string
   ) => Promise<void> | void;
+  onConnectProfile: (profileId: string) => void;
   onDeleteProfile: (profileId: string) => void;
 }) {
   const [isOpen, setIsOpen] = useState(false);
@@ -151,6 +153,16 @@ export function GatewayProfiles({
               {profileMeta(profile)}
             </span>
             <div className="gateway-profiles__actions">
+              {profile.id !== activeProfileId && (
+                <button
+                  type="button"
+                  className="gateway-profiles__action gateway-profiles__action--connect"
+                  disabled={isConnecting}
+                  onClick={() => onConnectProfile(profile.id)}
+                >
+                  Connect
+                </button>
+              )}
               {isSshProfile(profile) ? (
                 <button
                   type="button"

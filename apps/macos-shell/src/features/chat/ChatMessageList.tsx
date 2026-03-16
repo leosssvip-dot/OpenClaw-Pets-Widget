@@ -6,14 +6,18 @@ import { parseMessageActions, type MessageAction } from './message-actions';
 export function ChatMessageList({
   messages,
   typing,
+  agentName,
   onAction,
 }: {
   messages: ChatMessage[];
   /** Whether the assistant is currently generating a response. */
   typing?: boolean;
+  /** Display name for the assistant / agent. */
+  agentName?: string;
   /** Called when the user clicks an inline action button in an assistant message. */
   onAction?: (command: string) => void;
 }) {
+  const assistantLabel = agentName || 'Assistant';
   const containerRef = useRef<HTMLUListElement>(null);
   const [showScrollBtn, setShowScrollBtn] = useState(false);
 
@@ -101,7 +105,7 @@ export function ChatMessageList({
               data-testid={`chat-msg-${m.role}`}
             >
               <span className="chat-message__role" aria-hidden="true">
-                {m.role === 'user' ? 'You' : 'Assistant'}
+                {m.role === 'user' ? 'You' : assistantLabel}
               </span>
               {m.images && m.images.length > 0 && (
                 <div className="chat-message__images">
@@ -148,7 +152,7 @@ export function ChatMessageList({
 
         {typing && (
           <li className="chat-message chat-message--assistant chat-typing-indicator" aria-label="Assistant is typing">
-            <span className="chat-message__role" aria-hidden="true">Assistant</span>
+            <span className="chat-message__role" aria-hidden="true">{assistantLabel}</span>
             <div className="chat-typing-dots">
               <span className="chat-typing-dot" />
               <span className="chat-typing-dot" />

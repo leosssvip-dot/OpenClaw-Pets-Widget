@@ -109,11 +109,11 @@ export function ChatPanel({
   );
 
   const inputPlaceholder =
-    placeholder ?? `Message ${petName}... (or /help, /status)`;
+    placeholder ?? `Message ${petName}...`;
 
   return (
     <section className="chat-panel" aria-label={`Chat with ${petName}`}>
-      <ChatMessageList messages={messages} typing={typing} onAction={handleAction} />
+      <ChatMessageList messages={messages} typing={typing} agentName={petName} onAction={handleAction} />
       <ChatInput
         placeholder={inputPlaceholder}
         disabled={disabled}

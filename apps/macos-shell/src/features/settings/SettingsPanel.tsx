@@ -9,6 +9,7 @@ export interface SettingsPanelProps {
   activeProfileId: string | null;
   gatewayProfiles: GatewayProfile[];
   onSaveProfile: (input: ConnectionInput, profileId?: string) => Promise<void>;
+  onConnectProfile: (profileId: string) => void;
   onDeleteProfile: (profileId: string) => void;
 }
 
@@ -17,6 +18,7 @@ export function SettingsPanel({
   activeProfileId,
   gatewayProfiles,
   onSaveProfile,
+  onConnectProfile,
   onDeleteProfile
 }: SettingsPanelProps) {
   return (
@@ -40,6 +42,7 @@ export function SettingsPanel({
             connectionStatus === 'connecting' || connectionStatus === 'reconnecting'
           }
           onSaveProfile={onSaveProfile}
+          onConnectProfile={onConnectProfile}
           onDeleteProfile={onDeleteProfile}
         />
       </div>
