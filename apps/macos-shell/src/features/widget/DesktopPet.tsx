@@ -516,6 +516,7 @@ export function DesktopPet({
     try {
       const items = [
         { id: 'chat', label: 'Send Message' },
+        { id: 'settings', label: 'Settings' },
         { id: 'sep1', label: '', type: 'separator' as const },
         ...PET_ROLE_PACKS.map((pack) => ({
           id: `switch:${pack.id}`,
@@ -527,6 +528,9 @@ export function DesktopPet({
       if (actionId === 'chat') {
         // Open panel and switch to chat tab
         api.sendHabitatSync?.({ type: 'openTab', tab: 'chat' });
+        await api.showPanel?.();
+      } else if (actionId === 'settings') {
+        api.sendHabitatSync?.({ type: 'openTab', tab: 'settings' });
         await api.showPanel?.();
       } else if (actionId?.startsWith('switch:')) {
         const rolePackId = actionId.slice('switch:'.length);

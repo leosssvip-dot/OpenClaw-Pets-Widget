@@ -215,7 +215,7 @@ describe('hydrateAndReconnectActiveProfile', () => {
     expect(screen.getByRole('button', { name: '💬 Chat' })).toHaveClass('panel-tab--active');
 
     // Switch to Setup tab
-    fireEvent.click(screen.getByRole('button', { name: '⚙️ Setup' }));
+    fireEvent.click(screen.getByRole('button', { name: '⚙️ Settings' }));
     expect(screen.getByRole('heading', { name: 'Connection & Gateways' })).toBeInTheDocument();
     fireEvent.click(screen.getByRole('button', { name: 'Add gateway' }));
 

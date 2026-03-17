@@ -193,7 +193,7 @@ export function WidgetPanel({
                   className={`panel-tab ${activeTab === 'settings' ? 'panel-tab--active' : ''}`}
                   onClick={() => setActiveTab('settings')}
                 >
-                  ⚙️ Setup
+                  ⚙️ Settings
                 </button>
               </nav>
             </div>
