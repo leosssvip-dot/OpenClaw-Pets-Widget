@@ -1,4 +1,4 @@
-import { app, BrowserWindow, dialog, ipcMain, Menu, MenuItem, screen, session, type IpcMainEvent } from 'electron';
+import { app, BrowserWindow, dialog, ipcMain, Menu, MenuItem, screen, session, Tray, type IpcMainEvent } from 'electron';
 import { fileURLToPath } from 'node:url';
 import { readFile, writeFile, mkdir } from 'node:fs/promises';
 import { join, dirname } from 'node:path';
@@ -13,6 +13,7 @@ import { SshTunnelRuntime } from './ssh-runtime';
 
 let petWindow: BrowserWindow | null = null;
 let panelWindow: BrowserWindow | null = null;
+let habitatTray: Tray | null = null;
 const sshTunnelRuntime = new SshTunnelRuntime();
 
 export interface PetWindowPlacement {
@@ -191,7 +192,7 @@ async function createWindow() {
 
   petWindow = await createPetWidgetWindow();
   panelWindow = await createPanelWindow();
-  createHabitatTray();
+  habitatTray = createHabitatTray();
   pipeRendererLogs(petWindow);
   pipeRendererLogs(panelWindow);
   petWindow.on('move', alignPanelWindow);
@@ -216,7 +217,11 @@ async function createWindow() {
   await loadWindow(panelWindow, 'panel');
 
   // Ensure pet window is visible after content loads
-  petWindow.showInactive();
+  if (process.platform === 'darwin') {
+    petWindow.showInactive();
+  } else {
+    petWindow.show();
+  }
   alignPanelWindow();
 }
 

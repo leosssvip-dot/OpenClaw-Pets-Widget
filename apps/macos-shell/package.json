@@ -14,6 +14,7 @@
     "pack": "pnpm run build && electron-builder --dir",
     "dist": "pnpm run build && electron-builder",
     "dist:mac": "pnpm run build && electron-builder --mac",
+    "dist:win": "pnpm run build && electron-builder --win",
     "test": "vitest",
     "lint": "tsc --noEmit -p tsconfig.json"
   },
@@ -40,6 +41,14 @@
         {
           "target": "zip",
           "arch": ["universal"]
+        }
+      ]
+    },
+    "win": {
+      "target": [
+        {
+          "target": "nsis",
+          "arch": ["x64"]
         }
       ]
     },

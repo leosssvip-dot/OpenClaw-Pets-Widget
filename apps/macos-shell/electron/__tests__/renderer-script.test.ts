@@ -12,4 +12,24 @@ describe('renderer dev script', () => {
 
     expect(packageJson.scripts?.['dev:renderer']).toContain('--strictPort');
   });
+
+  it('exposes a Windows distribution script and target for desktop packaging', () => {
+    const packageJson = JSON.parse(
+      readFileSync(resolve(process.cwd(), 'package.json'), 'utf8')
+    ) as {
+      scripts?: Record<string, string>;
+      build?: {
+        win?: {
+          target?: Array<string | { target: string }>;
+        };
+      };
+    };
+
+    expect(packageJson.scripts?.['dist:win']).toContain('electron-builder --win');
+    expect(packageJson.build?.win?.target).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({ target: 'nsis' }),
+      ])
+    );
+  });
 });

@@ -12,4 +12,11 @@ describe('buildPetWidgetWindowOptions', () => {
     expect(options.alwaysOnTop).toBe(true);
     expect(options.resizable).toBe(false);
   });
+
+  it('applies Windows-safe transparent window settings for the pet overlay', () => {
+    const options = buildPetWidgetWindowOptions('win32');
+
+    expect(options.transparent).toBe(true);
+    expect(options.backgroundColor).toBe('#00000000');
+  });
 });

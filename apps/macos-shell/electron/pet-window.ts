@@ -30,11 +30,14 @@ function resolvePreloadPath() {
   }
 }
 
-export function buildPetWidgetWindowOptions(): BrowserWindowConstructorOptions {
+export function buildPetWidgetWindowOptions(
+  platform: NodeJS.Platform = process.platform
+): BrowserWindowConstructorOptions {
   return {
     width: SINGLE_PET_WIDTH,
     height: SINGLE_PET_HEIGHT,
     transparent: true,
+    ...(platform === 'win32' ? { backgroundColor: '#00000000' } : {}),
     frame: false,
     alwaysOnTop: true,
     resizable: false,
