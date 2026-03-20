@@ -8,11 +8,18 @@
 
 import type { HabitatEvent } from '@openclaw-habitat/bridge';
 import type { HabitatPet } from '../features/habitat/types';
+import type { PetAppearanceConfig } from '../features/widget/pet-appearance';
 import { getHabitatDesktopApi } from './habitat-api';
 
 export type SyncMessage =
   | { type: 'seedPets'; pets: HabitatPet[] }
-  | { type: 'event'; event: HabitatEvent };
+  | { type: 'event'; event: HabitatEvent }
+  | {
+      type: 'uiState';
+      selectedPetId: string | null;
+      pinnedAgentId: string | null;
+      appearances: Record<string, PetAppearanceConfig>;
+    };
 
 /** Panel window: send events to other windows via IPC */
 export function createHabitatPublisher() {
@@ -36,6 +43,11 @@ export function createHabitatPublisher() {
 export function createHabitatSubscriber(handlers: {
   onSeedPets: (pets: HabitatPet[]) => void;
   onEvent: (event: HabitatEvent) => void;
+  onUiState?: (state: {
+    selectedPetId: string | null;
+    pinnedAgentId: string | null;
+    appearances: Record<string, PetAppearanceConfig>;
+  }) => void;
 }) {
   const api = getHabitatDesktopApi();
   console.log('[bridge] createHabitatSubscriber: hasApi:', !!api, 'hasOnSync:', !!api?.onHabitatSync);
@@ -51,6 +63,12 @@ export function createHabitatSubscriber(handlers: {
       handlers.onSeedPets(msg.pets);
     } else if (msg.type === 'event') {
       handlers.onEvent(msg.event);
+    } else if (msg.type === 'uiState') {
+      handlers.onUiState?.({
+        selectedPetId: msg.selectedPetId,
+        pinnedAgentId: msg.pinnedAgentId,
+        appearances: msg.appearances,
+      });
     }
   });
 

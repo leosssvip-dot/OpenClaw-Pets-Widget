@@ -2152,12 +2152,6 @@ button.toggle {
   box-shadow: none;
   cursor: grab;
   user-select: none;
-  animation: pet-bounce 3s ease-in-out infinite;
-}
-
-@keyframes pet-bounce {
-  0%, 100% { transform: translateY(0); }
-  50% { transform: translateY(-6px); }
 }
 
 .desktop-pet--active .desktop-pet__stage {
@@ -3142,41 +3136,6 @@ button.toggle {
 
 .desktop-pet--mood-concerned .desktop-pet__glow {
   opacity: 0.65;
-}
-
-.desktop-pet--state-idle,
-.desktop-pet--activity-idle {
-  animation-duration: 3.4s;
-}
-
-.desktop-pet--state-thinking,
-.desktop-pet--activity-thinking {
-  animation-duration: 2.1s;
-}
-
-.desktop-pet--state-thinking .desktop-pet__stage,
-.desktop-pet--activity-thinking .desktop-pet__stage {
-  animation: pet-think 1.8s ease-in-out infinite;
-}
-
-.desktop-pet--state-working .desktop-pet__stage,
-.desktop-pet--activity-working .desktop-pet__stage {
-  animation: pet-work 0.95s ease-in-out infinite;
-}
-
-.desktop-pet--state-waiting .desktop-pet__stage,
-.desktop-pet--activity-waiting .desktop-pet__stage {
-  animation: pet-wait 2.6s ease-in-out infinite;
-}
-
-.desktop-pet--state-done,
-.desktop-pet--activity-done {
-  animation: pet-celebrate 0.85s ease-in-out 3;
-}
-
-.desktop-pet--state-blocked .desktop-pet__stage,
-.desktop-pet--activity-blocked .desktop-pet__stage {
-  animation: pet-blocked 0.18s linear 6;
 }
 
 @keyframes pet-think {
@@ -4299,6 +4258,11 @@ button.toggle {
   width: 100%;
   height: 100%;
   display: block;
+}
+
+.desktop-pet__render-surface--dimmed {
+  filter: grayscale(0.62) brightness(0.86) saturate(0.82);
+  opacity: 0.94;
 }
 
 /* ===================================================================
@@ -5749,4 +5713,3 @@ button.toggle {
   font-family: inherit;
   font-weight: 600;
 }
-

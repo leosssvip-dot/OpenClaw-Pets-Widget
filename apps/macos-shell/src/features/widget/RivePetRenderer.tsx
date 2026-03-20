@@ -7,20 +7,28 @@
  * - Falls back gracefully if the .riv file fails to load
  */
 
-import { useEffect, useCallback } from 'react';
-import { useRive, useStateMachineInput, EventType } from '@rive-app/react-canvas';
+import { useEffect, useCallback, useRef } from 'react';
+import {
+  useRive,
+  useStateMachineInput,
+  EventType,
+  StateMachineInputType,
+} from '@rive-app/react-canvas';
 import type { Event as RiveEvent } from '@rive-app/react-canvas';
 import {
   RIVE_STATE_MACHINE,
-  RIVE_STATUS_INPUT,
+  RIVE_WORKING_INPUT,
+  RIVE_CLICK_INPUT,
+  RIVE_CLICK_PULSE_MS,
   RIVE_STRIKE_EVENT,
-  ACTIVITY_TO_RIVE_INPUT,
+  ACTIVITY_TO_RIVE_BOOLEAN,
 } from './pet-engine';
 import type { PetAnimationActivity } from './pet-animation-state';
 
 interface RivePetRendererProps {
   src: string;
   activity: PetAnimationActivity;
+  clickSignal?: number;
   onStrike?: () => void;
   onLoadError?: () => void;
   className?: string;
@@ -29,10 +37,12 @@ interface RivePetRendererProps {
 export function RivePetRenderer({
   src,
   activity,
+  clickSignal = 0,
   onStrike,
   onLoadError,
   className = '',
 }: RivePetRendererProps) {
+  const clickResetTimeoutRef = useRef<number | null>(null);
   const { rive, RiveComponent } = useRive({
     src,
     stateMachines: RIVE_STATE_MACHINE,
@@ -42,14 +52,65 @@ export function RivePetRenderer({
     },
   });
 
-  const statusInput = useStateMachineInput(rive, RIVE_STATE_MACHINE, RIVE_STATUS_INPUT);
+  const workingInput = useStateMachineInput(rive, RIVE_STATE_MACHINE, RIVE_WORKING_INPUT);
+  const clickInput = useStateMachineInput(rive, RIVE_STATE_MACHINE, RIVE_CLICK_INPUT);
 
   // Sync activity → Rive state machine input
   useEffect(() => {
-    if (statusInput) {
-      statusInput.value = ACTIVITY_TO_RIVE_INPUT[activity];
+    if (workingInput) {
+      workingInput.value = ACTIVITY_TO_RIVE_BOOLEAN[activity];
     }
-  }, [activity, statusInput]);
+  }, [activity, workingInput]);
+
+  useEffect(() => {
+    return () => {
+      if (clickResetTimeoutRef.current !== null) {
+        window.clearTimeout(clickResetTimeoutRef.current);
+      }
+    };
+  }, []);
+
+  useEffect(() => {
+    if (clickSignal <= 0 || !clickInput) {
+      return;
+    }
+
+    if (clickResetTimeoutRef.current !== null) {
+      window.clearTimeout(clickResetTimeoutRef.current);
+      clickResetTimeoutRef.current = null;
+    }
+
+    if (clickInput.type === StateMachineInputType.Trigger) {
+      clickInput.fire();
+      return;
+    }
+
+    if (clickInput.type === StateMachineInputType.Boolean) {
+      clickInput.value = true;
+      clickResetTimeoutRef.current = window.setTimeout(() => {
+        clickInput.value = false;
+        clickResetTimeoutRef.current = null;
+      }, RIVE_CLICK_PULSE_MS);
+      return () => {
+        if (clickResetTimeoutRef.current !== null) {
+          window.clearTimeout(clickResetTimeoutRef.current);
+          clickResetTimeoutRef.current = null;
+        }
+      };
+    }
+
+    clickInput.value = 1;
+    clickResetTimeoutRef.current = window.setTimeout(() => {
+      clickInput.value = 0;
+      clickResetTimeoutRef.current = null;
+    }, RIVE_CLICK_PULSE_MS);
+    return () => {
+      if (clickResetTimeoutRef.current !== null) {
+        window.clearTimeout(clickResetTimeoutRef.current);
+        clickResetTimeoutRef.current = null;
+      }
+    };
+  }, [clickInput, clickSignal]);
 
   // Listen for strike events from the Rive animation
   const handleRiveEvent = useCallback(

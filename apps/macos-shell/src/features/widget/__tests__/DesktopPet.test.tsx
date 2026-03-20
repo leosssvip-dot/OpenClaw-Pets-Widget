@@ -1,45 +1,46 @@
 import { createEvent, fireEvent, render, screen, waitFor } from '@testing-library/react';
-import { readFileSync } from 'node:fs';
-import { dirname, resolve } from 'node:path';
-import { fileURLToPath } from 'node:url';
 import { vi } from 'vitest';
 import { DesktopPet } from '../DesktopPet';
 import { widgetStore } from '../widget-store';
 
-const gsapMocks = vi.hoisted(() => {
-  const timelineApi = {
-    addLabel: vi.fn(),
-    set: vi.fn(),
-    to: vi.fn(),
-    fromTo: vi.fn(),
-    kill: vi.fn()
-  };
-  timelineApi.addLabel.mockImplementation(() => timelineApi);
-  timelineApi.set.mockImplementation(() => timelineApi);
-  timelineApi.to.mockImplementation(() => timelineApi);
-  timelineApi.fromTo.mockImplementation(() => timelineApi);
+const petRendererSpy = vi.hoisted(() => vi.fn());
+const meritParticlesSpy = vi.hoisted(() => vi.fn());
 
-  const gsapRevert = vi.fn();
-  const gsapTimeline = vi.fn(() => timelineApi);
-  const gsapContext = vi.fn((callback: () => void) => {
-    callback();
-    return {
-      revert: gsapRevert
-    };
-  });
+vi.mock('../PetRenderer', () => ({
+  PetRenderer: (props: {
+    activity: string;
+    clickSignal?: number;
+    isDimmed?: boolean;
+    rolePack: string;
+  }) => {
+    petRendererSpy(props);
+    return (
+      <div
+        data-testid="pet-renderer"
+        data-activity={props.activity}
+        data-click-signal={String(props.clickSignal ?? 0)}
+        data-dimmed={String(props.isDimmed ?? false)}
+        data-role-pack={props.rolePack}
+      />
+    );
+  }
+}));
 
-  return {
-    timelineApi,
-    gsapRevert,
-    gsapTimeline,
-    gsapContext
-  };
-});
-
-vi.mock('gsap', () => ({
-  gsap: {
-    context: gsapMocks.gsapContext,
-    timeline: gsapMocks.gsapTimeline
+vi.mock('../MeritParticles', () => ({
+  MeritParticles: (props: {
+    active: boolean;
+    petId?: string;
+    intervalMs?: number;
+    initialDelayMs?: number;
+  }) => {
+    meritParticlesSpy(props);
+    return (
+      <div
+        data-testid="merit-particles"
+        data-active={String(props.active)}
+        data-pet-id={props.petId ?? ''}
+      />
+    );
   }
 }));
 
@@ -88,14 +89,8 @@ function installPointerCaptureMocks(element: HTMLElement) {
 
 describe('DesktopPet', () => {
   beforeEach(() => {
-    gsapMocks.gsapTimeline.mockClear();
-    gsapMocks.gsapContext.mockClear();
-    gsapMocks.gsapRevert.mockClear();
-    gsapMocks.timelineApi.addLabel.mockClear();
-    gsapMocks.timelineApi.set.mockClear();
-    gsapMocks.timelineApi.to.mockClear();
-    gsapMocks.timelineApi.fromTo.mockClear();
-    gsapMocks.timelineApi.kill.mockClear();
+    petRendererSpy.mockClear();
+    meritParticlesSpy.mockClear();
   });
 
   it('moves the pet window without snapping on drag end', async () => {
@@ -207,46 +202,7 @@ describe('DesktopPet', () => {
     );
   });
 
-  it('renders the monk with the shared role-pack SVG art', () => {
-    widgetStore.getState().setPanelOpen(false);
-    mockHabitatDesktopApi({
-      togglePanel: vi.fn().mockResolvedValue({ isOpen: false })
-    });
-
-    const { container } = render(
-      <DesktopPet
-        petName="Zen"
-        connectionStatus="connected"
-        appearance={{
-          rolePack: 'monk'
-        }}
-        petStatus="working"
-      />
-    );
-
-    expect(container.querySelector('.desktop-pet__art')).toBeInTheDocument();
-    expect(container.querySelector('.desktop-pet__role-art-motion')).toBeInTheDocument();
-    expect(container.querySelector('.desktop-pet__art--monk')).toBeInTheDocument();
-    expect(container.querySelector('.desktop-pet__art-svg')).toBeInTheDocument();
-    expect(container.querySelector('.desktop-pet__art-backdrop')).toBeNull();
-    expect(container.querySelector('.desktop-pet__monk-rig')).toBeInTheDocument();
-    expect(container.querySelector('.desktop-pet__monk-breath-halo')).toBeInTheDocument();
-    expect(container.querySelector('.desktop-pet__monk-arm--right')).toBeInTheDocument();
-    expect(container.querySelector('.desktop-pet__mallet')).toBeInTheDocument();
-    expect(container.querySelector('.desktop-pet__mallet-head')).toBeInTheDocument();
-    expect(container.querySelector('.desktop-pet__woodfish-impact')).toBeInTheDocument();
-    expect(container.querySelector('.desktop-pet__woodfish-echo')).toBeInTheDocument();
-    expect(container.querySelector('.desktop-pet__merit-badge')).toHaveTextContent('功德+1');
-    expect(container.querySelector('.desktop-pet__stage--roomy')).toBeInTheDocument();
-    expect(container.querySelector('.desktop-pet__monk-hand--right')).toHaveAttribute('cx', '112');
-    expect(container.querySelector('.desktop-pet__monk-hand--right')).toHaveAttribute('cy', '68');
-    expect(container.querySelector('.desktop-pet__woodfish-shell')).toHaveAttribute('cx', '132');
-    expect(container.querySelector('.desktop-pet__woodfish-shell')).toHaveAttribute('cy', '98');
-    expect(container.querySelector('.desktop-pet__monk-hand--left')).toHaveAttribute('cx', '103');
-    expect(container.querySelector('.desktop-pet__monk-hand--left')).toHaveAttribute('cy', '95');
-  });
-
-  it('builds a GSAP strike timeline for the monk working state', () => {
+  it('renders the monk through the shared pet renderer instead of legacy svg animation', () => {
     widgetStore.getState().setPanelOpen(false);
     mockHabitatDesktopApi({
       togglePanel: vi.fn().mockResolvedValue({ isOpen: false })
@@ -263,17 +219,12 @@ describe('DesktopPet', () => {
       />
     );
 
-    expect(gsapMocks.gsapContext).toHaveBeenCalledTimes(1);
-    expect(gsapMocks.gsapTimeline).toHaveBeenCalledWith(
-      expect.objectContaining({
-        paused: false,
-        repeat: -1
-      })
-    );
-    expect(gsapMocks.timelineApi.to).toHaveBeenCalled();
+    expect(screen.getByTestId('pet-renderer')).toHaveAttribute('data-role-pack', 'monk');
+    expect(screen.getByTestId('pet-renderer')).toHaveAttribute('data-activity', 'working');
+    expect(screen.queryByText('功德+1')).not.toBeInTheDocument();
   });
 
-  it('builds a GSAP meditation timeline for the monk idle state', () => {
+  it('does not start a legacy gsap timeline for the monk working state', () => {
     widgetStore.getState().setPanelOpen(false);
     mockHabitatDesktopApi({
       togglePanel: vi.fn().mockResolvedValue({ isOpen: false })
@@ -286,27 +237,23 @@ describe('DesktopPet', () => {
         appearance={{
           rolePack: 'monk'
         }}
-        petStatus="idle"
+        petStatus="working"
       />
     );
 
-    expect(gsapMocks.gsapContext).toHaveBeenCalledTimes(1);
-    expect(gsapMocks.gsapTimeline).toHaveBeenCalledWith(
-      expect.objectContaining({
-        paused: false,
-        repeat: -1
-      })
+    expect(screen.getByRole('button', { name: 'Zen desktop pet' })).not.toHaveClass(
+      'desktop-pet--monk-gsap'
     );
-    expect(gsapMocks.timelineApi.addLabel).toHaveBeenCalledWith('rest', 0);
+    expect(screen.queryByText('功德+1')).not.toBeInTheDocument();
   });
 
-  it('uses distinct shared SVG art for each built-in role pack', () => {
+  it('uses the shared renderer for all built-in role packs instead of legacy shared svg art', () => {
     widgetStore.getState().setPanelOpen(false);
     mockHabitatDesktopApi({
       togglePanel: vi.fn().mockResolvedValue({ isOpen: false })
     });
 
-    const { container, rerender } = render(
+    const { rerender } = render(
       <DesktopPet
         petName="Ruby"
         connectionStatus="connected"
@@ -316,7 +263,7 @@ describe('DesktopPet', () => {
       />
     );
 
-    expect(container.querySelector('.desktop-pet__art--lobster')).toBeInTheDocument();
+    expect(screen.getByTestId('pet-renderer')).toHaveAttribute('data-role-pack', 'lobster');
 
     rerender(
       <DesktopPet
@@ -327,7 +274,7 @@ describe('DesktopPet', () => {
         }}
       />
     );
-    expect(container.querySelector('.desktop-pet__art--cat')).toBeInTheDocument();
+    expect(screen.getByTestId('pet-renderer')).toHaveAttribute('data-role-pack', 'cat');
 
     rerender(
       <DesktopPet
@@ -338,7 +285,7 @@ describe('DesktopPet', () => {
         }}
       />
     );
-    expect(container.querySelector('.desktop-pet__art--robot')).toBeInTheDocument();
+    expect(screen.getByTestId('pet-renderer')).toHaveAttribute('data-role-pack', 'robot');
   });
 
   it('applies owner interaction classes for hover, press, focus, and drag', () => {
@@ -397,18 +344,51 @@ describe('DesktopPet', () => {
     expect(pet).not.toHaveClass('desktop-pet--interaction-focused');
   });
 
-  it('keeps monk tapping rules active even when offline maps to blocked activity', () => {
-    const testDir = dirname(fileURLToPath(import.meta.url));
-    const styles = readFileSync(
-      resolve(testDir, '../../../styles.css'),
-      'utf8'
+  it('mounts monk-only merit particles for the monk role pack', () => {
+    widgetStore.getState().setPanelOpen(false);
+    mockHabitatDesktopApi({
+      togglePanel: vi.fn().mockResolvedValue({ isOpen: false })
+    });
+
+    const { rerender } = render(
+      <DesktopPet
+        petName="Unit-7"
+        petId="pet-robot"
+        connectionStatus="connected"
+        appearance={{ rolePack: 'robot' }}
+      />
     );
 
-    expect(styles).toContain(
-      '.desktop-pet--role-monk.desktop-pet--activity-blocked .desktop-pet__monk-arm--right'
+    expect(screen.queryByTestId('merit-particles')).not.toBeInTheDocument();
+
+    rerender(
+      <DesktopPet
+        petName="Zen"
+        petId="pet-monk"
+        connectionStatus="connected"
+        appearance={{ rolePack: 'monk' }}
+      />
     );
-    expect(styles).toContain(
-      '.desktop-pet--role-monk.desktop-pet--activity-blocked .desktop-pet__woodfish-impact'
+
+    expect(screen.getByTestId('merit-particles')).toHaveAttribute('data-active', 'true');
+    expect(screen.getByTestId('merit-particles')).toHaveAttribute('data-pet-id', 'pet-monk');
+  });
+
+  it('keeps monk merit mounted but inactive when the monk is disconnected', () => {
+    widgetStore.getState().setPanelOpen(false);
+    mockHabitatDesktopApi({
+      togglePanel: vi.fn().mockResolvedValue({ isOpen: false })
+    });
+
+    render(
+      <DesktopPet
+        petName="Zen"
+        petId="pet-monk"
+        connectionStatus="offline"
+        appearance={{ rolePack: 'monk' }}
+      />
     );
+
+    expect(screen.getByTestId('merit-particles')).toHaveAttribute('data-active', 'false');
   });
 });

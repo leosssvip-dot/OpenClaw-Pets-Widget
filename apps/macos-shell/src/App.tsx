@@ -18,6 +18,38 @@ import { PetWindowSizeProvider } from './features/widget/PetWindowSizeContext';
 import { WidgetPanel } from './features/widget/WidgetPanel';
 import { createHabitatSubscriber } from './runtime/habitat-sync';
 
+interface UiStateSnapshot {
+  selectedPetId: string | null;
+  pinnedAgentId: string | null;
+  appearances: Record<string, PetAppearanceConfig>;
+}
+
+function serializeUiStateSnapshot(snapshot: UiStateSnapshot) {
+  return JSON.stringify({
+    selectedPetId: snapshot.selectedPetId,
+    pinnedAgentId: snapshot.pinnedAgentId,
+    appearances: Object.fromEntries(
+      Object.entries(snapshot.appearances)
+        .sort(([leftPetId], [rightPetId]) => leftPetId.localeCompare(rightPetId))
+        .map(([petId, appearance]) => [
+          petId,
+          {
+            ...(appearance.avatar ? { avatar: appearance.avatar } : {}),
+            ...(appearance.rolePack ? { rolePack: appearance.rolePack } : {}),
+          },
+        ]),
+    ),
+  });
+}
+
+function isSameUiStateSnapshot(left: UiStateSnapshot | null, right: UiStateSnapshot) {
+  if (!left) {
+    return false;
+  }
+
+  return serializeUiStateSnapshot(left) === serializeUiStateSnapshot(right);
+}
+
 function toHabitatPets(agents: AgentBindingSeed[]) {
   return agents.map((agent) => ({
     id: agent.id,
@@ -161,9 +193,11 @@ export function App() {
       ? 'pet'
       : 'panel';
   });
+  const [syncedUiState, setSyncedUiState] = useState<UiStateSnapshot | null>(null);
   const [menuExtraHeight, setMenuExtraHeight] = useState<number | null>(0);
   const [, setWorkingDisplayTick] = useState(0);
   const reconnectAttemptedRef = useRef(false);
+  const lastPublishedUiStateRef = useRef<string | null>(null);
   const connectionSnapshot = useSyncExternalStore(
     (listener) => connectionManager.subscribe(listener),
     () => connectionManager.getSnapshot()
@@ -182,6 +216,12 @@ export function App() {
   const pinnedAgentId = useSettingsStore((state) => state.pinnedAgentId);
   const bindingsByPetId = useSettingsStore((state) => state.bindings);
   const appearancesByPetId = useSettingsStore((state) => state.appearances);
+  const effectiveSelectedPetId =
+    surface === 'pet' ? syncedUiState?.selectedPetId ?? selectedPetId : selectedPetId;
+  const effectivePinnedAgentId =
+    surface === 'pet' ? syncedUiState?.pinnedAgentId ?? pinnedAgentId : pinnedAgentId;
+  const effectiveAppearancesByPetId =
+    surface === 'pet' ? syncedUiState?.appearances ?? appearancesByPetId : appearancesByPetId;
   const gatewayProfiles = Object.values(gatewayProfilesById);
   const now = Date.now();
   const agentRows = [
@@ -194,8 +234,8 @@ export function App() {
         agentId: bindingsByPetId[pet.id]?.agentId ?? pet.agentId,
         gatewayId: bindingsByPetId[pet.id]?.gatewayId ?? pet.gatewayId,
         status,
-        isSelected: selectedPetId === pet.id,
-        appearance: appearancesByPetId[pet.id]
+        isSelected: effectiveSelectedPetId === pet.id,
+        appearance: effectiveAppearancesByPetId[pet.id]
       };
     }),
     ...Object.values(bindingsByPetId)
@@ -213,15 +253,15 @@ export function App() {
           gatewayId: binding.gatewayId,
           status,
           isSelected: false,
-          appearance: appearancesByPetId[binding.petId]
+          appearance: effectiveAppearancesByPetId[binding.petId]
         };
       })
   ];
   const visiblePetRow =
-    (pinnedAgentId
-      ? agentRows.find((row) => row.agentId === pinnedAgentId)
+    (effectivePinnedAgentId
+      ? agentRows.find((row) => row.agentId === effectivePinnedAgentId)
       : null) ??
-    (selectedPetId ? agentRows.find((row) => row.petId === selectedPetId) : null) ??
+    (effectiveSelectedPetId ? agentRows.find((row) => row.petId === effectiveSelectedPetId) : null) ??
     agentRows[0] ??
     null;
   const petDisplayName =
@@ -311,11 +351,54 @@ export function App() {
       onEvent: (event) => {
         console.log('[bridge] pet window event:', event.kind, 'petId=', event.petId);
         habitatStore.getState().applyEvent(event);
+      },
+      onUiState: (state) => {
+        const nextUiState = {
+          selectedPetId: state.selectedPetId,
+          pinnedAgentId: state.pinnedAgentId,
+          appearances: state.appearances,
+        };
+
+        setSyncedUiState((currentState) => {
+          if (isSameUiStateSnapshot(currentState, nextUiState)) {
+            return currentState;
+          }
+
+          return {
+            selectedPetId: nextUiState.selectedPetId,
+            pinnedAgentId: nextUiState.pinnedAgentId,
+            appearances: nextUiState.appearances,
+          };
+        });
       }
     });
 
     return () => subscriber.dispose();
   }, [surface]);
+
+  useEffect(() => {
+    if (surface !== 'pet') {
+      setSyncedUiState(null);
+    }
+  }, [surface]);
+
+  useEffect(() => {
+    if (surface === 'pet') return;
+    const nextUiState = {
+      type: 'uiState',
+      selectedPetId,
+      pinnedAgentId,
+      appearances: appearancesByPetId,
+    } as const;
+    const nextUiStateKey = serializeUiStateSnapshot(nextUiState);
+
+    if (lastPublishedUiStateRef.current === nextUiStateKey) {
+      return;
+    }
+
+    lastPublishedUiStateRef.current = nextUiStateKey;
+    getHabitatDesktopApi()?.sendHabitatSync?.(nextUiState);
+  }, [surface, selectedPetId, pinnedAgentId, appearancesByPetId]);
 
   const handlePetSendMessage = async (
     petId: string,

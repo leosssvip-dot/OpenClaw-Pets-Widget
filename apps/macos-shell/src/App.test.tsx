@@ -1,4 +1,4 @@
-import { fireEvent, render, screen, within } from '@testing-library/react';
+import { act, fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { hydrateAndReconnectActiveProfile, hydrateProfileSecrets } from './App';
 import { App } from './App';
@@ -30,6 +30,7 @@ vi.mock('./runtime/runtime-deps', () => ({
 }));
 
 beforeEach(() => {
+  let syncCallback: ((msg: unknown) => void) | null = null;
   window.history.replaceState({}, '', '/');
   localStorage.clear();
   bridgeMocks.connect.mockClear();
@@ -63,12 +64,23 @@ beforeEach(() => {
     teardownGatewayConnection: vi.fn(),
     movePetWindow: vi.fn(),
     persistPetWindowPosition: vi.fn(),
+    sendHabitatSync: vi.fn(),
+    onHabitatSync: vi.fn((callback: (msg: unknown) => void) => {
+      syncCallback = callback;
+      return () => {
+        if (syncCallback === callback) {
+          syncCallback = null;
+        }
+      };
+    }),
     togglePanel: vi.fn().mockResolvedValue({ isOpen: false }),
     showPanel: vi.fn().mockResolvedValue({ isOpen: true }),
     storeSecret: vi.fn(),
     retrieveSecret: vi.fn(),
     deleteSecret: vi.fn()
   };
+  (globalThis as typeof globalThis & { __habitatSyncCallback?: (msg: unknown) => void }).__habitatSyncCallback =
+    (msg: unknown) => syncCallback?.(msg);
   clearGatewaySessionAuth('remote-1');
 });
 
@@ -235,6 +247,75 @@ describe('hydrateAndReconnectActiveProfile', () => {
     expect(screen.getByRole('button', { name: 'Add gateway' })).toBeInTheDocument();
   });
 
+  it('does not rebroadcast identical uiState snapshots after store rehydrate noise', async () => {
+    render(<App />);
+
+    const sendHabitatSync = (globalThis as typeof globalThis & {
+      habitat?: {
+        sendHabitatSync?: ReturnType<typeof vi.fn>;
+      };
+    }).habitat?.sendHabitatSync;
+
+    await waitFor(() => {
+      expect(sendHabitatSync).toHaveBeenCalledTimes(1);
+    });
+
+    await act(async () => {
+      settingsStore.setState({
+        appearances: {},
+        pinnedAgentId: null,
+      });
+    });
+
+    expect(sendHabitatSync).toHaveBeenCalledTimes(1);
+  });
+
+  it('rebroadcasts uiState when the selected companion actually changes', async () => {
+    habitatStore.getState().seedPets([
+      {
+        id: 'pet-1',
+        agentId: 'main',
+        gatewayId: 'remote-1',
+        status: 'idle',
+        name: 'Main'
+      },
+      {
+        id: 'pet-2',
+        agentId: 'ad-expert',
+        gatewayId: 'remote-1',
+        status: 'working',
+        name: 'Ads'
+      }
+    ]);
+
+    render(<App />);
+
+    const sendHabitatSync = (globalThis as typeof globalThis & {
+      habitat?: {
+        sendHabitatSync?: ReturnType<typeof vi.fn>;
+      };
+    }).habitat?.sendHabitatSync;
+
+    await waitFor(() => {
+      expect(sendHabitatSync).toHaveBeenCalledTimes(1);
+    });
+
+    await act(async () => {
+      settingsStore.getState().setPinnedAgentId('ad-expert');
+      habitatStore.getState().selectPet('pet-2');
+    });
+
+    await waitFor(() => {
+      expect(sendHabitatSync).toHaveBeenCalledTimes(2);
+    });
+
+    expect(sendHabitatSync?.mock.calls[1]?.[0]).toMatchObject({
+      type: 'uiState',
+      selectedPetId: 'pet-2',
+      pinnedAgentId: 'ad-expert',
+    });
+  });
+
   it('reconnects again when the panel remounts with an active profile', async () => {
     settingsStore.getState().saveGatewayProfile({
       id: 'remote-1',
@@ -297,6 +378,53 @@ describe('hydrateAndReconnectActiveProfile', () => {
       await screen.findByRole('button', { name: 'Ads desktop pet' })
     ).toBeInTheDocument();
     expect(screen.getByText('Ads')).toBeInTheDocument();
+  });
+
+  it('applies synced companion selection and appearance updates on the pet surface', async () => {
+    window.history.replaceState({}, '', '/?surface=pet');
+    habitatStore.getState().seedPets([
+      {
+        id: 'pet-1',
+        agentId: 'main',
+        gatewayId: 'remote-1',
+        status: 'idle',
+        name: 'Main'
+      },
+      {
+        id: 'pet-2',
+        agentId: 'ad-expert',
+        gatewayId: 'remote-1',
+        status: 'working',
+        name: 'Ads'
+      }
+    ]);
+
+    render(<App />);
+
+    expect(
+      await screen.findByRole('button', { name: 'Main desktop pet' })
+    ).toBeInTheDocument();
+
+    await act(async () => {
+      (globalThis as typeof globalThis & {
+        __habitatSyncCallback?: (msg: unknown) => void;
+      }).__habitatSyncCallback?.({
+        type: 'uiState',
+        selectedPetId: 'pet-2',
+        pinnedAgentId: 'ad-expert',
+        appearances: {
+          'pet-2': {
+            rolePack: 'robot'
+          }
+        }
+      });
+    });
+
+    await waitFor(() => {
+      expect(screen.getByRole('button', { name: 'Ads desktop pet' })).toHaveClass(
+        'desktop-pet--role-robot'
+      );
+    });
   });
 
   it('hydrates stored gateway tokens and ssh passwords from secure storage', async () => {
