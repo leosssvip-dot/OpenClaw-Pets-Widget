@@ -63,7 +63,7 @@ jobs:
         # run: pnpm --filter @openclaw-habitat/macos-shell exec electron-builder --mac --publish never
         # 加入 Apple Developer Program ($99/年) 后，取消注释以下 env 块启用签名 + 公证：
         env:
-          CSC_LINK: ../cert.p12
+          CSC_LINK: ../../cert.p12
           CSC_KEY_PASSWORD: ${{ secrets.MAC_CERT_PASSWORD }}
           APPLE_ID: ${{ secrets.APPLE_ID }}
           APPLE_APP_SPECIFIC_PASSWORD: ${{ secrets.APPLE_APP_SPECIFIC_PASSWORD }}
