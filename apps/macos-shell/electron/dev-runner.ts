@@ -8,7 +8,7 @@ import { ensureElectronBinary } from './ensure-electron';
 const electronBinary = await ensureElectronBinary();
 const currentDir = dirname(fileURLToPath(import.meta.url));
 const appDir = resolve(currentDir, '..');
-const outputFile = resolve(appDir, '.electron-build/main.js');
+const outputFile = resolve(appDir, '.electron-build/main.cjs');
 const preloadFile = resolve(appDir, '.electron-build/preload.cjs');
 
 function delay(ms: number) {
@@ -53,7 +53,7 @@ const buildContext = await context({
   entryPoints: [resolve(appDir, 'electron/main.ts')],
   bundle: true,
   platform: 'node',
-  format: 'esm',
+  format: 'cjs',
   outfile: outputFile,
   external: ['electron'],
   sourcemap: true

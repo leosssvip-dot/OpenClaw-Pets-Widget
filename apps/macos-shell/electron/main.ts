@@ -1,5 +1,4 @@
 import { app, BrowserWindow, dialog, ipcMain, Menu, MenuItem, nativeImage, screen, session, Tray, type IpcMainEvent } from 'electron';
-import { fileURLToPath } from 'node:url';
 import { existsSync } from 'node:fs';
 import { readFile, writeFile, mkdir } from 'node:fs/promises';
 import { join, dirname } from 'node:path';
@@ -146,13 +145,12 @@ async function loadWindow(window: BrowserWindow, surface: 'pet' | 'panel') {
       return;
     }
 
-    // Resolve path relative to the main script location.
-    // import.meta.url works in ESM; fallback to app.getAppPath() for asar.
-    let htmlPath: string;
-    try {
-      htmlPath = fileURLToPath(new URL('../dist/index.html', import.meta.url));
-    } catch {
-      htmlPath = join(app.getAppPath(), 'dist', 'index.html');
+    // Resolve path relative to app root.
+    // In packaged builds app.getAppPath() points to the asar root (contains dist/).
+    // In dev start:desktop it may point to .electron-build/, so fallback one level up.
+    let htmlPath = join(app.getAppPath(), 'dist', 'index.html');
+    if (!existsSync(htmlPath)) {
+      htmlPath = join(app.getAppPath(), '..', 'dist', 'index.html');
     }
     console.log(`[openclaw] loading ${surface}: ${htmlPath}`);
     await window.loadFile(htmlPath, { search });
@@ -195,10 +193,14 @@ async function createWindow() {
   habitatTray = createHabitatTray();
 
   // Set app icon (Dock on macOS, taskbar on Windows/Linux)
-  const logoDir = join(dirname(fileURLToPath(import.meta.url)), '..', 'public', 'logo');
-  const devLogoDir = join(dirname(fileURLToPath(import.meta.url)), '..', '..', 'public', 'logo');
-  const distLogoDir = join(dirname(fileURLToPath(import.meta.url)), '..', 'dist', 'logo');
-  const logoPath = [logoDir, devLogoDir, distLogoDir]
+  const appRoot = app.getAppPath();
+  const logoSearchDirs = [
+    join(appRoot, 'dist', 'logo'),
+    join(appRoot, 'public', 'logo'),
+    join(appRoot, '..', 'dist', 'logo'),
+    join(appRoot, '..', 'public', 'logo')
+  ];
+  const logoPath = logoSearchDirs
     .map((dir) => join(dir, 'logo-1024.png'))
     .find((p) => existsSync(p));
   if (logoPath) {
