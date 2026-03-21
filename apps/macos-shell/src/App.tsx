@@ -60,8 +60,34 @@ function toHabitatPets(agents: AgentBindingSeed[]) {
   }));
 }
 
+/**
+ * Find an existing profile that matches the same connection target.
+ * SSH: same host + sshPort + username, Local: same gatewayPort.
+ */
+function findExistingProfile(input: ConnectionInput): string | undefined {
+  const profiles = Object.values(settingsStore.getState().gatewayProfiles);
+
+  if (input.transport === 'ssh') {
+    return profiles.find(
+      (p) =>
+        p.transport === 'ssh' &&
+        p.host === input.host &&
+        p.sshPort === input.sshPort &&
+        p.username === input.username
+    )?.id;
+  }
+
+  if (input.transport === 'local') {
+    return profiles.find(
+      (p) => p.transport === 'local' && p.gatewayPort === input.gatewayPort
+    )?.id;
+  }
+
+  return undefined;
+}
+
 function toGatewayProfile(input: ConnectionInput, profileId?: string) {
-  const id = profileId ?? `gateway-${Date.now()}`;
+  const id = profileId ?? findExistingProfile(input) ?? `gateway-${Date.now()}`;
 
   if (input.transport === 'local') {
     return {
