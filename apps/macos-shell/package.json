@@ -20,7 +20,7 @@
   },
   "build": {
     "appId": "com.openclaw.habitat",
-    "productName": "OpenClaw",
+    "productName": "OpenClaw-Pets-Widget",
     "directories": {
       "output": "release"
     },
@@ -38,10 +38,6 @@
       "target": [
         {
           "target": "dmg",
-          "arch": ["universal"]
-        },
-        {
-          "target": "zip",
           "arch": ["universal"]
         }
       ]

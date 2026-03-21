@@ -51,7 +51,6 @@ jobs:
           name: release-mac
           path: |
             apps/macos-shell/release/*.dmg
-            apps/macos-shell/release/*.zip
           if-no-files-found: error
 
   build-win:
