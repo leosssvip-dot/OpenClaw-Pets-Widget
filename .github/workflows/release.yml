@@ -70,7 +70,7 @@ jobs:
           APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
           DEBUG: electron-builder
         run: |
-          pnpm --filter @openclaw-habitat/macos-shell exec electron-builder --mac --publish never --cdebug
+          pnpm --filter @openclaw-habitat/macos-shell exec electron-builder --mac --publish never
 
       - name: Upload macOS artifacts
         uses: actions/upload-artifact@v4
