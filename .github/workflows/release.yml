@@ -54,8 +54,10 @@ jobs:
         run: |
           echo "=== Keychain list ==="
           security list-keychains
+          echo "=== Show keychain info ==="
+          security show-keychain-info build.keychain
           echo "=== Signing identities ==="
-          security find-identity -v -p codesigning
+          security find-identity -v -p codesigning build.keychain
 
       - name: Package macOS
         # run: pnpm --filter @openclaw-habitat/macos-shell exec electron-builder --mac --publish never
@@ -68,7 +70,7 @@ jobs:
           APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
           DEBUG: electron-builder
         run: |
-          pnpm --filter @openclaw-habitat/macos-shell exec electron-builder --mac --publish never
+          pnpm --filter @openclaw-habitat/macos-shell exec electron-builder --mac --publish never --cdebug
 
       - name: Upload macOS artifacts
         uses: actions/upload-artifact@v4
