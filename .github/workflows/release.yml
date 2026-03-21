@@ -40,7 +40,7 @@ jobs:
           MAC_CERTIFICATE: ${{ secrets.MAC_CERT_P12 }}
           MAC_CERTIFICATE_PASSWORD: ${{ secrets.MAC_CERT_PASSWORD }}
         run: |
-          echo "$MAC_CERTIFICATE" | base64 --decode > cert.p12
+          echo "$MAC_CERTIFICATE" | base64 --decode > apps/macos-shell/cert.p12
 
           security create-keychain -p "" build.keychain
           security default-keychain -s build.keychain
