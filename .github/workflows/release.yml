@@ -25,10 +25,12 @@ jobs:
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
-      - name: Build & package macOS
-        run: pnpm --filter @openclaw-habitat/macos-shell dist:mac
+      - name: Build renderer & electron
+        run: pnpm --filter @openclaw-habitat/macos-shell build
+
+      - name: Package macOS
+        run: pnpm --filter @openclaw-habitat/macos-shell exec electron-builder --mac --publish never
         env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           # 如果需要签名，取消注释以下行并配置对应 secrets：
           # CSC_LINK: ${{ secrets.MAC_CERT_P12 }}
           # CSC_KEY_PASSWORD: ${{ secrets.MAC_CERT_PASSWORD }}
@@ -60,10 +62,11 @@ jobs:
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
-      - name: Build & package Windows
-        run: pnpm --filter @openclaw-habitat/macos-shell dist:win
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      - name: Build renderer & electron
+        run: pnpm --filter @openclaw-habitat/macos-shell build
+
+      - name: Package Windows
+        run: pnpm --filter @openclaw-habitat/macos-shell exec electron-builder --win --publish never
 
       - name: Upload Windows artifacts
         uses: actions/upload-artifact@v4
