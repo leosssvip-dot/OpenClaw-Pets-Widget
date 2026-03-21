@@ -68,10 +68,10 @@ export type PetEngineType = 'rive' | 'svg';
  * When a .riv file is available, the Rive engine is used; otherwise SVG fallback.
  */
 const RIVE_ASSETS: Partial<Record<PetRolePackId, string>> = {
-  monk: '/assets/pets/monk(1).riv',
-  lobster: '/assets/pets/lobster(1).riv',
-  cat: '/assets/pets/cat(1).riv',
-  robot: '/assets/pets/robot(1).riv',
+  monk: './assets/pets/monk(1).riv',
+  lobster: './assets/pets/lobster(1).riv',
+  cat: './assets/pets/cat(1).riv',
+  robot: './assets/pets/robot(1).riv',
 };
 
 export function resolveEngine(rolePack: PetRolePackId): {

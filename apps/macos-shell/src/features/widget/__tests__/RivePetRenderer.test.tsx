@@ -66,14 +66,14 @@ describe('RivePetRenderer', () => {
 
   it('maps widget activity to the boolean state input and fires click triggers', () => {
     const { rerender } = render(
-      <RivePetRenderer src="/assets/pets/robot(1).riv" activity="working" clickSignal={0} />,
+      <RivePetRenderer src="./assets/pets/robot(1).riv" activity="working" clickSignal={0} />,
     );
 
     expect(riveMocks.stateInput.value).toBe(true);
     expect(riveMocks.clickInput.fire).not.toHaveBeenCalled();
 
     rerender(
-      <RivePetRenderer src="/assets/pets/robot(1).riv" activity="blocked" clickSignal={1} />,
+      <RivePetRenderer src="./assets/pets/robot(1).riv" activity="blocked" clickSignal={1} />,
     );
 
     expect(riveMocks.stateInput.value).toBe(false);
@@ -85,11 +85,11 @@ describe('RivePetRenderer', () => {
     riveMocks.clickInput.type = 59;
 
     const { rerender } = render(
-      <RivePetRenderer src="/assets/pets/robot(1).riv" activity="idle" clickSignal={0} />,
+      <RivePetRenderer src="./assets/pets/robot(1).riv" activity="idle" clickSignal={0} />,
     );
 
     rerender(
-      <RivePetRenderer src="/assets/pets/robot(1).riv" activity="idle" clickSignal={1} />,
+      <RivePetRenderer src="./assets/pets/robot(1).riv" activity="idle" clickSignal={1} />,
     );
 
     expect(riveMocks.clickInput.value).toBe(true);
@@ -109,11 +109,11 @@ describe('RivePetRenderer', () => {
     riveMocks.clickInput.type = 59;
 
     const { rerender } = render(
-      <RivePetRenderer src="/assets/pets/robot(1).riv" activity="idle" clickSignal={0} />,
+      <RivePetRenderer src="./assets/pets/robot(1).riv" activity="idle" clickSignal={0} />,
     );
 
     rerender(
-      <RivePetRenderer src="/assets/pets/robot(1).riv" activity="idle" clickSignal={1} />,
+      <RivePetRenderer src="./assets/pets/robot(1).riv" activity="idle" clickSignal={1} />,
     );
 
     vi.advanceTimersByTime(500);

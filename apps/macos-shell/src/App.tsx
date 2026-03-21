@@ -80,75 +80,23 @@ function toGatewayProfile(input: ConnectionInput, profileId?: string) {
     host: input.host,
     username: input.username,
     sshPort: input.sshPort,
+    password: input.password,
     remoteGatewayPort: input.remoteGatewayPort,
     gatewayToken: input.gatewayToken
   };
 }
 
-function tokenSecretKey(profileId: string) {
-  return `gateway-token:${profileId}`;
-}
-
-function passwordSecretKey(profileId: string) {
-  return `gateway-password:${profileId}`;
-}
-
-async function storeProfileToken(profileId: string, token: string) {
-  const api = getHabitatDesktopApi();
-
-  if (api?.storeSecret) {
-    await api.storeSecret(tokenSecretKey(profileId), token);
-  }
-}
-
-async function storeProfilePassword(profileId: string, password?: string) {
-  const api = getHabitatDesktopApi();
-
-  if (!password) {
-    return;
-  }
-
-  if (api?.storeSecret) {
-    await api.storeSecret(passwordSecretKey(profileId), password);
-  }
-}
-
-async function deleteProfileToken(profileId: string) {
-  const api = getHabitatDesktopApi();
-
-  if (api?.deleteSecret) {
-    await api.deleteSecret(tokenSecretKey(profileId));
-  }
-}
-
-async function deleteProfilePassword(profileId: string) {
-  const api = getHabitatDesktopApi();
-
-  if (api?.deleteSecret) {
-    await api.deleteSecret(passwordSecretKey(profileId));
-  }
-}
-
+/**
+ * Hydrate session auth from persisted gateway profiles.
+ * Tokens and passwords are now stored directly in the settings file (no Keychain).
+ */
 export async function hydrateProfileSecrets() {
-  const api = getHabitatDesktopApi();
-
-  if (!api?.retrieveSecret) {
-    return;
-  }
-
   const profiles = settingsStore.getState().gatewayProfiles;
 
   for (const profile of Object.values(profiles)) {
-    const token = await api.retrieveSecret(tokenSecretKey(profile.id));
-    const password = await api.retrieveSecret(passwordSecretKey(profile.id));
-
-    if (token) {
-      settingsStore.getState().updateProfileToken(profile.id, token);
-    }
-
-    if (password) {
+    if (profile.transport === 'ssh' && profile.password) {
       setGatewaySessionAuth(profile.id, {
-        password
+        password: profile.password
       });
     }
   }
@@ -524,12 +472,6 @@ export function App() {
               password: input.password
             });
           }
-          await storeProfileToken(profile.id, input.gatewayToken);
-          await storeProfilePassword(profile.id, input.password);
-        } else if (input.transport === 'local') {
-          if (input.gatewayToken) {
-            await storeProfileToken(profile.id, input.gatewayToken);
-          }
         }
 
         await connectionManager.connect(profile.id);
@@ -541,8 +483,6 @@ export function App() {
       onDeleteProfile={(profileId) => {
         clearGatewaySessionAuth(profileId);
         settingsStore.getState().deleteGatewayProfile(profileId);
-        void deleteProfileToken(profileId);
-        void deleteProfilePassword(profileId);
       }}
       onPinnedAgentChange={(agentId) => {
         settingsStore.getState().setPinnedAgentId(agentId);

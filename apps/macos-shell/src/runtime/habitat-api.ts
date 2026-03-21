@@ -23,9 +23,6 @@ export interface HabitatDesktopApi {
   togglePanel: () => Promise<{ isOpen: boolean }>;
   showPanel: () => Promise<{ isOpen: boolean }>;
   showPetContextMenu?: (items: Array<{ id: string; label: string; type?: 'separator' | 'normal'; enabled?: boolean; checked?: boolean }>) => Promise<string | null>;
-  storeSecret: (key: string, value: string) => Promise<void>;
-  retrieveSecret: (key: string) => Promise<string | null>;
-  deleteSecret: (key: string) => Promise<void>;
   readSettings: () => Promise<string | null>;
   writeSettings: (data: string) => Promise<void>;
 }

@@ -39,7 +39,7 @@ describe('PetRenderer', () => {
 
     expect(screen.getByTestId('mock-rive-renderer')).toHaveAttribute(
       'data-src',
-      '/assets/pets/robot(1).riv',
+      './assets/pets/robot(1).riv',
     );
     expect(riveRendererMocks.mountSpy).toHaveBeenCalledTimes(1);
 
@@ -47,7 +47,7 @@ describe('PetRenderer', () => {
 
     expect(screen.getByTestId('mock-rive-renderer')).toHaveAttribute(
       'data-src',
-      '/assets/pets/cat(1).riv',
+      './assets/pets/cat(1).riv',
     );
     expect(riveRendererMocks.mountSpy).toHaveBeenCalledTimes(2);
   });
@@ -63,7 +63,7 @@ describe('PetRenderer', () => {
 
     expect(screen.getByTestId('mock-rive-renderer')).toHaveAttribute(
       'data-src',
-      '/assets/pets/cat(1).riv',
+      './assets/pets/cat(1).riv',
     );
   });
 });

@@ -25,12 +25,6 @@ contextBridge.exposeInMainWorld('habitat', {
   showPanel: () => ipcRenderer.invoke('window:showPanel'),
   showPetContextMenu: (items: Array<{ id: string; label: string; type?: string; enabled?: boolean; checked?: boolean }>) =>
     ipcRenderer.invoke('window:showPetContextMenu', { items }) as Promise<string | null>,
-  storeSecret: (key: string, value: string) =>
-    ipcRenderer.invoke('secrets:store', { key, value }),
-  retrieveSecret: (key: string) =>
-    ipcRenderer.invoke('secrets:retrieve', { key }) as Promise<string | null>,
-  deleteSecret: (key: string) =>
-    ipcRenderer.invoke('secrets:delete', { key }),
   readSettings: () =>
     ipcRenderer.invoke('settings:read') as Promise<string | null>,
   writeSettings: (data: string) =>

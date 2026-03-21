@@ -113,23 +113,6 @@ interface SettingsState {
   setPetWindowPlacement: (placement: PetWindowPlacement | null) => void;
 }
 
-function stripProfileTokens(profiles: Record<string, GatewayProfile>): Record<string, GatewayProfile> {
-  const stripped: Record<string, GatewayProfile> = {};
-
-  for (const [id, profile] of Object.entries(profiles)) {
-    if (profile.transport === 'ssh') {
-      stripped[id] = { ...profile, gatewayToken: '' };
-    } else if (profile.transport === 'tailnet') {
-      stripped[id] = { ...profile, token: '' };
-    } else if (profile.transport === 'local') {
-      stripped[id] = { ...profile, gatewayToken: undefined };
-    } else {
-      stripped[id] = profile;
-    }
-  }
-
-  return stripped;
-}
 
 export const createSettingsStore = () =>
   createStore<SettingsState>()(
@@ -247,7 +230,7 @@ export const createSettingsStore = () =>
         name: SETTINGS_STORAGE_KEY,
         storage: createElectronStorage(),
         partialize: (state) => ({
-          gatewayProfiles: stripProfileTokens(state.gatewayProfiles),
+          gatewayProfiles: state.gatewayProfiles,
           bindings: state.bindings,
           appearances: state.appearances,
           activeProfileId: state.activeProfileId,

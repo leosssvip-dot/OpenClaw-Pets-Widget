@@ -12,25 +12,25 @@ describe('pet engine rive integration', () => {
     expect(resolveEngine('monk')).toEqual(
       expect.objectContaining({
         type: 'rive',
-        riveSrc: '/assets/pets/monk(1).riv',
+        riveSrc: './assets/pets/monk(1).riv',
       }),
     );
     expect(resolveEngine('cat')).toEqual(
       expect.objectContaining({
         type: 'rive',
-        riveSrc: '/assets/pets/cat(1).riv',
+        riveSrc: './assets/pets/cat(1).riv',
       }),
     );
     expect(resolveEngine('robot')).toEqual(
       expect.objectContaining({
         type: 'rive',
-        riveSrc: '/assets/pets/robot(1).riv',
+        riveSrc: './assets/pets/robot(1).riv',
       }),
     );
     expect(resolveEngine('lobster')).toEqual(
       expect.objectContaining({
         type: 'rive',
-        riveSrc: '/assets/pets/lobster(1).riv',
+        riveSrc: './assets/pets/lobster(1).riv',
       }),
     );
   });

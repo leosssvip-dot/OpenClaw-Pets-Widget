@@ -37,7 +37,7 @@ jobs:
 
       - name: Package macOS
         run: pnpm --filter @openclaw-habitat/macos-shell exec electron-builder --mac --publish never
-        # 如果需要签名，取消注释以下 env 块并配置对应 secrets：
+        # 加入 Apple Developer Program ($99/年) 后，取消注释以下 env 块启用签名 + 公证：
         # env:
         #   CSC_LINK: ${{ secrets.MAC_CERT_P12 }}
         #   CSC_KEY_PASSWORD: ${{ secrets.MAC_CERT_PASSWORD }}

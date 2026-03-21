@@ -11,3 +11,6 @@ playwright-report/
 test-results/
 apps/macos-shell/.electron-build/
 apps/macos-shell/release/
+apps/macos-shell/public/logo/.DS_Store
+apps/macos-shell/public/.DS_Store
+apps/macos-shell/public/.DS_Store

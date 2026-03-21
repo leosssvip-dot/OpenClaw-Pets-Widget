@@ -75,9 +75,6 @@ beforeEach(() => {
     }),
     togglePanel: vi.fn().mockResolvedValue({ isOpen: false }),
     showPanel: vi.fn().mockResolvedValue({ isOpen: true }),
-    storeSecret: vi.fn(),
-    retrieveSecret: vi.fn(),
-    deleteSecret: vi.fn()
   };
   (globalThis as typeof globalThis & { __habitatSyncCallback?: (msg: unknown) => void }).__habitatSyncCallback =
     (msg: unknown) => syncCallback?.(msg);
@@ -427,7 +424,9 @@ describe('hydrateAndReconnectActiveProfile', () => {
     });
   });
 
-  it('hydrates stored gateway tokens and ssh passwords from secure storage', async () => {
+  it('hydrates ssh passwords from persisted gateway profiles into session auth', async () => {
+    // Tokens are now stored directly in settings (no Keychain).
+    // hydrateProfileSecrets restores session auth (passwords) from the profile.
     settingsStore.getState().saveGatewayProfile({
       id: 'remote-1',
       label: 'Studio Gateway',
@@ -436,36 +435,12 @@ describe('hydrateAndReconnectActiveProfile', () => {
       username: 'chenyang',
       sshPort: 22,
       remoteGatewayPort: 18789,
-      gatewayToken: ''
+      gatewayToken: 'secret-token',
+      password: 'hunter2'
     });
-
-    const retrieveSecret = vi
-      .fn()
-      .mockImplementation(async (key: string) =>
-        key === 'gateway-token:remote-1'
-          ? 'secret-token'
-          : key === 'gateway-password:remote-1'
-            ? 'hunter2'
-            : null
-      );
-
-    (globalThis as typeof globalThis & {
-      habitat?: Record<string, unknown>;
-    }).habitat = {
-      ...(globalThis as typeof globalThis & { habitat?: Record<string, unknown> }).habitat,
-      retrieveSecret
-    };
 
     await hydrateProfileSecrets();
 
-    expect(retrieveSecret).toHaveBeenCalledWith('gateway-token:remote-1');
-    expect(retrieveSecret).toHaveBeenCalledWith('gateway-password:remote-1');
-    const hydratedProfile = settingsStore.getState().gatewayProfiles['remote-1'];
-
-    expect(hydratedProfile?.transport).toBe('ssh');
-    if (hydratedProfile?.transport === 'ssh') {
-      expect(hydratedProfile.gatewayToken).toBe('secret-token');
-    }
     expect(getGatewaySessionAuth('remote-1')).toEqual({
       password: 'hunter2'
     });
