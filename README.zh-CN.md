@@ -6,6 +6,8 @@ OpenClaw Pets Widget 是 OpenClaw agents 的桌面宠物挂件。它会以一个
 
 桌宠使用 Rive 动画，支持多个 agent persona，并通过 Electron IPC 保持面板与宠物窗口同步。
 
+https://github.com/user-attachments/assets/914543c5-19ee-4100-b404-fd02b112ec19
+
 ## 特性
 
 - 悬浮桌宠，以及独立的聊天和设置面板
