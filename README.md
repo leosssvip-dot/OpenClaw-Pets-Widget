@@ -65,6 +65,8 @@ Remote setup checklist:
 - Your machine can SSH into that host with your normal SSH configuration
 - You have the Gateway token for that Gateway instance
 
+If your Gateway is running on a home network and you are away from home, a direct SSH connection usually will not work unless that machine is reachable from outside your local network. In that case, first use a secure remote network solution such as Tailscale so the home machine becomes reachable over SSH, then connect the app to the machine by its Tailscale IP or hostname.
+
 In the app:
 
 1. Start the desktop app with `pnpm dev:desktop`
