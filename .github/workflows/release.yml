@@ -56,7 +56,7 @@ jobs:
             -s -k "" build.keychain
 
       - name: Package macOS
-        run: pnpm --filter @openclaw-habitat/macos-shell exec electron-builder --mac --publish never
+        # run: pnpm --filter @openclaw-habitat/macos-shell exec electron-builder --mac --publish never
         # 加入 Apple Developer Program ($99/年) 后，取消注释以下 env 块启用签名 + 公证：
         env:
           CSC_LINK: ${{ secrets.MAC_CERT_P12 }}
@@ -64,6 +64,8 @@ jobs:
           APPLE_ID: ${{ secrets.APPLE_ID }}
           APPLE_APP_SPECIFIC_PASSWORD: ${{ secrets.APPLE_APP_SPECIFIC_PASSWORD }}
           APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
+        run: |
+          pnpm --filter @openclaw-habitat/macos-shell exec electron-builder --mac --publish never
 
       - name: Upload macOS artifacts
         uses: actions/upload-artifact@v4
