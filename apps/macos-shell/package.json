@@ -27,7 +27,8 @@
     "files": [
       ".electron-build/**/*",
       "dist/**/*",
-      "!node_modules"
+      "!node_modules",
+      ".electron-build/node_modules/**/*"
     ],
     "nodeGypRebuild": false,
     "npmRebuild": false,
