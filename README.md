@@ -130,7 +130,6 @@ Useful commands from that directory:
 ```bash
 pnpm dev:desktop
 pnpm start:desktop
-pnpm pack
 pnpm dist:mac
 pnpm dist:win
 ```

@@ -130,7 +130,6 @@ cat ~/.openclaw/.env | grep OPENCLAW_GATEWAY_TOKEN
 ```bash
 pnpm dev:desktop
 pnpm start:desktop
-pnpm pack
 pnpm dist:mac
 pnpm dist:win
 ```
