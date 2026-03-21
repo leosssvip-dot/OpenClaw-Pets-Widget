@@ -1,5 +1,14 @@
 import { describe, it, expect } from 'vitest';
-import { checkMilestone, currentMilestone, nextMilestone, MERIT_MILESTONES } from '../merit-milestones';
+import {
+  checkMilestone,
+  currentMilestone,
+  nextMilestone,
+  MERIT_MILESTONES,
+  LOBSTER_MILESTONES,
+  ROBOT_MILESTONES,
+  CAT_MILESTONES,
+  ROLE_MILESTONES,
+} from '../merit-milestones';
 
 describe('merit-milestones', () => {
   describe('checkMilestone', () => {
@@ -32,6 +41,18 @@ describe('merit-milestones', () => {
     it('returns null when already past all milestones', () => {
       expect(checkMilestone(100001, 100002)).toBeNull();
     });
+
+    it('uses role-specific milestones when provided', () => {
+      const result = checkMilestone(9, 10, LOBSTER_MILESTONES);
+      expect(result).not.toBeNull();
+      expect(result!.label).toBe('初写代码');
+
+      const robotResult = checkMilestone(9, 10, ROBOT_MILESTONES);
+      expect(robotResult!.label).toBe('初次巡检');
+
+      const catResult = checkMilestone(9, 10, CAT_MILESTONES);
+      expect(catResult!.label).toBe('初学规划');
+    });
   });
 
   describe('currentMilestone', () => {
@@ -49,6 +70,11 @@ describe('merit-milestones', () => {
       const result = currentMilestone(100000);
       expect(result).not.toBeNull();
       expect(result!.tier).toBe('diamond');
+    });
+
+    it('works with role-specific milestones', () => {
+      const result = currentMilestone(150, LOBSTER_MILESTONES);
+      expect(result!.label).toBe('代码百行');
     });
   });
 
@@ -68,13 +94,40 @@ describe('merit-milestones', () => {
     it('returns null when all milestones achieved', () => {
       expect(nextMilestone(100000)).toBeNull();
     });
+
+    it('works with role-specific milestones', () => {
+      const result = nextMilestone(50, ROBOT_MILESTONES);
+      expect(result!.label).toBe('百次巡逻');
+    });
   });
 
-  it('milestones are sorted by ascending threshold', () => {
-    for (let i = 1; i < MERIT_MILESTONES.length; i++) {
-      expect(MERIT_MILESTONES[i].threshold).toBeGreaterThan(
-        MERIT_MILESTONES[i - 1].threshold
-      );
+  describe('all milestone arrays', () => {
+    const allArrays = [
+      { name: 'monk', milestones: MERIT_MILESTONES },
+      { name: 'lobster', milestones: LOBSTER_MILESTONES },
+      { name: 'robot', milestones: ROBOT_MILESTONES },
+      { name: 'cat', milestones: CAT_MILESTONES },
+    ];
+
+    for (const { name, milestones } of allArrays) {
+      it(`${name} milestones are sorted by ascending threshold`, () => {
+        for (let i = 1; i < milestones.length; i++) {
+          expect(milestones[i].threshold).toBeGreaterThan(
+            milestones[i - 1].threshold
+          );
+        }
+      });
+
+      it(`${name} milestones have exactly 9 entries`, () => {
+        expect(milestones).toHaveLength(9);
+      });
     }
+  });
+
+  it('ROLE_MILESTONES maps all four roles', () => {
+    expect(ROLE_MILESTONES.monk).toBe(MERIT_MILESTONES);
+    expect(ROLE_MILESTONES.lobster).toBe(LOBSTER_MILESTONES);
+    expect(ROLE_MILESTONES.robot).toBe(ROBOT_MILESTONES);
+    expect(ROLE_MILESTONES.cat).toBe(CAT_MILESTONES);
   });
 });

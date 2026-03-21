@@ -10,12 +10,13 @@ import type { MeritMilestone } from './merit-milestones';
 
 interface MeritCelebrationProps {
   milestone: MeritMilestone | null;
+  metricLabel?: string;
   onDismiss: () => void;
 }
 
 const CELEBRATION_DURATION = 3200;
 
-export function MeritCelebration({ milestone, onDismiss }: MeritCelebrationProps) {
+export function MeritCelebration({ milestone, metricLabel = '功德', onDismiss }: MeritCelebrationProps) {
   const [visible, setVisible] = useState(false);
 
   useEffect(() => {
@@ -47,7 +48,7 @@ export function MeritCelebration({ milestone, onDismiss }: MeritCelebrationProps
         <span className="merit-celebration__icon">{milestone.icon}</span>
         <span className="merit-celebration__label">{milestone.label}</span>
         <span className="merit-celebration__threshold">
-          功德 {milestone.threshold.toLocaleString('zh-CN')}
+          {metricLabel} {milestone.threshold.toLocaleString('zh-CN')}
         </span>
       </div>
       {/* Particle ring */}

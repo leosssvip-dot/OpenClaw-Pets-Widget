@@ -235,7 +235,8 @@ export function DesktopPet({
               initialDelayMs={meritInitialDelay}
               text={rolePackMeta.metricBurst}
               counterLabel={rolePackMeta.metricLabel}
-              celebrationEnabled={resolvedAppearance.rolePack === 'monk'}
+              rolePack={resolvedAppearance.rolePack}
+              celebrationEnabled
             />
           ) : null}
         </span>

@@ -11,7 +11,8 @@
 
 import { useEffect, useRef, useState, useCallback } from 'react';
 import { meritStore, useMeritStore } from './merit-store';
-import { checkMilestone, currentMilestone, nextMilestone, type MeritMilestone } from './merit-milestones';
+import { checkMilestone, currentMilestone, nextMilestone, ROLE_MILESTONES, type MeritMilestone } from './merit-milestones';
+import type { PetRolePackId } from './pet-appearance';
 import { MeritCelebration } from './MeritCelebration';
 
 interface MeritParticle {
@@ -35,6 +36,8 @@ interface MeritParticlesProps {
   counterLabel?: string;
   /** Whether milestone celebrations should be shown for this metric. */
   celebrationEnabled?: boolean;
+  /** Role pack for selecting the correct milestone array. */
+  rolePack?: PetRolePackId;
 }
 
 let nextId = 0;
@@ -56,7 +59,9 @@ export function MeritParticles({
   text = '功德+1',
   counterLabel = '功德',
   celebrationEnabled = true,
+  rolePack,
 }: MeritParticlesProps) {
+  const milestones = rolePack ? ROLE_MILESTONES[rolePack] : undefined;
   const [particles, setParticles] = useState<MeritParticle[]>([]);
   const [celebration, setCelebration] = useState<MeritMilestone | null>(null);
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
@@ -86,12 +91,12 @@ export function MeritParticles({
       const prevCount = meritStore.getState().counts[petId] ?? 0;
       const newCount = meritStore.getState().increment(petId);
       // Check for milestone crossing
-      const milestone = checkMilestone(prevCount, newCount);
+      const milestone = checkMilestone(prevCount, newCount, milestones);
       if (celebrationEnabled && milestone) {
         setCelebration(milestone);
       }
     }
-  }, [celebrationEnabled, petId]);
+  }, [celebrationEnabled, milestones, petId]);
 
   const removeParticle = useCallback((id: number) => {
     setParticles((prev) => prev.filter((p) => p.id !== id));
@@ -140,8 +145,8 @@ export function MeritParticles({
     };
   }, [active, initialDelayMs, intervalMs, spawnParticle]);
 
-  const achieved = currentMilestone(totalMerit);
-  const next = nextMilestone(totalMerit);
+  const achieved = currentMilestone(totalMerit, milestones);
+  const next = nextMilestone(totalMerit, milestones);
 
   return (
     <>
@@ -175,7 +180,7 @@ export function MeritParticles({
         ) : null}
       </span>
       {celebrationEnabled ? (
-        <MeritCelebration milestone={celebration} onDismiss={dismissCelebration} />
+        <MeritCelebration milestone={celebration} metricLabel={counterLabel} onDismiss={dismissCelebration} />
       ) : null}
     </>
   );
