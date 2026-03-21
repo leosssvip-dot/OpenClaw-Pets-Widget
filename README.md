@@ -10,7 +10,7 @@ The desktop pet uses Rive animations, supports multiple agent personas, and keep
 
 - Floating desktop pet with a separate chat and settings panel
 - Built-in Rive-based pet animations
-- Per-agent character selection and custom avatar art
+- Per-agent character selection from built-in pets
 - Local gateway mode and remote gateway mode over SSH
 - Electron desktop app with macOS and Windows packaging targets
 
@@ -79,6 +79,12 @@ In the app:
 
 Because of a known bug in `openclaw 2026.3.13`, you may need to allow insecure auth for the Control UI before the desktop app can connect correctly.
 
+A common failure looks like this:
+
+```text
+Gateway handshake rejected: control ui requires device identity (use HTTPS or localhost secure context)
+```
+
 Update the Gateway config:
 
 ```json
@@ -129,35 +135,13 @@ pnpm dist:mac
 pnpm dist:win
 ```
 
-Additional docs:
-
-- [Testing guide](./docs/testing-guide.md)
-- [Pet animation import guide](./docs/pet-animation-import-guide.md)
-
 ## Project Structure
 
 ```text
 apps/macos-shell/     Electron shell, renderer, pet UI, packaging
 packages/bridge/      Bridge client and OpenClaw gateway integration
 packages/domain/      Shared domain types and logic
-docs/                 Testing notes, design docs, animation import notes
 ```
-
-## Custom Pet Assets
-
-- Built-in pets use `.riv` files from [`apps/macos-shell/public/assets/pets`](./apps/macos-shell/public/assets/pets)
-- Custom static art can be provided through the panel with:
-  - `https://...`
-  - `file:///absolute/path/to/file.png`
-  - `data:image/...`
-
-Supported custom image formats:
-
-- PNG
-- JPG / JPEG
-- WEBP
-- GIF
-- SVG
 
 ## Testing
 

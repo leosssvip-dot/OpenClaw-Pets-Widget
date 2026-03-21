@@ -1,4 +1,7 @@
 .worktrees/
+# Local documentation; not tracked in this repo
+doc/
+docs/
 node_modules/
 dist/
 coverage/

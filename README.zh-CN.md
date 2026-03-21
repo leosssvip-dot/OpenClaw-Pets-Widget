@@ -10,7 +10,7 @@ OpenClaw Pets Widget 是 OpenClaw agents 的桌面宠物挂件。它会以一个
 
 - 悬浮桌宠，以及独立的聊天和设置面板
 - 内置基于 Rive 的桌宠动画
-- 支持为每个 agent 选择角色和自定义头像
+- 支持为每个 agent 从内置桌宠中选择角色
 - 支持本地 Gateway 模式和通过 SSH 的远程 Gateway 模式
 - 基于 Electron 的桌面应用，支持 macOS 和 Windows 打包
 
@@ -79,6 +79,12 @@ pnpm lint
 
 由于 `openclaw 2026.3.13` 的一个已知 bug，在桌面应用无法正常连接时，你可能需要为 Control UI 打开 insecure auth。
 
+常见报错如下：
+
+```text
+Gateway handshake rejected: control ui requires device identity (use HTTPS or localhost secure context)
+```
+
 更新 Gateway 配置：
 
 ```json
@@ -129,35 +135,13 @@ pnpm dist:mac
 pnpm dist:win
 ```
 
-更多文档：
-
-- [测试指南](./docs/testing-guide.md)
-- [桌宠动画导入指南](./docs/pet-animation-import-guide.md)
-
 ## 项目结构
 
 ```text
 apps/macos-shell/     Electron shell、renderer、桌宠 UI、打包
 packages/bridge/      Bridge client 和 OpenClaw gateway 集成
 packages/domain/      共享领域类型与逻辑
-docs/                 测试说明、设计文档、动画导入说明
 ```
-
-## 自定义桌宠资源
-
-- 内置桌宠使用 [`apps/macos-shell/public/assets/pets`](./apps/macos-shell/public/assets/pets) 下的 `.riv` 文件
-- 面板中也支持以下格式的自定义静态图片：
-  - `https://...`
-  - `file:///absolute/path/to/file.png`
-  - `data:image/...`
-
-支持的自定义图片格式：
-
-- PNG
-- JPG / JPEG
-- WEBP
-- GIF
-- SVG
 
 ## 测试
 
