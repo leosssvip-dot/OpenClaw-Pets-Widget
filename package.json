@@ -9,6 +9,9 @@
     "dev:desktop": "pnpm --filter @openclaw-habitat/macos-shell dev:desktop",
     "dev": "pnpm --filter @openclaw-habitat/macos-shell dev",
     "build": "pnpm -r build",
+    "dist:mac": "pnpm --filter @openclaw-habitat/macos-shell dist:mac",
+    "dist:win": "pnpm --filter @openclaw-habitat/macos-shell dist:win",
+    "start:desktop": "pnpm --filter @openclaw-habitat/macos-shell start:desktop",
     "test": "pnpm -r test",
     "lint": "pnpm -r lint"
   },
