@@ -6,6 +6,7 @@ OpenClaw Pets Widget is a desktop companion for OpenClaw agents. It runs as a sm
 
 The desktop pet uses Rive animations, supports multiple agent personas, and keeps the panel and pet window in sync through Electron IPC.
 
+https://github.com/user-attachments/assets/914543c5-19ee-4100-b404-fd02b112ec19
 
 ## Highlights
 
