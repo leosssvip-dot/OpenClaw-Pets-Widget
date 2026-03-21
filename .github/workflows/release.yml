@@ -35,15 +35,35 @@ jobs:
       - name: Build renderer & electron
         run: pnpm --filter @openclaw-habitat/macos-shell build
 
+      - name: Install Certificate
+        env:
+          MAC_CERTIFICATE: ${{ secrets.MAC_CERT_P12 }}
+          MAC_CERTIFICATE_PASSWORD: ${{ secrets.MAC_CERT_PASSWORD }}
+        run: |
+          echo "$MAC_CERTIFICATE" | base64 --decode > cert.p12
+
+          security create-keychain -p "" build.keychain
+          security default-keychain -s build.keychain
+          security unlock-keychain -p "" build.keychain
+
+          security import cert.p12 \
+            -k build.keychain \
+            -P "$MAC_CERTIFICATE_PASSWORD" \
+            -T /usr/bin/codesign
+
+          security set-key-partition-list \
+            -S apple-tool:,apple: \
+            -s -k "" build.keychain
+
       - name: Package macOS
         run: pnpm --filter @openclaw-habitat/macos-shell exec electron-builder --mac --publish never
         # 加入 Apple Developer Program ($99/年) 后，取消注释以下 env 块启用签名 + 公证：
-        # env:
-        #   CSC_LINK: ${{ secrets.MAC_CERT_P12 }}
-        #   CSC_KEY_PASSWORD: ${{ secrets.MAC_CERT_PASSWORD }}
-        #   APPLE_ID: ${{ secrets.APPLE_ID }}
-        #   APPLE_APP_SPECIFIC_PASSWORD: ${{ secrets.APPLE_APP_SPECIFIC_PASSWORD }}
-        #   APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
+        env:
+          CSC_LINK: ${{ secrets.MAC_CERT_P12 }}
+          CSC_KEY_PASSWORD: ${{ secrets.MAC_CERT_PASSWORD }}
+          APPLE_ID: ${{ secrets.APPLE_ID }}
+          APPLE_APP_SPECIFIC_PASSWORD: ${{ secrets.APPLE_APP_SPECIFIC_PASSWORD }}
+          APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
 
       - name: Upload macOS artifacts
         uses: actions/upload-artifact@v4
