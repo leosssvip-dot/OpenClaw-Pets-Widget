@@ -10,10 +10,12 @@
 import { cpSync, mkdirSync, existsSync } from 'node:fs';
 import { createRequire } from 'node:module';
 import { dirname, join } from 'node:path';
+import { fileURLToPath } from 'node:url';
 
 const require = createRequire(import.meta.url);
 
-const DEST = join(dirname(new URL(import.meta.url).pathname), '..', '.electron-build', 'node_modules');
+const __dirname = dirname(fileURLToPath(import.meta.url));
+const DEST = join(__dirname, '..', '.electron-build', 'node_modules');
 
 /** Packages that must be available at runtime (ssh2 + transitive deps). */
 const PACKAGES = ['ssh2', 'asn1', 'bcrypt-pbkdf', 'safer-buffer', 'tweetnacl'];
