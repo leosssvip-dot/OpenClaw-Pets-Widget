@@ -467,7 +467,30 @@ export function App() {
         }}
         onSwitchCharacter={(rolePackId) => {
           if (visiblePetRow) {
-            settingsStore.getState().setPetAppearance(visiblePetRow.petId, { rolePack: rolePackId as import('./features/widget/pet-appearance').PetRolePackId });
+            const appearance = { rolePack: rolePackId as import('./features/widget/pet-appearance').PetRolePackId };
+            settingsStore.getState().setPetAppearance(visiblePetRow.petId, appearance);
+            // In pet surface, syncedUiState overrides the settings store.
+            // Update it directly so the switch takes effect immediately,
+            // and notify the panel window so it stays in sync.
+            if (surface === 'pet') {
+              setSyncedUiState((prev) => ({
+                selectedPetId: prev?.selectedPetId ?? selectedPetId,
+                pinnedAgentId: prev?.pinnedAgentId ?? pinnedAgentId,
+                appearances: {
+                  ...prev?.appearances,
+                  [visiblePetRow.petId]: appearance,
+                },
+              }));
+              getHabitatDesktopApi()?.sendHabitatSync?.({
+                type: 'uiState',
+                selectedPetId: effectiveSelectedPetId,
+                pinnedAgentId: effectivePinnedAgentId,
+                appearances: {
+                  ...effectiveAppearancesByPetId,
+                  [visiblePetRow.petId]: appearance,
+                },
+              });
+            }
           }
         }}
       />
