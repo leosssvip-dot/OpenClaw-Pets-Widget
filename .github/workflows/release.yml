@@ -3,11 +3,11 @@ name: Build & Release
 on:
   push:
     tags:
-      - 'v*'        # 推送 v1.0.0 这样的 tag 时触发
-  workflow_dispatch:  # 也可以手动触发
+      - "v*" # 推送 v1.0.0 这样的 tag 时触发
+  workflow_dispatch: # 也可以手动触发
 
 permissions:
-  contents: write    # 需要写权限来创建 Release
+  contents: write # 需要写权限来创建 Release
 
 jobs:
   build-mac:
@@ -70,7 +70,7 @@ jobs:
           APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
           DEBUG: electron-builder,electron-osx-sign*
         run: |
-          pnpm --filter @openclaw-habitat/macos-shell exec electron-builder --mac --publish never
+          pnpm --filter @openclaw-habitat/macos-shell exec electron-builder --mac dmg --publish never
 
       - name: Upload macOS artifacts
         uses: actions/upload-artifact@v4
