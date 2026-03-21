@@ -32,6 +32,8 @@ vi.mock('../MeritParticles', () => ({
     petId?: string;
     intervalMs?: number;
     initialDelayMs?: number;
+    text?: string;
+    counterLabel?: string;
   }) => {
     meritParticlesSpy(props);
     return (
@@ -39,6 +41,8 @@ vi.mock('../MeritParticles', () => ({
         data-testid="merit-particles"
         data-active={String(props.active)}
         data-pet-id={props.petId ?? ''}
+        data-text={props.text ?? ''}
+        data-counter-label={props.counterLabel ?? ''}
       />
     );
   }
@@ -344,7 +348,7 @@ describe('DesktopPet', () => {
     expect(pet).not.toHaveClass('desktop-pet--interaction-focused');
   });
 
-  it('mounts monk-only merit particles for the monk role pack', () => {
+  it('shows a role-specific metric overlay for non-monk pets', () => {
     widgetStore.getState().setPanelOpen(false);
     mockHabitatDesktopApi({
       togglePanel: vi.fn().mockResolvedValue({ isOpen: false })
@@ -359,9 +363,19 @@ describe('DesktopPet', () => {
       />
     );
 
-    expect(screen.queryByTestId('merit-particles')).not.toBeInTheDocument();
+    expect(screen.getByTestId('merit-particles')).toHaveAttribute('data-active', 'true');
+    expect(screen.getByTestId('merit-particles')).toHaveAttribute('data-pet-id', 'pet-robot');
+    expect(screen.getByTestId('merit-particles')).toHaveAttribute('data-text', '巡检+1');
+    expect(screen.getByTestId('merit-particles')).toHaveAttribute('data-counter-label', '巡检');
+  });
 
-    rerender(
+  it('keeps monk-specific metric copy for the monk role pack', () => {
+    widgetStore.getState().setPanelOpen(false);
+    mockHabitatDesktopApi({
+      togglePanel: vi.fn().mockResolvedValue({ isOpen: false })
+    });
+
+    render(
       <DesktopPet
         petName="Zen"
         petId="pet-monk"
@@ -372,6 +386,8 @@ describe('DesktopPet', () => {
 
     expect(screen.getByTestId('merit-particles')).toHaveAttribute('data-active', 'true');
     expect(screen.getByTestId('merit-particles')).toHaveAttribute('data-pet-id', 'pet-monk');
+    expect(screen.getByTestId('merit-particles')).toHaveAttribute('data-text', '功德+1');
+    expect(screen.getByTestId('merit-particles')).toHaveAttribute('data-counter-label', '功德');
   });
 
   it('keeps monk merit mounted but inactive when the monk is disconnected', () => {

@@ -1,4 +1,4 @@
-# OpenClaw Habitat 测试教程
+# OpenClaw Pets Widget 测试教程
 
 这份教程按真实使用路径来写：先验证代码质量，再启动桌面挂件，然后连接另一台电脑上已经常驻运行的 OpenClaw。
 

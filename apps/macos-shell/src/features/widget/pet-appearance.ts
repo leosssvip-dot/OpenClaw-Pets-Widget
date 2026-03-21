@@ -17,6 +17,8 @@ export const PET_ROLE_PACKS: Array<{
   id: PetRolePackId;
   label: string;
   roleLabel: string;
+  metricLabel: string;
+  metricBurst: string;
   tagline: string;
   promptHint: string;
   panelTitle: string;
@@ -28,6 +30,8 @@ export const PET_ROLE_PACKS: Array<{
     id: 'lobster',
     label: 'Coder Claw',
     roleLabel: 'Code',
+    metricLabel: '修复',
+    metricBurst: '修复+1',
     tagline: 'Headset on, keyboard ready, bug already spotted.',
     promptHint: 'Ask for a fix, refactor, or implementation patch.',
     panelTitle: 'Your coding pet is already at the keyboard.',
@@ -40,6 +44,8 @@ export const PET_ROLE_PACKS: Array<{
     id: 'cat',
     label: 'Planner Cat',
     roleLabel: 'Plan',
+    metricLabel: '规划',
+    metricBurst: '规划+1',
     tagline: 'Sticky notes out, priorities sorted, next step in sight.',
     promptHint: 'Ask for a breakdown, plan, or task ordering.',
     panelTitle: 'Your planning pet already sorted the next three moves.',
@@ -52,6 +58,8 @@ export const PET_ROLE_PACKS: Array<{
     id: 'robot',
     label: 'Ops Bot',
     roleLabel: 'Ops',
+    metricLabel: '巡检',
+    metricBurst: '巡检+1',
     tagline: 'Signals clean, beacon live, runtime under watch.',
     promptHint: 'Ask for a status check, reconnect, or runtime diagnosis.',
     panelTitle: 'Your ops pet is watching the runtime for you.',
@@ -64,6 +72,8 @@ export const PET_ROLE_PACKS: Array<{
     id: 'monk',
     label: 'Mokugyo Monk',
     roleLabel: 'Focus',
+    metricLabel: '功德',
+    metricBurst: '功德+1',
     tagline: 'Wooden fish steady, rhythm locked, execution underway.',
     promptHint: 'Ask to start, continue, or finish the next focused action.',
     panelTitle: 'Your focus pet keeps the rhythm and pushes execution forward.',

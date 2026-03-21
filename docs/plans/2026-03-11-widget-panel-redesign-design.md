@@ -2,7 +2,7 @@
 
 ## Goal
 
-Redesign the `openclaw-widget` application main panel and settings panel into a lightweight, cute-cartoon desktop-pet control surface. The primary experience should emphasize quick prompting and current agent awareness, while low-frequency configuration moves behind a simplified secondary settings layer. Character customization should be based on animated role packs, not static uploaded images.
+Redesign the OpenClaw Pets Widget application main panel and settings panel into a lightweight, cute-cartoon desktop-pet control surface. The primary experience should emphasize quick prompting and current agent awareness, while low-frequency configuration moves behind a simplified secondary settings layer. Character customization should be based on animated role packs, not static uploaded images.
 
 ## Product Direction
 

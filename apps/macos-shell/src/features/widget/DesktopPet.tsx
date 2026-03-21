@@ -17,6 +17,10 @@ const MERIT_INTERVAL: Record<string, number> = {
   blocked: 2100,
 };
 
+function rolePackMetricCopy(rolePack: (typeof PET_ROLE_PACKS)[number]['id']) {
+  return PET_ROLE_PACKS.find((pack) => pack.id === rolePack) ?? PET_ROLE_PACKS[0];
+}
+
 export function DesktopPet({
   petName,
   petId,
@@ -58,6 +62,7 @@ export function DesktopPet({
   const { isDragging, isPressed, wasDrag, handlers: dragHandlers } = usePetDrag();
 
   const resolvedAppearance = resolvePetAppearance(appearance);
+  const rolePackMeta = rolePackMetricCopy(resolvedAppearance.rolePack);
   const animationState = resolvePetAnimationState({
     petStatus,
     connectionStatus,
@@ -65,10 +70,8 @@ export function DesktopPet({
   const isDisconnected = connectionStatus === 'offline' || connectionStatus === 'auth-expired';
   const stageClassName = `desktop-pet__stage${resolvedAppearance.rolePack === 'monk' ? ' desktop-pet__stage--roomy' : ''}`;
 
-  const supportsMonkMerit =
-    !resolvedAppearance.avatar &&
-    resolvedAppearance.rolePack === 'monk';
-  const showMerit = supportsMonkMerit && !isDisconnected;
+  const supportsRoleMetric = !resolvedAppearance.avatar;
+  const showMerit = supportsRoleMetric && !isDisconnected;
   const meritInterval = MERIT_INTERVAL[animationState.activity] ?? 2100;
   const meritInitialDelay =
     animationState.activity === 'idle'
@@ -224,12 +227,15 @@ export function DesktopPet({
               isDimmed={isDisconnected}
             />
           )}
-          {supportsMonkMerit ? (
+          {supportsRoleMetric ? (
             <MeritParticles
               active={showMerit}
               petId={petId}
               intervalMs={meritInterval}
               initialDelayMs={meritInitialDelay}
+              text={rolePackMeta.metricBurst}
+              counterLabel={rolePackMeta.metricLabel}
+              celebrationEnabled={resolvedAppearance.rolePack === 'monk'}
             />
           ) : null}
         </span>

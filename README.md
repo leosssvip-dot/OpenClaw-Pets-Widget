@@ -1,6 +1,8 @@
-# OpenClaw Habitat
+# OpenClaw Pets Widget
 
-OpenClaw Habitat is a desktop companion for OpenClaw agents. It runs as a small floating pet, opens into a control panel, and connects to an OpenClaw Gateway either on the same machine or through SSH to a remote machine.
+[English](./README.md) | [简体中文](./README.zh-CN.md)
+
+OpenClaw Pets Widget is a desktop companion for OpenClaw agents. It runs as a small floating pet, opens into a control panel, and connects to an OpenClaw Gateway either on the same machine or through SSH to a remote machine.
 
 The desktop pet uses Rive animations, supports multiple agent personas, and keeps the panel and pet window in sync through Electron IPC.
 
@@ -70,6 +72,46 @@ In the app:
 3. Go to `Settings`
 4. Add a local or SSH gateway profile
 5. Connect and wait for the agent list to appear
+
+### Gateway Auth Notes
+
+Because of a known bug in `openclaw 2026.3.13`, you may need to allow insecure auth for the Control UI before the desktop app can connect correctly.
+
+Update the Gateway config:
+
+```json
+{
+  "gateway": {
+    "controlUi": {
+      "allowInsecureAuth": true
+    }
+  }
+}
+```
+
+Or use the CLI:
+
+```bash
+# Set the config value
+openclaw config set gateway.controlUi.allowInsecureAuth true --json
+
+# Verify the current value
+openclaw config get gateway.controlUi.allowInsecureAuth
+
+# Restart the gateway
+openclaw gateway restart
+```
+
+If you need the Gateway token, check one of these locations:
+
+1. `~/.openclaw/openclaw.json`
+   Look for `gateway.auth.token`. OpenClaw Gateway auth uses `gateway.auth.token` or the `OPENCLAW_GATEWAY_TOKEN` environment variable.
+2. `~/.openclaw/.env`
+   Look for `OPENCLAW_GATEWAY_TOKEN`, for example:
+
+```bash
+cat ~/.openclaw/.env | grep OPENCLAW_GATEWAY_TOKEN
+```
 
 ## Development
 

@@ -31,6 +31,10 @@ interface MeritParticlesProps {
   initialDelayMs?: number;
   /** Text to display. Defaults to "功德+1". */
   text?: string;
+  /** Label for the persistent counter badge. Defaults to "功德". */
+  counterLabel?: string;
+  /** Whether milestone celebrations should be shown for this metric. */
+  celebrationEnabled?: boolean;
 }
 
 let nextId = 0;
@@ -50,6 +54,8 @@ export function MeritParticles({
   intervalMs = 2100,
   initialDelayMs = 0,
   text = '功德+1',
+  counterLabel = '功德',
+  celebrationEnabled = true,
 }: MeritParticlesProps) {
   const [particles, setParticles] = useState<MeritParticle[]>([]);
   const [celebration, setCelebration] = useState<MeritMilestone | null>(null);
@@ -81,11 +87,11 @@ export function MeritParticles({
       const newCount = meritStore.getState().increment(petId);
       // Check for milestone crossing
       const milestone = checkMilestone(prevCount, newCount);
-      if (milestone) {
+      if (celebrationEnabled && milestone) {
         setCelebration(milestone);
       }
     }
-  }, [petId]);
+  }, [celebrationEnabled, petId]);
 
   const removeParticle = useCallback((id: number) => {
     setParticles((prev) => prev.filter((p) => p.id !== id));
@@ -158,13 +164,19 @@ export function MeritParticles({
         {totalMerit > 0 ? (
           <span
             className={`merit-particles__counter${achieved ? ` merit-particles__counter--${achieved.tier}` : ''}`}
-            title={next ? `下一个成就: ${next.label} (${next.threshold.toLocaleString('zh-CN')})` : '功德无量'}
+            title={
+              celebrationEnabled && next
+                ? `下一个成就: ${next.label} (${next.threshold.toLocaleString('zh-CN')})`
+                : `${counterLabel}累计`
+            }
           >
-            {achieved ? `${achieved.icon} ` : ''}功德 {formatMerit(totalMerit)}
+            {celebrationEnabled && achieved ? `${achieved.icon} ` : ''}{counterLabel} {formatMerit(totalMerit)}
           </span>
         ) : null}
       </span>
-      <MeritCelebration milestone={celebration} onDismiss={dismissCelebration} />
+      {celebrationEnabled ? (
+        <MeritCelebration milestone={celebration} onDismiss={dismissCelebration} />
+      ) : null}
     </>
   );
 }
