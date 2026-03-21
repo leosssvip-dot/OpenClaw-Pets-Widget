@@ -22,6 +22,13 @@ jobs:
           node-version: 22
           cache: pnpm
 
+      - name: Sync version from tag
+        if: startsWith(github.ref, 'refs/tags/v')
+        run: |
+          VERSION="${GITHUB_REF_NAME#v}"
+          cd apps/macos-shell
+          node -e "const p=require('./package.json'); p.version='$VERSION'; require('fs').writeFileSync('package.json', JSON.stringify(p, null, 2)+'\n')"
+
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
@@ -58,6 +65,14 @@ jobs:
         with:
           node-version: 22
           cache: pnpm
+
+      - name: Sync version from tag
+        if: startsWith(github.ref, 'refs/tags/v')
+        shell: bash
+        run: |
+          VERSION="${GITHUB_REF_NAME#v}"
+          cd apps/macos-shell
+          node -e "const p=require('./package.json'); p.version='$VERSION'; require('fs').writeFileSync('package.json', JSON.stringify(p, null, 2)+'\n')"
 
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
