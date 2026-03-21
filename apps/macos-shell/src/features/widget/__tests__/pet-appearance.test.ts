@@ -50,11 +50,11 @@ describe('pet appearance helpers', () => {
       normalizePetAvatarSource('https://cdn.example.com/pets/ruby-lobster.svg')
     ).toBe('https://cdn.example.com/pets/ruby-lobster.svg');
     expect(
-      normalizePetAvatarSource('file:///Users/chenyang/Pictures/ruby-lobster.png')
-    ).toBe('file:///Users/chenyang/Pictures/ruby-lobster.png');
+      normalizePetAvatarSource('file:///Users/testuser/Pictures/ruby-lobster.png')
+    ).toBe('file:///Users/testuser/Pictures/ruby-lobster.png');
     expect(
-      normalizePetAvatarSource('/Users/chenyang/Pictures/ruby-lobster.webp')
-    ).toBe('file:///Users/chenyang/Pictures/ruby-lobster.webp');
+      normalizePetAvatarSource('/Users/testuser/Pictures/ruby-lobster.webp')
+    ).toBe('file:///Users/testuser/Pictures/ruby-lobster.webp');
     expect(
       normalizePetAvatarSource('data:image/svg+xml;base64,PHN2Zy8+')
     ).toBe('data:image/svg+xml;base64,PHN2Zy8+');

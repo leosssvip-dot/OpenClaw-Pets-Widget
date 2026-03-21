@@ -75,7 +75,7 @@ export function SshConnectionForm({
           aria-label="Remote Host"
           value={host}
           onChange={(event) => setHost(event.target.value)}
-          placeholder="studio.internal"
+          placeholder="gateway.example.com"
           required
           disabled={isBusy}
         />

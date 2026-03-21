@@ -42,8 +42,8 @@ describe('SshTunnelRuntime', () => {
       id: 'profile-2',
       label: 'Studio',
       transport: 'ssh',
-      host: '10.0.0.52',
-      username: 'chenyang',
+      host: '192.0.2.10',
+      username: 'testuser',
       sshPort: 22,
       remoteGatewayPort: 18789,
       gatewayToken: 'secret-token'
@@ -81,8 +81,8 @@ describe('SshTunnelRuntime', () => {
         id: 'profile-4',
         label: 'Studio',
         transport: 'ssh',
-        host: '10.0.0.52',
-        username: 'chenyang',
+        host: '192.0.2.10',
+        username: 'testuser',
         sshPort: 22,
         remoteGatewayPort: 18789,
         gatewayToken: 'secret-token'
@@ -110,19 +110,19 @@ describe('SshTunnelRuntime', () => {
       id: 'profile-5',
       label: 'Studio',
       transport: 'ssh',
-      host: '10.0.0.52',
-      username: 'chenyang',
+      host: '192.0.2.10',
+      username: 'testuser',
       sshPort: 22,
       remoteGatewayPort: 18789,
       gatewayToken: 'secret-token'
     });
 
-    child.stderr.emit('data', 'ssh: connect to host 10.0.0.52 port 22: Connection reset\n');
+    child.stderr.emit('data', 'ssh: connect to host 192.0.2.10 port 22: Connection reset\n');
     child.emit('exit', 255, null);
 
     expect(onUnexpectedTunnelExit).toHaveBeenCalledWith({
       profileId: 'profile-5',
-      errorMessage: 'ssh: connect to host 10.0.0.52 port 22: Connection reset'
+      errorMessage: 'ssh: connect to host 192.0.2.10 port 22: Connection reset'
     });
   });
 });

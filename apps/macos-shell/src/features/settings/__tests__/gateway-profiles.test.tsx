@@ -13,20 +13,20 @@ describe('GatewayProfiles', () => {
         profiles={[
           {
             id: 'remote-1',
-            label: '10.0.0.52',
+            label: '192.0.2.10',
             transport: 'ssh',
-            host: '10.0.0.52',
-            username: 'chenyang',
+            host: '192.0.2.10',
+            username: 'testuser',
             sshPort: 22,
             remoteGatewayPort: 18789,
             gatewayToken: 'secret-token'
           },
           {
             id: 'remote-2',
-            label: '10.0.0.53',
+            label: '192.0.2.11',
             transport: 'ssh',
-            host: '10.0.0.53',
-            username: 'chenyang',
+            host: '192.0.2.11',
+            username: 'testuser',
             sshPort: 2222,
             remoteGatewayPort: 18789,
             gatewayToken: 'secret-token'
@@ -43,8 +43,8 @@ describe('GatewayProfiles', () => {
 
     fireEvent.click(within(profiles[0]).getByRole('button', { name: 'Edit' }));
 
-    expect(screen.getByLabelText('Remote Host')).toHaveValue('10.0.0.52');
-    expect(screen.getByLabelText('SSH User')).toHaveValue('chenyang');
+    expect(screen.getByLabelText('Remote Host')).toHaveValue('192.0.2.10');
+    expect(screen.getByLabelText('SSH User')).toHaveValue('testuser');
     expect(screen.getByLabelText('SSH Port')).toHaveValue(22);
     expect(screen.getByLabelText('Gateway Port')).toHaveValue(18789);
     expect(screen.getByLabelText('Gateway Token')).toHaveValue('secret-token');
@@ -59,8 +59,8 @@ describe('GatewayProfiles', () => {
     expect(onSaveProfile).toHaveBeenCalledWith(
       expect.objectContaining({
         transport: 'ssh',
-        host: '10.0.0.52',
-        username: 'chenyang',
+        host: '192.0.2.10',
+        username: 'testuser',
         sshPort: 2200,
         remoteGatewayPort: 18789,
         gatewayToken: 'secret-token',

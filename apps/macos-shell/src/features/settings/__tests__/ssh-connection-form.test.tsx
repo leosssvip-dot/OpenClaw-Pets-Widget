@@ -9,10 +9,10 @@ describe('SshConnectionForm', () => {
     render(<SshConnectionForm onSubmit={onSubmit} />);
 
     fireEvent.change(screen.getByLabelText('Remote Host'), {
-      target: { value: 'studio.internal' }
+      target: { value: 'gateway.example.com' }
     });
     fireEvent.change(screen.getByLabelText('SSH User'), {
-      target: { value: 'chenyang' }
+      target: { value: 'testuser' }
     });
     fireEvent.change(screen.getByLabelText('SSH Password'), {
       target: { value: 'hunter2' }
@@ -24,8 +24,8 @@ describe('SshConnectionForm', () => {
 
     expect(onSubmit).toHaveBeenCalledWith(
       expect.objectContaining({
-        host: 'studio.internal',
-        username: 'chenyang',
+        host: 'gateway.example.com',
+        username: 'testuser',
         sshPort: 22,
         remoteGatewayPort: 18789,
         gatewayToken: 'secret-token',

@@ -10,8 +10,8 @@ describe('createSettingsStore', () => {
       id: 'remote-1',
       label: 'Studio Gateway',
       transport: 'ssh',
-      host: 'studio.internal',
-      username: 'chenyang',
+      host: 'gateway.example.com',
+      username: 'testuser',
       sshPort: 22,
       remoteGatewayPort: 18789,
       gatewayToken: 'secret'
@@ -42,8 +42,8 @@ describe('createSettingsStore', () => {
       id: 'remote-1',
       label: 'Studio Gateway',
       transport: 'ssh',
-      host: '10.0.0.52',
-      username: 'chenyang',
+      host: '192.0.2.10',
+      username: 'testuser',
       sshPort: 22,
       remoteGatewayPort: 18789,
       gatewayToken: 'secret'
@@ -52,8 +52,8 @@ describe('createSettingsStore', () => {
       id: 'remote-2',
       label: 'Backup Gateway',
       transport: 'ssh',
-      host: '10.0.0.53',
-      username: 'chenyang',
+      host: '192.0.2.11',
+      username: 'testuser',
       sshPort: 22,
       remoteGatewayPort: 18789,
       gatewayToken: 'secret'
