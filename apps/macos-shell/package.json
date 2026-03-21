@@ -9,7 +9,7 @@
     "dev:renderer": "vite --host 127.0.0.1 --port 5173 --strictPort",
     "dev:desktop": "tsx electron/dev-runner.ts",
     "build": "vite build && pnpm run build:electron",
-    "build:electron": "esbuild electron/main.ts --bundle --platform=node --format=esm --outfile=.electron-build/main.js --external:electron --external:ssh2 --sourcemap && esbuild electron/preload.ts --bundle --platform=node --format=cjs --outfile=.electron-build/preload.cjs --external:electron --sourcemap",
+    "build:electron": "esbuild electron/main.ts --bundle --platform=node --format=esm --outfile=.electron-build/main.js --external:electron --external:cpu-features --sourcemap && esbuild electron/preload.ts --bundle --platform=node --format=cjs --outfile=.electron-build/preload.cjs --external:electron --sourcemap",
     "start:desktop": "pnpm run build && electron .electron-build/main.js",
     "pack": "pnpm run build && electron-builder --dir",
     "dist": "pnpm run build && electron-builder",
@@ -27,8 +27,7 @@
     "files": [
       ".electron-build/**/*",
       "dist/**/*",
-      "!node_modules",
-      "node_modules/ssh2/**/*"
+      "!node_modules"
     ],
     "nodeGypRebuild": false,
     "npmRebuild": false,
