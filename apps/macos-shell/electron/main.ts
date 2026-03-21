@@ -1,5 +1,6 @@
-import { app, BrowserWindow, dialog, ipcMain, Menu, MenuItem, screen, session, Tray, type IpcMainEvent } from 'electron';
+import { app, BrowserWindow, dialog, ipcMain, Menu, MenuItem, nativeImage, screen, session, Tray, type IpcMainEvent } from 'electron';
 import { fileURLToPath } from 'node:url';
+import { existsSync } from 'node:fs';
 import { readFile, writeFile, mkdir } from 'node:fs/promises';
 import { join, dirname } from 'node:path';
 import type { GatewayProfile } from '@openclaw-habitat/bridge';
@@ -193,6 +194,20 @@ async function createWindow() {
   petWindow = await createPetWidgetWindow();
   panelWindow = await createPanelWindow();
   habitatTray = createHabitatTray();
+
+  // Set app icon (Dock on macOS, taskbar on Windows/Linux)
+  const logoDir = join(dirname(fileURLToPath(import.meta.url)), '..', 'public', 'logo');
+  const devLogoDir = join(dirname(fileURLToPath(import.meta.url)), '..', '..', 'public', 'logo');
+  const distLogoDir = join(dirname(fileURLToPath(import.meta.url)), '..', 'dist', 'logo');
+  const logoPath = [logoDir, devLogoDir, distLogoDir]
+    .map((dir) => join(dir, 'logo-1024.png'))
+    .find((p) => existsSync(p));
+  if (logoPath) {
+    const appIcon = nativeImage.createFromPath(logoPath);
+    if (process.platform === 'darwin' && app.dock) {
+      app.dock.setIcon(appIcon);
+    }
+  }
   pipeRendererLogs(petWindow);
   pipeRendererLogs(panelWindow);
   petWindow.on('move', alignPanelWindow);

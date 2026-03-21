@@ -32,6 +32,7 @@
     "nodeGypRebuild": false,
     "npmRebuild": false,
     "mac": {
+      "icon": "public/logo/logo-1024.png",
       "category": "public.app-category.productivity",
       "target": [
         {
@@ -45,6 +46,7 @@
       ]
     },
     "win": {
+      "icon": "public/logo/logo-256.png",
       "target": [
         {
           "target": "nsis",
