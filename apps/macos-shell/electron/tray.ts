@@ -1,6 +1,23 @@
-import { Tray, nativeImage } from 'electron';
+import { existsSync } from 'node:fs';
+import { join } from 'node:path';
+import { app, Menu, Tray, nativeImage } from 'electron';
 
 function createTrayIcon() {
+  // Try to use the logo PNG for better Windows compatibility
+  // (SVG data URLs often render as blank on Windows tray)
+  const appRoot = app.getAppPath();
+  const candidates = [
+    join(appRoot, 'dist', 'logo', 'logo-256.png'),
+    join(appRoot, 'public', 'logo', 'logo-256.png'),
+    join(appRoot, '..', 'dist', 'logo', 'logo-256.png'),
+    join(appRoot, '..', 'public', 'logo', 'logo-256.png')
+  ];
+  const pngPath = candidates.find((p) => existsSync(p));
+  if (pngPath) {
+    return nativeImage.createFromPath(pngPath).resize({ width: 16, height: 16 });
+  }
+
+  // Fallback: inline SVG (works on macOS)
   const svg = `
     <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32">
       <rect width="32" height="32" rx="8" fill="#172033"/>
@@ -19,6 +36,22 @@ function createTrayIcon() {
 
 export function createHabitatTray() {
   const tray = new Tray(createTrayIcon());
-  tray.setToolTip('OpenClaw Agent Habitat');
+  tray.setToolTip('OpenClaw Pets Widget');
+
+  const contextMenu = Menu.buildFromTemplate([
+    {
+      label: 'OpenClaw Pets Widget',
+      enabled: false
+    },
+    { type: 'separator' },
+    {
+      label: process.platform === 'darwin' ? 'Quit' : '退出 / Quit',
+      click: () => {
+        app.quit();
+      }
+    }
+  ]);
+  tray.setContextMenu(contextMenu);
+
   return tray;
 }

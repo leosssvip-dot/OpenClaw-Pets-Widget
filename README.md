@@ -21,6 +21,23 @@ The desktop pet uses Rive animations, supports multiple agent personas, and keep
 
 Linux is not packaged or documented yet.
 
+### Installing Unsigned Builds
+
+The app is not code-signed yet. Your OS will show a security warning when you first open it.
+
+**macOS**
+
+1. Open the `.dmg` and drag the app to Applications
+2. When macOS blocks the app ("Apple cannot check it for malicious software"), go to **System Settings → Privacy & Security**
+3. Scroll down to find the blocked app message, click **Open Anyway**
+4. Or: right-click the app → **Open** → click **Open** in the dialog
+
+**Windows**
+
+1. Run the `.exe` installer
+2. Windows SmartScreen may show "Windows protected your PC"
+3. Click **More info** → **Run anyway**
+
 ## Requirements
 
 - Node.js 20+
