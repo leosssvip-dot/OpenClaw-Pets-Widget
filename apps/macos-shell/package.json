@@ -39,12 +39,12 @@
       "gatekeeperAssess": false,
       "entitlements": "entitlements.mac.plist",
       "entitlementsInherit": "entitlements.mac.plist",
-      "notarize": true,
+      "notarize": false,
       "target": [
         {
           "target": "dmg",
           "arch": [
-            "universal"
+            "arm64"
           ]
         }
       ]
