@@ -12,6 +12,9 @@ permissions:
 jobs:
   build-mac:
     runs-on: macos-latest
+    strategy:
+      matrix:
+        arch: [arm64, x64]
     steps:
       - uses: actions/checkout@v4
 
@@ -35,8 +38,8 @@ jobs:
       - name: Build renderer & electron
         run: pnpm --filter @openclaw-habitat/macos-shell build
 
-      - name: Package macOS (signed + notarized)
-        run: pnpm --filter @openclaw-habitat/macos-shell exec electron-builder --mac --publish never
+      - name: Package macOS (${{ matrix.arch }})
+        run: pnpm --filter @openclaw-habitat/macos-shell exec electron-builder --mac --arch ${{ matrix.arch }} --publish never
         env:
           CSC_LINK: ${{ secrets.MAC_CERT_P12 }}
           CSC_KEY_PASSWORD: ${{ secrets.MAC_CERT_PASSWORD }}
@@ -47,7 +50,7 @@ jobs:
       - name: Upload macOS artifacts
         uses: actions/upload-artifact@v4
         with:
-          name: release-mac
+          name: release-mac-${{ matrix.arch }}
           path: |
             apps/macos-shell/release/*.dmg
           if-no-files-found: error
