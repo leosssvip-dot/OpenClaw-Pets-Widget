@@ -68,7 +68,7 @@ jobs:
           APPLE_ID: ${{ secrets.APPLE_ID }}
           APPLE_APP_SPECIFIC_PASSWORD: ${{ secrets.APPLE_APP_SPECIFIC_PASSWORD }}
           APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
-          DEBUG: electron-builder,electron-osx-sign*
+          DEBUG: electron-builder,electron-osx-sign*,electron-notarize*
         run: |
           pnpm --filter @openclaw-habitat/macos-shell exec electron-builder --mac dmg --publish never
 
