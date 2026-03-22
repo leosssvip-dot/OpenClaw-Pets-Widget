@@ -3,11 +3,11 @@ name: Build & Release
 on:
   push:
     tags:
-      - 'v*'        # 推送 v1.0.0 这样的 tag 时触发
-  workflow_dispatch:  # 也可以手动触发
+      - 'v*'
+  workflow_dispatch:
 
 permissions:
-  contents: write    # 需要写权限来创建 Release
+  contents: write
 
 jobs:
   build-mac:
@@ -35,15 +35,14 @@ jobs:
       - name: Build renderer & electron
         run: pnpm --filter @openclaw-habitat/macos-shell build
 
-      - name: Package macOS
+      - name: Package macOS (signed + notarized)
         run: pnpm --filter @openclaw-habitat/macos-shell exec electron-builder --mac --publish never
-        # 加入 Apple Developer Program ($99/年) 后，取消注释以下 env 块启用签名 + 公证：
-        # env:
-        #   CSC_LINK: ${{ secrets.MAC_CERT_P12 }}
-        #   CSC_KEY_PASSWORD: ${{ secrets.MAC_CERT_PASSWORD }}
-        #   APPLE_ID: ${{ secrets.APPLE_ID }}
-        #   APPLE_APP_SPECIFIC_PASSWORD: ${{ secrets.APPLE_APP_SPECIFIC_PASSWORD }}
-        #   APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
+        env:
+          CSC_LINK: ${{ secrets.MAC_CERT_P12 }}
+          CSC_KEY_PASSWORD: ${{ secrets.MAC_CERT_PASSWORD }}
+          APPLE_ID: ${{ secrets.APPLE_ID }}
+          APPLE_APP_SPECIFIC_PASSWORD: ${{ secrets.APPLE_APP_SPECIFIC_PASSWORD }}
+          APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
 
       - name: Upload macOS artifacts
         uses: actions/upload-artifact@v4
