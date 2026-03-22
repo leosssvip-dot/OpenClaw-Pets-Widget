@@ -1,5 +1,4 @@
-import { fileURLToPath } from 'node:url';
-import { join } from 'node:path';
+import { join, dirname } from 'node:path';
 import type { BrowserWindowConstructorOptions } from 'electron';
 
 /** 单只桌宠时的窗口宽高 */
@@ -16,18 +15,18 @@ export function getPetWindowSize(petCount: number): { width: number; height: num
   return { width: Math.min(w, 1100), height: SINGLE_PET_HEIGHT };
 }
 
+/**
+ * Resolve the preload script path.
+ *
+ * The main process is bundled into CJS by esbuild, so `import.meta.url` is
+ * unavailable. We use `__dirname` (CJS global pointing to the output
+ * directory of main.cjs) which always works in both dev and packaged builds.
+ * Preload.cjs sits in the same directory as main.cjs.
+ */
 function resolvePreloadPath() {
-  try {
-    return fileURLToPath(new URL('./preload.cjs', import.meta.url));
-  } catch {
-    // Fallback for asar packaging
-    try {
-      const { app } = require('electron') as typeof import('electron');
-      return join(app.getAppPath(), '.electron-build', 'preload.cjs');
-    } catch {
-      return './preload.cjs';
-    }
-  }
+  // __dirname = directory of the bundled main.cjs (e.g. .electron-build/)
+  // preload.cjs is a sibling file in the same directory.
+  return join(__dirname, 'preload.cjs');
 }
 
 export function buildPetWidgetWindowOptions(

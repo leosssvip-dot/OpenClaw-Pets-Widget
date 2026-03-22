@@ -55,7 +55,7 @@ const buildContext = await context({
   platform: 'node',
   format: 'cjs',
   outfile: outputFile,
-  external: ['electron'],
+  external: ['electron', 'cpu-features'],
   sourcemap: true
 });
 

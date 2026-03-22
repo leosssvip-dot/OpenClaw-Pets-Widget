@@ -33,36 +33,56 @@ function toHabitatPets(agents: AgentBindingSeed[]) {
 }
 
 /**
- * Resolve the agentId from the event, falling back to chatStore.activeAgentId
- * when the gateway doesn't provide one (agentId is 'unknown').
+ * Resolve the agentId from the event.  Only fall back to chatStore.activeAgentId
+ * when the gateway sent an explicit sessionKey that we can verify later — this
+ * prevents messages from other channels (no sessionKey) being silently attributed
+ * to the currently active agent.
  */
 function resolveEventAgentId(event: HabitatEvent): string | null {
   if (event.agentId && event.agentId !== 'unknown') {
     return event.agentId;
   }
-  // Gateway didn't tell us — assume it belongs to the agent we last talked to
-  return chatStore.getState().activeAgentId;
+  // Only fall back if the event carries a sessionKey — we can still verify it
+  // downstream in isDesktopSession().  Without a sessionKey there is no way to
+  // confirm this message belongs to the desktop session.
+  if (event.sessionKey) {
+    return chatStore.getState().activeAgentId;
+  }
+  return null;
 }
 
 function isActiveAgent(agentId: string | null): boolean {
-  if (!agentId) return true; // can't determine, accept
+  if (!agentId) return false; // can't determine → reject
 
   const activeAgentId = chatStore.getState().activeAgentId;
-  if (!activeAgentId) return true; // nothing active, accept all
+  if (!activeAgentId) return false; // nothing active → reject (runId check covers our own runs)
 
   return agentId === activeAgentId;
+}
+
+/**
+ * Check if the event belongs to a run we initiated from this desktop client.
+ * When we send a message we track the generated runId; the gateway echoes it
+ * back on every event for that run, so we can always recognise our own traffic.
+ */
+function isOwnRun(event: HabitatEvent): boolean {
+  if (!event.runId) return false;
+  return chatStore.getState().pendingRunIds.has(event.runId);
 }
 
 /**
  * Check if the event's sessionKey matches the desktop app's session for the
  * given agent. Events from other channels (e.g. Feishu) will have a different
  * sessionKey and should not be displayed in the desktop chat UI.
+ *
+ * STRICT: events without a sessionKey are always rejected — the desktop client
+ * sends a sessionKey with every request and expects the gateway to echo it back.
  */
 function isDesktopSession(event: HabitatEvent, bridge: BridgeClient, agentId: string | null): boolean {
-  // No sessionKey on the event — can't filter, accept (backwards-compat)
-  if (!event.sessionKey) return true;
-  // No active agent to compare against — accept
-  if (!agentId) return true;
+  // No sessionKey on the event → cannot verify channel, reject
+  if (!event.sessionKey) return false;
+  // No agent to compare against → reject
+  if (!agentId) return false;
 
   const desktopSessionKey = bridge.getSessionKey(agentId);
   return event.sessionKey === desktopSessionKey;
@@ -186,7 +206,17 @@ export class ConnectionManager {
   }
 
   async sendMessage(input: SendMessageInput): Promise<void> {
-    await this.executeWithRecovery(() => this.bridge.sendMessage(input));
+    // Generate a runId so we can recognise the gateway's response events
+    const runId = input.idempotencyKey ?? crypto.randomUUID();
+    chatStore.getState().trackRunId(runId);
+    try {
+      await this.executeWithRecovery(() =>
+        this.bridge.sendMessage({ ...input, idempotencyKey: runId })
+      );
+    } catch (error) {
+      chatStore.getState().untrackRunId(runId);
+      throw error;
+    }
   }
 
   async createTask(input: CreateTaskInput): Promise<void> {
@@ -217,9 +247,12 @@ export class ConnectionManager {
         publisher.publishEvent(event);
 
         const eventAgentId = resolveEventAgentId(event);
+        // Accept if the event matches our own run OR the active agent's desktop session
+        const ownRun = isOwnRun(event);
+        const desktopMatch = isActiveAgent(eventAgentId) && isDesktopSession(event, this.bridge, eventAgentId);
 
         if (event.kind === 'chat.message') {
-          if (isActiveAgent(eventAgentId) && isDesktopSession(event, this.bridge, eventAgentId)) {
+          if (ownRun || desktopMatch) {
             chatStore.getState().addAssistantMessage(event.text, event.final);
           } else if (eventAgentId) {
             // Different agent or different channel — persist in background
@@ -228,11 +261,20 @@ export class ConnectionManager {
           }
         }
         if (event.kind === 'agent.completed') {
-          if (isActiveAgent(eventAgentId) && isDesktopSession(event, this.bridge, eventAgentId)) {
+          if (ownRun || desktopMatch) {
             chatStore.getState().setTyping(false);
             chatStore.setState({ pendingResponse: false });
           }
+          // Clean up the tracked runId
+          if (event.runId) {
+            chatStore.getState().untrackRunId(event.runId);
+          }
         }
+        // NOTE: Do NOT untrack runId on agent.error — the gateway may
+        // internally retry the run (e.g. 401 → fallback model).  All
+        // retry events share the same runId, so removing it here would
+        // cause subsequent chat.message / agent.completed events to be
+        // unrecognised.  Cleanup happens only on agent.completed above.
       });
 
       const agents = await this.bridge.listAgents();

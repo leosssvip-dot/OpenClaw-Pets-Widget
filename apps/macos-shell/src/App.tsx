@@ -380,7 +380,7 @@ export function App() {
     text: string,
     images?: Array<{ url: string; alt?: string }>,
   ) => {
-    habitatStore.getState().markPetAsThinking(petId, text);
+    habitatStore.getState().markPetAsWorking(petId);
     try {
       await connectionManager.sendMessage({ petId, agentId, content: text, images });
     } catch (error) {

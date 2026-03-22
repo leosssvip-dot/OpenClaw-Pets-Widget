@@ -10,6 +10,8 @@ export interface ChatState {
   activeAgentId: string | null;
   /** The gateway profile id for building session keys. */
   activeProfileId: string | null;
+  /** runIds of messages we sent from this desktop client — used to identify our own responses. */
+  pendingRunIds: Set<string>;
   addUserMessage: (content: string, images?: ChatImage[]) => void;
   addAssistantMessage: (content: string, final?: boolean) => void;
   replaceMessages: (messages: ChatMessage[]) => void;
@@ -17,6 +19,10 @@ export interface ChatState {
   setTyping: (typing: boolean) => void;
   /** Set which agent/profile session is currently displayed. */
   setActiveSession: (profileId: string | null, agentId: string | null) => void;
+  /** Register a runId so incoming events with that runId are recognised as ours. */
+  trackRunId: (runId: string) => void;
+  /** Remove a runId when the run completes. */
+  untrackRunId: (runId: string) => void;
 }
 
 let messageId = 0;
@@ -31,6 +37,7 @@ export const createChatStore = () =>
     pendingResponse: false,
     activeAgentId: null,
     activeProfileId: null,
+    pendingRunIds: new Set<string>(),
     addUserMessage: (content, images) =>
       set((s) => ({
         typing: true,
@@ -73,6 +80,18 @@ export const createChatStore = () =>
     clearMessages: () => set({ messages: [], typing: false, pendingResponse: false }),
     setTyping: (typing) => set({ typing }),
     setActiveSession: (profileId, agentId) => set({ activeProfileId: profileId, activeAgentId: agentId }),
+    trackRunId: (runId) =>
+      set((s) => {
+        const next = new Set(s.pendingRunIds);
+        next.add(runId);
+        return { pendingRunIds: next };
+      }),
+    untrackRunId: (runId) =>
+      set((s) => {
+        const next = new Set(s.pendingRunIds);
+        next.delete(runId);
+        return { pendingRunIds: next };
+      }),
   }));
 
 export const chatStore = createChatStore();

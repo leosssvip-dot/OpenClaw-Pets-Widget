@@ -42,6 +42,12 @@ export function QuickComposer({
           placeholder={placeholder ?? `Message ${petName}`}
           rows={4}
           onChange={(event) => setValue(event.target.value)}
+          onKeyDown={(event) => {
+            // Prevent form submission while composing CJK characters via IME
+            if (event.key === 'Enter' && event.nativeEvent.isComposing) {
+              event.preventDefault();
+            }
+          }}
         />
       </label>
       <div className="composer-actions">

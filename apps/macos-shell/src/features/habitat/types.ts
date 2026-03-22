@@ -11,8 +11,8 @@ export interface HabitatPet {
   bubbleText?: string;
 }
 
-/** 本地覆盖：发消息后立即显示 thinking，等 bridge 事件再清除 */
-export type LocalPetStatusOverride = 'thinking' | 'blocked';
+/** 本地覆盖：发消息后立即显示 working，出错时显示 blocked，等 bridge 事件再清除 */
+export type LocalPetStatusOverride = 'thinking' | 'working' | 'blocked';
 
 /** 收到回复后 working 状态多延续一段时间（时间戳，过期前展示为 working） */
 export const WORKING_EXTEND_MS = 3200;
@@ -28,6 +28,7 @@ export interface HabitatState {
   seedPets: (pets: HabitatPet[]) => void;
   selectPet: (petId: string) => void;
   markPetAsThinking: (petId: string, content: string) => void;
+  markPetAsWorking: (petId: string) => void;
   markPetAsBlocked: (petId: string, message: string) => void;
   applyEvent: (event: HabitatEvent) => void;
   clearExpiredWorkingUntil: () => void;

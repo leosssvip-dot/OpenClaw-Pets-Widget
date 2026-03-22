@@ -175,7 +175,7 @@ export function ChatInput({
         setActiveIndex((i) => (i <= 0 ? filteredCommands.length - 1 : i - 1));
         return;
       }
-      if ((e.key === 'Enter' || e.key === 'Tab') && activeIndex >= 0) {
+      if ((e.key === 'Enter' || e.key === 'Tab') && activeIndex >= 0 && !e.nativeEvent.isComposing) {
         e.preventDefault();
         handleCommandClick(filteredCommands[activeIndex]);
         return;
@@ -187,7 +187,9 @@ export function ChatInput({
       }
     }
 
-    if (e.key === 'Enter' && !e.shiftKey) {
+    // Skip if the user is composing CJK characters via IME — Enter confirms
+    // the candidate selection, not message submission.
+    if (e.key === 'Enter' && !e.shiftKey && !e.nativeEvent.isComposing) {
       e.preventDefault();
       handleSubmit();
     }

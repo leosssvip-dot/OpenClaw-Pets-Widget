@@ -14,6 +14,8 @@ export interface SendMessageInput {
   content: string;
   /** Optional image attachments as data-URIs or remote URLs. */
   images?: Array<{ url: string; alt?: string }>;
+  /** Caller-provided idempotency key; gateway echoes it back as runId on all events. */
+  idempotencyKey?: string;
 }
 
 export interface CreateTaskInput {
@@ -46,6 +48,8 @@ interface BaseHabitatEvent {
   petId?: string;
   /** The session key echoed back by the gateway (e.g. "agent:main:main"). */
   sessionKey?: string;
+  /** The run identifier echoed back by the gateway (matches the idempotencyKey we sent). */
+  runId?: string;
 }
 
 export type HabitatEvent =

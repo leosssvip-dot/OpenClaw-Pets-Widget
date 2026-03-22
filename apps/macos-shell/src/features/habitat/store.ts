@@ -100,6 +100,19 @@ export const createHabitatStore = () =>
           : state.pets;
         return { pets: nextPets, localStatusByPetId: nextLocal };
       }),
+    markPetAsWorking: (petId: string) =>
+      set((state) => {
+        const pet = state.pets[petId];
+        const nextLocal = { ...state.localStatusByPetId, [petId]: 'working' as const };
+        const nextPets = pet
+          ? { ...state.pets, [petId]: { ...pet, status: 'working' as const } }
+          : state.pets;
+        const nextWorkingUntil = {
+          ...state.workingUntilByPetId,
+          [petId]: Date.now() + WORKING_EXTEND_MS
+        };
+        return { pets: nextPets, localStatusByPetId: nextLocal, workingUntilByPetId: nextWorkingUntil };
+      }),
     markPetAsBlocked: (petId: string, message: string) =>
       set((state) => {
         const nextLocal = { ...state.localStatusByPetId, [petId]: 'blocked' as const };

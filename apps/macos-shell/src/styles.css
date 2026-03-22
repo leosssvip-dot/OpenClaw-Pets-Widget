@@ -2148,7 +2148,10 @@ button.toggle {
   padding: 0 0 4px;
   border: 0;
   border-radius: 0;
-  background: transparent;
+  /* Nearly invisible background — ensures Electron's transparent-window hit
+     test detects this area as opaque so mouse events are delivered to the
+     renderer instead of passing through to windows behind. */
+  background: rgba(0, 0, 0, 0.01);
   box-shadow: none;
   cursor: grab;
   user-select: none;
@@ -4258,6 +4261,7 @@ button.toggle {
   width: 100%;
   height: 100%;
   display: block;
+  pointer-events: none;
 }
 
 .desktop-pet__render-surface--dimmed {

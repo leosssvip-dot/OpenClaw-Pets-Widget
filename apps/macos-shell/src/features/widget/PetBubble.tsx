@@ -46,6 +46,11 @@ export function PetBubble({ mode, statusText, onSend, onClose }: PetBubbleProps)
     if (event.key === 'Escape') {
       onClose?.();
     }
+    // Prevent form submission while composing CJK characters via IME —
+    // Enter should confirm the candidate selection, not send the message.
+    if (event.key === 'Enter' && event.nativeEvent.isComposing) {
+      event.preventDefault();
+    }
   }
 
   return (

@@ -592,6 +592,7 @@ export class OpenClawClient implements BridgeClient {
       const petId = frame.petId ?? parseAgentIdFromSessionKey(payloadRecord?.sessionKey) ?? undefined;
 
       const sessionKey = typeof payloadRecord?.sessionKey === 'string' ? payloadRecord.sessionKey : undefined;
+      const runId = typeof payloadRecord?.runId === 'string' ? payloadRecord.runId : undefined;
 
       listener(
         parseOpenClawEvent({
@@ -600,6 +601,7 @@ export class OpenClawClient implements BridgeClient {
           gatewayId: frame.gatewayId ?? this.activeProfile?.id ?? 'unknown',
           petId,
           sessionKey,
+          runId,
           payload: frame.payload
         })
       );
@@ -630,7 +632,7 @@ export class OpenClawClient implements BridgeClient {
     const params: Record<string, unknown> = {
       sessionKey: this.resolveSessionKey(input.agentId ?? input.petId),
       message: input.content,
-      idempotencyKey: createIdempotencyKey()
+      idempotencyKey: input.idempotencyKey ?? createIdempotencyKey()
     };
 
     // Convert data-URI images into gateway attachments format
