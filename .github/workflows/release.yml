@@ -43,7 +43,7 @@ jobs:
         run: pnpm --filter @openclaw-habitat/macos-shell build
 
       - name: Package macOS (${{ matrix.arch }})
-        run: pnpm --filter @openclaw-habitat/macos-shell exec electron-builder --mac --arch ${{ matrix.arch }} --publish never
+        run: pnpm --filter @openclaw-habitat/macos-shell exec electron-builder --mac --${{ matrix.arch }} --publish never
         env:
           CSC_LINK: ${{ secrets.MAC_CERT_P12 }}
           CSC_KEY_PASSWORD: ${{ secrets.MAC_CERT_PASSWORD }}
