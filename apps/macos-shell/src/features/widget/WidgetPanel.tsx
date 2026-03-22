@@ -15,6 +15,7 @@ import {
   type PetRolePackId
 } from './pet-appearance';
 import { getHabitatDesktopApi } from '../../runtime/habitat-api';
+import { useT } from '../../i18n';
 
 function rolePackMeta(rolePack: PetRolePackId) {
   return PET_ROLE_PACKS.find((pack) => pack.id === rolePack) ?? PET_ROLE_PACKS[0];
@@ -70,6 +71,7 @@ export function WidgetPanel({
   onUpdateAppearance: (petId: string, appearance: PetAppearanceConfig) => void;
   onSubmitQuickPrompt: (value: string, images?: Array<{ url: string; alt?: string }>) => Promise<void>;
 }) {
+  const t = useT();
   const resolvedAppearance = resolvePetAppearance(currentCompanion?.appearance);
   const currentRolePack = rolePackMeta(resolvedAppearance.rolePack);
   const currentName = currentCompanion?.petName ?? currentCompanion?.agentId ?? 'OpenClaw';
@@ -120,17 +122,17 @@ export function WidgetPanel({
             <div className="panel-header">
               <div className="window-bar">
                 <div className="dots" aria-hidden="true">
-                  <button 
-                    type="button" 
-                    className="dot dot--close" 
-                    aria-label="Close" 
-                    onClick={() => void getHabitatDesktopApi()?.togglePanel()} 
+                  <button
+                    type="button"
+                    className="dot dot--close"
+                    aria-label="Close"
+                    onClick={() => void getHabitatDesktopApi()?.togglePanel()}
                   />
-                  <button 
-                    type="button" 
-                    className="dot dot--minimize" 
-                    aria-label="Minimize" 
-                    onClick={() => void getHabitatDesktopApi()?.togglePanel()} 
+                  <button
+                    type="button"
+                    className="dot dot--minimize"
+                    aria-label="Minimize"
+                    onClick={() => void getHabitatDesktopApi()?.togglePanel()}
                   />
                 </div>
                 <div className="window-bar__actions">
@@ -152,7 +154,7 @@ export function WidgetPanel({
                       }
                     }}
                   >
-                    💬 Chat
+                    {'💬 '}{t('tab.chat')}
                     {agentRows.length > 1 && (
                       <span className={`panel-tab-chevron${agentDropdownOpen ? ' panel-tab-chevron--open' : ''}`}>
                         <svg width="8" height="5" viewBox="0 0 8 5" fill="none">
@@ -183,17 +185,17 @@ export function WidgetPanel({
                     </div>
                   )}
                 </div>
-                <button 
+                <button
                   className={`panel-tab ${activeTab === 'pets' ? 'panel-tab--active' : ''}`}
                   onClick={() => setActiveTab('pets')}
                 >
-                  🐾 Gallery
+                  {'🐾 '}{t('tab.gallery')}
                 </button>
-                <button 
+                <button
                   className={`panel-tab ${activeTab === 'settings' ? 'panel-tab--active' : ''}`}
                   onClick={() => setActiveTab('settings')}
                 >
-                  ⚙️ Settings
+                  {'⚙️ '}{t('tab.settings')}
                 </button>
               </nav>
             </div>
@@ -217,22 +219,22 @@ export function WidgetPanel({
                 ) : (
                   <div className="app-shell__empty-state">
                     <div className="app-shell__empty-state-icon" aria-hidden="true">🦞</div>
-                    <strong>No companion on stage</strong>
-                    <p>Pick a companion from the Gallery, or connect a gateway first.</p>
+                    <strong>{t('empty.noCompanion')}</strong>
+                    <p>{t('empty.noCompanionHint')}</p>
                     <div className="app-shell__empty-state-actions">
                       <button
                         type="button"
                         className="app-shell__empty-state-action"
                         onClick={() => setActiveTab('pets')}
                       >
-                        Browse Gallery
+                        {t('empty.browseGallery')}
                       </button>
                       <button
                         type="button"
                         className="app-shell__empty-state-action app-shell__empty-state-action--secondary"
                         onClick={() => setActiveTab('settings')}
                       >
-                        Connect gateway
+                        {t('empty.connectGateway')}
                       </button>
                     </div>
                   </div>

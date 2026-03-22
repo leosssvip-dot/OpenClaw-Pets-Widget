@@ -2,6 +2,7 @@ import { useRef, useEffect, useMemo, useState, useCallback } from 'react';
 import type { ChatMessage } from './types';
 import { MarkdownContent } from './MarkdownContent';
 import { parseMessageActions, type MessageAction } from './message-actions';
+import { useT } from '../../i18n';
 
 export function ChatMessageList({
   messages,
@@ -17,6 +18,7 @@ export function ChatMessageList({
   /** Called when the user clicks an inline action button in an assistant message. */
   onAction?: (command: string) => void;
 }) {
+  const t = useT();
   const assistantLabel = agentName || 'Assistant';
   const containerRef = useRef<HTMLUListElement>(null);
   const [showScrollBtn, setShowScrollBtn] = useState(false);
@@ -82,7 +84,7 @@ export function ChatMessageList({
         aria-label="Chat messages"
       >
         <p className="chat-message-list__empty">
-          No messages yet. Send a message to start.
+          {t('chat.emptyMessages')}
         </p>
       </div>
     );
@@ -105,7 +107,7 @@ export function ChatMessageList({
               data-testid={`chat-msg-${m.role}`}
             >
               <span className="chat-message__role" aria-hidden="true">
-                {m.role === 'user' ? 'You' : assistantLabel}
+                {m.role === 'user' ? t('chat.you') : assistantLabel}
               </span>
               {m.images && m.images.length > 0 && (
                 <div className="chat-message__images">
@@ -167,7 +169,7 @@ export function ChatMessageList({
           type="button"
           className="chat-scroll-bottom-btn"
           onClick={() => scrollToBottom('smooth')}
-          aria-label="Scroll to latest messages"
+          aria-label={t('chat.scrollToLatest')}
         >
           ↓
         </button>

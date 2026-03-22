@@ -3,6 +3,7 @@ import { createJSONStorage, persist } from 'zustand/middleware';
 import { createStore } from 'zustand/vanilla';
 import { useStore } from 'zustand';
 import type { PetAppearanceConfig } from '../widget/pet-appearance';
+import type { Locale } from '../../i18n';
 import { getHabitatDesktopApi } from '../../runtime/habitat-api';
 
 /**
@@ -103,6 +104,7 @@ interface SettingsState {
   activeProfileId: string | null;
   pinnedAgentId: string | null;
   petWindowPlacement: PetWindowPlacement | null;
+  language: Locale;
   saveGatewayProfile: (profile: GatewayProfile) => void;
   deleteGatewayProfile: (profileId: string) => void;
   bindPetToAgent: (binding: PetAgentBinding) => void;
@@ -111,6 +113,7 @@ interface SettingsState {
   updateProfileToken: (profileId: string, token: string) => void;
   setPinnedAgentId: (agentId: string | null) => void;
   setPetWindowPlacement: (placement: PetWindowPlacement | null) => void;
+  setLanguage: (language: Locale) => void;
 }
 
 
@@ -124,6 +127,7 @@ export const createSettingsStore = () =>
         activeProfileId: null,
         pinnedAgentId: null,
         petWindowPlacement: null,
+        language: 'en' as Locale,
         saveGatewayProfile: (profile) =>
           set((state) => ({
             gatewayProfiles: {
@@ -188,6 +192,8 @@ export const createSettingsStore = () =>
           set({
             petWindowPlacement: placement
           }),
+        setLanguage: (language) =>
+          set({ language }),
         updateProfileToken: (profileId, token) =>
           set((state) => {
             const profile = state.gatewayProfiles[profileId];
@@ -235,7 +241,8 @@ export const createSettingsStore = () =>
           appearances: state.appearances,
           activeProfileId: state.activeProfileId,
           pinnedAgentId: state.pinnedAgentId,
-          petWindowPlacement: state.petWindowPlacement
+          petWindowPlacement: state.petWindowPlacement,
+          language: state.language
         })
       }
     )

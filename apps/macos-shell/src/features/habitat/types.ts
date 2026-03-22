@@ -15,7 +15,7 @@ export interface HabitatPet {
 export type LocalPetStatusOverride = 'thinking' | 'working' | 'blocked';
 
 /** 收到回复后 working 状态多延续一段时间（时间戳，过期前展示为 working） */
-export const WORKING_EXTEND_MS = 3200;
+export const WORKING_EXTEND_MS = 5_000;
 
 export interface HabitatState {
   pets: Record<string, HabitatPet>;

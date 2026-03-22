@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { useT } from '../../i18n';
 
 export interface SshConnectionInput {
   host: string;
@@ -23,7 +24,7 @@ export type ConnectionInput =
 export function SshConnectionForm({
   onSubmit,
   initialValues,
-  submitLabel = 'Connect',
+  submitLabel,
   disabled
 }: {
   onSubmit: (input: SshConnectionInput) => Promise<void> | void;
@@ -31,6 +32,7 @@ export function SshConnectionForm({
   submitLabel?: string;
   disabled?: boolean;
 }) {
+  const t = useT();
   const [host, setHost] = useState(initialValues?.host ?? '');
   const [username, setUsername] = useState(initialValues?.username ?? '');
   const [sshPort, setSshPort] = useState(String(initialValues?.sshPort ?? 22));
@@ -42,6 +44,7 @@ export function SshConnectionForm({
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
+  const effectiveSubmitLabel = submitLabel ?? t('gateway.connect');
   const isValid = host.trim() !== '' && username.trim() !== '' && gatewayToken.trim() !== '';
   const isBusy = disabled || submitting;
 
@@ -70,9 +73,9 @@ export function SshConnectionForm({
       }}
     >
       <label>
-        Remote Host
+        {t('ssh.remoteHost')}
         <input
-          aria-label="Remote Host"
+          aria-label={t('ssh.remoteHost')}
           value={host}
           onChange={(event) => setHost(event.target.value)}
           placeholder="gateway.example.com"
@@ -81,9 +84,9 @@ export function SshConnectionForm({
         />
       </label>
       <label>
-        SSH User
+        {t('ssh.sshUser')}
         <input
-          aria-label="SSH User"
+          aria-label={t('ssh.sshUser')}
           value={username}
           onChange={(event) => setUsername(event.target.value)}
           placeholder="users"
@@ -92,9 +95,9 @@ export function SshConnectionForm({
         />
       </label>
       <label>
-        SSH Port
+        {t('ssh.sshPort')}
         <input
-          aria-label="SSH Port"
+          aria-label={t('ssh.sshPort')}
           type="number"
           min="1"
           value={sshPort}
@@ -103,9 +106,9 @@ export function SshConnectionForm({
         />
       </label>
       <label>
-        SSH Password
+        {t('ssh.sshPassword')}
         <input
-          aria-label="SSH Password"
+          aria-label={t('ssh.sshPassword')}
           type="password"
           value={password}
           onChange={(event) => setPassword(event.target.value)}
@@ -114,9 +117,9 @@ export function SshConnectionForm({
         />
       </label>
       <label>
-        Gateway Port
+        {t('ssh.gatewayPort')}
         <input
-          aria-label="Gateway Port"
+          aria-label={t('ssh.gatewayPort')}
           type="number"
           min="1"
           value={remoteGatewayPort}
@@ -125,9 +128,9 @@ export function SshConnectionForm({
         />
       </label>
       <label>
-        Gateway Token
+        {t('ssh.gatewayToken')}
         <input
-          aria-label="Gateway Token"
+          aria-label={t('ssh.gatewayToken')}
           type="password"
           value={gatewayToken}
           onChange={(event) => setGatewayToken(event.target.value)}
@@ -136,8 +139,7 @@ export function SshConnectionForm({
         />
       </label>
       <p className="gateway-profiles__hint">
-        Uses your system SSH config and loaded keys.
-        Password is securely cached for reconnects.
+        {t('ssh.hint')}
       </p>
       {error && (
         <p className="gateway-profiles__error" role="alert">
@@ -145,7 +147,7 @@ export function SshConnectionForm({
         </p>
       )}
       <button type="submit" disabled={isBusy || !isValid}>
-        {submitting ? 'Connecting...' : submitLabel}
+        {submitting ? t('gateway.connecting') : effectiveSubmitLabel}
       </button>
     </form>
   );
@@ -154,7 +156,7 @@ export function SshConnectionForm({
 export function LocalConnectionForm({
   onSubmit,
   initialValues,
-  submitLabel = 'Connect',
+  submitLabel,
   disabled
 }: {
   onSubmit: (input: LocalConnectionInput) => Promise<void> | void;
@@ -162,6 +164,7 @@ export function LocalConnectionForm({
   submitLabel?: string;
   disabled?: boolean;
 }) {
+  const t = useT();
   const [gatewayPort, setGatewayPort] = useState(
     String(initialValues?.gatewayPort ?? 18789)
   );
@@ -169,6 +172,7 @@ export function LocalConnectionForm({
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
+  const effectiveSubmitLabel = submitLabel ?? t('gateway.connect');
   const isBusy = disabled || submitting;
 
   return (
@@ -192,9 +196,9 @@ export function LocalConnectionForm({
       }}
     >
       <label>
-        Gateway Port
+        {t('ssh.gatewayPort')}
         <input
-          aria-label="Gateway Port"
+          aria-label={t('ssh.gatewayPort')}
           type="number"
           min="1"
           value={gatewayPort}
@@ -203,9 +207,9 @@ export function LocalConnectionForm({
         />
       </label>
       <label>
-        Gateway Token
+        {t('ssh.gatewayToken')}
         <input
-          aria-label="Gateway Token"
+          aria-label={t('ssh.gatewayToken')}
           type="password"
           value={gatewayToken}
           onChange={(event) => setGatewayToken(event.target.value)}
@@ -214,7 +218,7 @@ export function LocalConnectionForm({
         />
       </label>
       <p className="gateway-profiles__hint">
-        Connects directly to an OpenClaw gateway running on this machine at ws://127.0.0.1:{gatewayPort || '18789'}.
+        {t('local.hint', { port: gatewayPort || '18789' })}
       </p>
       {error && (
         <p className="gateway-profiles__error" role="alert">
@@ -222,7 +226,7 @@ export function LocalConnectionForm({
         </p>
       )}
       <button type="submit" disabled={isBusy}>
-        {submitting ? 'Connecting...' : submitLabel}
+        {submitting ? t('gateway.connecting') : effectiveSubmitLabel}
       </button>
     </form>
   );

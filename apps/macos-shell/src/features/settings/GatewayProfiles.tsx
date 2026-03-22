@@ -6,6 +6,7 @@ import {
   type SshConnectionDraft,
   type ConnectionInput
 } from './SshConnectionForm';
+import { useT } from '../../i18n';
 
 type TransportMode = 'ssh' | 'local';
 
@@ -56,6 +57,7 @@ export function GatewayProfiles({
   onConnectProfile: (profileId: string) => void;
   onDeleteProfile: (profileId: string) => void;
 }) {
+  const t = useT();
   const [isOpen, setIsOpen] = useState(false);
   const [transportMode, setTransportMode] = useState<TransportMode>('ssh');
   const [editingProfile, setEditingProfile] = useState<GatewayProfile | null>(null);
@@ -76,8 +78,8 @@ export function GatewayProfiles({
     <section className="gateway-profiles">
       <div className="section-heading">
         <div className="section-heading__copy">
-          <h2>Connection & Gateways</h2>
-          <p>Saved links and gateway setup for this companion.</p>
+          <h2>{t('gateway.heading')}</h2>
+          <p>{t('gateway.description')}</p>
         </div>
         <button
           type="button"
@@ -91,7 +93,7 @@ export function GatewayProfiles({
             openNewForm('ssh');
           }}
         >
-          {isConnecting ? 'Connecting...' : isOpen ? 'Cancel' : 'Add gateway'}
+          {isConnecting ? t('gateway.connecting') : isOpen ? t('gateway.cancel') : t('gateway.addGateway')}
         </button>
       </div>
 
@@ -104,14 +106,14 @@ export function GatewayProfiles({
                 className={`gateway-profiles__transport-tab ${transportMode === 'ssh' ? 'gateway-profiles__transport-tab--active' : ''}`}
                 onClick={() => setTransportMode('ssh')}
               >
-                SSH Tunnel
+                {t('gateway.sshTunnel')}
               </button>
               <button
                 type="button"
                 className={`gateway-profiles__transport-tab ${transportMode === 'local' ? 'gateway-profiles__transport-tab--active' : ''}`}
                 onClick={() => setTransportMode('local')}
               >
-                Local
+                {t('gateway.local')}
               </button>
             </div>
           )}
@@ -120,7 +122,7 @@ export function GatewayProfiles({
             <SshConnectionForm
               key={editingProfile?.id ?? 'new-ssh'}
               initialValues={editingProfile && isSshProfile(editingProfile) ? toSshDraft(editingProfile) : undefined}
-              submitLabel={editingProfile ? 'Save' : 'Connect'}
+              submitLabel={editingProfile ? t('gateway.save') : t('gateway.connect')}
               disabled={isConnecting}
               onSubmit={async (input) => {
                 await onSaveProfile({ transport: 'ssh', ...input }, editingProfile?.id);
@@ -131,7 +133,7 @@ export function GatewayProfiles({
             <LocalConnectionForm
               key={editingProfile?.id ?? 'new-local'}
               initialValues={editingProfile && isLocalProfile(editingProfile) ? undefined : undefined}
-              submitLabel={editingProfile ? 'Save' : 'Connect'}
+              submitLabel={editingProfile ? t('gateway.save') : t('gateway.connect')}
               disabled={isConnecting}
               onSubmit={async (input) => {
                 await onSaveProfile({ transport: 'local', ...input }, editingProfile?.id);
@@ -160,7 +162,7 @@ export function GatewayProfiles({
                   disabled={isConnecting}
                   onClick={() => onConnectProfile(profile.id)}
                 >
-                  Connect
+                  {t('gateway.connect')}
                 </button>
               )}
               {isSshProfile(profile) ? (
@@ -174,7 +176,7 @@ export function GatewayProfiles({
                     setIsOpen(true);
                   }}
                 >
-                  Edit
+                  {t('gateway.edit')}
                 </button>
               ) : null}
               {pendingDeleteId === profile.id ? (
@@ -190,14 +192,14 @@ export function GatewayProfiles({
                       }
                     }}
                   >
-                    Confirm
+                    {t('gateway.confirm')}
                   </button>
                   <button
                     type="button"
                     className="gateway-profiles__action"
                     onClick={() => setPendingDeleteId(null)}
                   >
-                    Cancel
+                    {t('gateway.cancel')}
                   </button>
                 </>
               ) : (
@@ -207,7 +209,7 @@ export function GatewayProfiles({
                   disabled={isConnecting}
                   onClick={() => setPendingDeleteId(profile.id)}
                 >
-                  Delete
+                  {t('gateway.delete')}
                 </button>
               )}
             </div>

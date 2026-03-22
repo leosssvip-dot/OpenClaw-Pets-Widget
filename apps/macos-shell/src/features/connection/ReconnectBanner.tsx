@@ -1,3 +1,4 @@
+import { useT } from '../../i18n';
 import type { ConnectionStatus } from './ConnectionBadge';
 
 export function ReconnectBanner({
@@ -11,6 +12,8 @@ export function ReconnectBanner({
   hasActiveProfile: boolean;
   onReconnect: () => void;
 }) {
+  const t = useT();
+
   if (status !== 'reconnecting' && status !== 'offline' && status !== 'auth-expired') {
     return null;
   }
@@ -23,11 +26,11 @@ export function ReconnectBanner({
     <div className="reconnect-banner">
       <span>
         {status === 'auth-expired'
-          ? 'Gateway authentication expired. Reconnect with fresh credentials.'
-          : errorMessage ?? 'Gateway link is unavailable. Retry to restore live agent updates.'}
+          ? t('reconnect.authExpired')
+          : errorMessage ?? t('reconnect.offline')}
       </span>
       <button type="button" onClick={onReconnect}>
-        Retry
+        {t('reconnect.retry')}
       </button>
     </div>
   );

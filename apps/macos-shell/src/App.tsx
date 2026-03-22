@@ -17,6 +17,7 @@ import type { PetAppearanceConfig } from './features/widget/pet-appearance';
 import { PetWindowSizeProvider } from './features/widget/PetWindowSizeContext';
 import { WidgetPanel } from './features/widget/WidgetPanel';
 import { createHabitatSubscriber } from './runtime/habitat-sync';
+import { I18nProvider } from './i18n';
 
 interface UiStateSnapshot {
   selectedPetId: string | null;
@@ -188,6 +189,7 @@ export function App() {
   const gatewayProfilesById = useSettingsStore((state) => state.gatewayProfiles);
   const activeProfileId = useSettingsStore((state) => state.activeProfileId);
   const pinnedAgentId = useSettingsStore((state) => state.pinnedAgentId);
+  const language = useSettingsStore((state) => state.language);
   const bindingsByPetId = useSettingsStore((state) => state.bindings);
   const appearancesByPetId = useSettingsStore((state) => state.appearances);
   const effectiveSelectedPetId =
@@ -381,6 +383,11 @@ export function App() {
     images?: Array<{ url: string; alt?: string }>,
   ) => {
     habitatStore.getState().markPetAsWorking(petId);
+    // Sync working state to pet window immediately (separate renderer process)
+    getHabitatDesktopApi()?.sendHabitatSync?.({
+      type: 'event',
+      event: { kind: 'agent.status', status: 'working', petId, agentId } as import('@openclaw-habitat/bridge').HabitatEvent,
+    });
     try {
       await connectionManager.sendMessage({ petId, agentId, content: text, images });
     } catch (error) {
@@ -394,6 +401,11 @@ export function App() {
 
   const handlePetCreateTask = async (petId: string, agentId: string, prompt: string) => {
     habitatStore.getState().markPetAsThinking(petId, prompt);
+    // Sync thinking state to pet window immediately (separate renderer process)
+    getHabitatDesktopApi()?.sendHabitatSync?.({
+      type: 'event',
+      event: { kind: 'agent.status', status: 'thinking', petId, agentId } as import('@openclaw-habitat/bridge').HabitatEvent,
+    });
     try {
       await connectionManager.createTask({ petId, agentId, prompt });
     } catch (error) {
@@ -422,6 +434,7 @@ export function App() {
     const petWindowSizeValue = { setMenuExtraHeight };
     
     return (
+      <I18nProvider locale={language}>
       <PetWindowSizeProvider value={petWindowSizeValue}>
         <DesktopPet
         petName={petDisplayName}
@@ -469,10 +482,12 @@ export function App() {
         }}
       />
       </PetWindowSizeProvider>
+      </I18nProvider>
     );
   }
 
   return (
+    <I18nProvider locale={language}>
     <WidgetPanel
       connectionStatus={connectionStatus}
       connectionError={connectionError}
@@ -530,5 +545,6 @@ export function App() {
         }
       }}
     />
+    </I18nProvider>
   );
 }

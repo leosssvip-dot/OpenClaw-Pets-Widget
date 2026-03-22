@@ -35,11 +35,9 @@
     "mac": {
       "icon": "public/logo/logo-1024.png",
       "category": "public.app-category.productivity",
-      "hardenedRuntime": true,
+      "hardenedRuntime": false,
       "gatekeeperAssess": false,
-      "entitlements": "entitlements.mac.plist",
-      "entitlementsInherit": "entitlements.mac.plist",
-      "notarize": true,
+      "notarize": false,
       "target": [
         {
           "target": "dmg"

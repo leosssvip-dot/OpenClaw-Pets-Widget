@@ -8,6 +8,7 @@ import { PetRenderer } from './PetRenderer';
 import { MeritParticles } from './MeritParticles';
 import { PetBubble } from './PetBubble';
 import { usePetDrag } from './use-pet-drag';
+import { useT } from '../../i18n';
 
 const MERIT_INTERVAL: Record<string, number> = {
   idle: 1780,
@@ -50,6 +51,7 @@ export function DesktopPet({
 }) {
   void onCreateTask;
 
+  const t = useT();
   const isPanelOpen = useWidgetStore((state) => state.isPanelOpen);
   const [isHovered, setIsHovered] = useState(false);
   const [isFocused, setIsFocused] = useState(false);
@@ -121,12 +123,12 @@ export function DesktopPet({
       contextMenuOpenRef.current = true;
       try {
         const items = [
-          { id: 'chat', label: 'Send Message' },
-          { id: 'settings', label: 'Settings' },
+          { id: 'chat', label: t('pet.contextSendMessage') },
+          { id: 'settings', label: t('pet.contextSettings') },
           { id: 'sep1', label: '', type: 'separator' as const },
           ...PET_ROLE_PACKS.map((pack) => ({
             id: `switch:${pack.id}`,
-            label: pack.label,
+            label: t(`role.${pack.id}.label`),
             checked: pack.id === resolvedAppearance.rolePack,
           })),
         ];
@@ -145,7 +147,7 @@ export function DesktopPet({
         contextMenuOpenRef.current = false;
       }
     },
-    [resolvedAppearance.rolePack, onSwitchCharacter],
+    [resolvedAppearance.rolePack, onSwitchCharacter, t],
   );
 
   const handleBubbleSend = useCallback(
@@ -158,12 +160,12 @@ export function DesktopPet({
   );
 
   const statusTextMap: Record<string, string> = {
-    idle: 'Idle — ready for a task',
-    thinking: 'Thinking...',
-    working: 'Working on it...',
-    waiting: 'Waiting for input...',
-    done: 'Task complete!',
-    blocked: 'Something went wrong',
+    idle: t('pet.idle'),
+    thinking: t('pet.thinking'),
+    working: t('pet.working'),
+    waiting: t('pet.waiting'),
+    done: t('pet.done'),
+    blocked: t('pet.blocked'),
   };
 
   return (
@@ -179,7 +181,7 @@ export function DesktopPet({
         type="button"
         className={`desktop-pet desktop-pet--frameless desktop-pet--${connectionStatus} desktop-pet--state-${animationState.activity} desktop-pet--activity-${animationState.activity} desktop-pet--mood-${animationState.mood} desktop-pet--role-${resolvedAppearance.rolePack}${isPanelOpen ? ' desktop-pet--active desktop-pet--interaction-panel-open' : ''}${isHovered ? ' desktop-pet--interaction-hovered' : ''}${isPressed ? ' desktop-pet--interaction-pressed' : ''}${isFocused ? ' desktop-pet--interaction-focused' : ''}${isDragging ? ' desktop-pet--interaction-dragging' : ''}${isGreeting ? ' desktop-pet--interaction-greeting' : ''}`}
         aria-label={`${petName} desktop pet`}
-        title="Drag to move. Click to chat. Double-click to open panel. Right-click for menu."
+        title={t('pet.tooltip')}
         onContextMenu={handleContextMenu}
         onDoubleClick={() => {
           triggerGreeting();

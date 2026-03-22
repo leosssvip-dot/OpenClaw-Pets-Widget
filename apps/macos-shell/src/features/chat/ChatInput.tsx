@@ -1,5 +1,6 @@
 import { useState, useRef, useMemo, useCallback, useEffect } from 'react';
 import type { ChatImage } from './types';
+import { useT } from '../../i18n';
 
 /* ------------------------------------------------------------------ */
 /*  Public types                                                       */
@@ -38,29 +39,11 @@ async function processImageFiles(files: FileList | File[]): Promise<ChatImage[]>
 }
 
 /* ------------------------------------------------------------------ */
-/*  Built-in commands (autocomplete hints only)                        */
-/*  All commands are sent as plain text — the backend interprets them   */
-/*  and responds with structured data that becomes inline action buttons*/
-/* ------------------------------------------------------------------ */
-
-const BUILTIN_COMMANDS: SlashCommand[] = [
-  { command: '/help', description: 'Show available commands' },
-  { command: '/status', description: 'Check connection status' },
-  { command: '/new', description: 'Start a new session' },
-  { command: '/models', description: 'List available providers & models' },
-  { command: '/think', description: 'Set reasoning depth' },
-  { command: '/verbose', description: 'Set response verbosity' },
-  { command: '/compact', description: 'Compact conversation context' },
-  { command: '/reset', description: 'Reset current session' },
-  { command: '/stop', description: 'Stop current generation' },
-];
-
-/* ------------------------------------------------------------------ */
 /*  Component                                                          */
 /* ------------------------------------------------------------------ */
 
 export function ChatInput({
-  placeholder = 'Message...',
+  placeholder,
   disabled = false,
   onSubmit,
   extraCommands = [],
@@ -71,18 +54,33 @@ export function ChatInput({
   /** Additional commands to show in autocomplete (e.g. from gateway). */
   extraCommands?: SlashCommand[];
 }) {
+  const t = useT();
+  const effectivePlaceholder = placeholder ?? t('chat.placeholder');
   const [value, setValue] = useState('');
   const [activeIndex, setActiveIndex] = useState(-1);
   const [pendingImages, setPendingImages] = useState<ChatImage[]>([]);
   const inputRef = useRef<HTMLTextAreaElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
+  /* ---------- built-in commands (autocomplete hints only) ---------- */
+  const builtinCommands: SlashCommand[] = useMemo(() => [
+    { command: '/help', description: t('cmd.help') },
+    { command: '/status', description: t('cmd.status') },
+    { command: '/new', description: t('cmd.new') },
+    { command: '/models', description: t('cmd.models') },
+    { command: '/think', description: t('cmd.think') },
+    { command: '/verbose', description: t('cmd.verbose') },
+    { command: '/compact', description: t('cmd.compact') },
+    { command: '/reset', description: t('cmd.reset') },
+    { command: '/stop', description: t('cmd.stop') },
+  ], [t]);
+
   const commands = useMemo(() => {
     const map = new Map<string, SlashCommand>();
-    for (const cmd of BUILTIN_COMMANDS) map.set(cmd.command, cmd);
+    for (const cmd of builtinCommands) map.set(cmd.command, cmd);
     for (const cmd of extraCommands) map.set(cmd.command, cmd);
     return Array.from(map.values());
-  }, [extraCommands]);
+  }, [builtinCommands, extraCommands]);
 
   /* ---------- derived: autocomplete list ---------- */
   const showAutocomplete = value.startsWith('/');
@@ -229,7 +227,7 @@ export function ChatInput({
       {/* ---- Image previews ---- */}
       {pendingImages.length > 0 && (
         <div className="chat-input-images">
-          <p className="chat-input-images__hint">Images will be sent as attachments to the AI model.</p>
+          <p className="chat-input-images__hint">{t('chat.imageHint')}</p>
           {pendingImages.map((img, i) => (
             <div key={i} className="chat-input-images__item">
               <img src={img.url} alt={img.alt ?? 'attachment'} className="chat-input-images__thumb" />
@@ -271,7 +269,7 @@ export function ChatInput({
           ref={inputRef}
           className="chat-input__field"
           aria-label="Message"
-          placeholder={placeholder}
+          placeholder={effectivePlaceholder}
           value={value}
           onChange={(e) => setValue(e.target.value)}
           onKeyDown={handleKeyDown}
@@ -284,7 +282,7 @@ export function ChatInput({
           className="chat-input__submit"
           disabled={disabled || (!value.trim() && pendingImages.length === 0)}
         >
-          Send
+          {t('chat.send')}
         </button>
       </div>
     </form>

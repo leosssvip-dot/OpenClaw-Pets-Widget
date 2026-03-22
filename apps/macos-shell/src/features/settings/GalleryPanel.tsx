@@ -6,6 +6,7 @@ import {
 } from '../widget/pet-appearance';
 import { PetRenderer } from '../widget/PetRenderer';
 import type { PetAnimationActivity } from '../widget/pet-animation-state';
+import { useT } from '../../i18n';
 
 function statusLabel(status: string) {
   return status.replace(/-/g, ' ');
@@ -59,6 +60,7 @@ export function GalleryPanel({
   onCompanionSelect,
   pinnedAgentId
 }: GalleryPanelProps) {
+  const t = useT();
 
   return (
     <section className="gallery-panel" aria-label="Companions Gallery">
@@ -68,9 +70,9 @@ export function GalleryPanel({
             <span className="settings-drawer__pet-hint-mark" />
           </div>
           <div className="settings-drawer__heading-copy">
-            <h3 className="settings-drawer__title">Companions</h3>
+            <h3 className="settings-drawer__title">{t('gallery.title')}</h3>
             <span className="settings-drawer__subtitle">
-              Your lovely desktop pets
+              {t('gallery.subtitle')}
             </span>
           </div>
         </div>
@@ -79,8 +81,8 @@ export function GalleryPanel({
       {agentRows.length === 0 ? (
         <div className="app-shell__empty-state" style={{ marginTop: '20px' }}>
           <div className="app-shell__empty-state-icon" aria-hidden="true">🐾</div>
-          <strong>No companions available</strong>
-          <p>Connect to a gateway first to load your available companions.</p>
+          <strong>{t('gallery.noCompanions')}</strong>
+          <p>{t('gallery.noCompanionsHint')}</p>
         </div>
       ) : (
         <div className="gallery-grid">
@@ -132,7 +134,7 @@ export function GalleryPanel({
                       title={`Status: ${statusLabel(row.status)}`}
                     />
                   </div>
-                  <p className="gallery-card__role">{rowRoleMeta.roleLabel}</p>
+                  <p className="gallery-card__role">{t(`role.${rowRolePack}.roleLabel`) !== `role.${rowRolePack}.roleLabel` ? t(`role.${rowRolePack}.roleLabel`) : rowRoleMeta.roleLabel}</p>
 
                   <div className="gallery-card__actions" onClick={(e) => e.stopPropagation()}>
                     <select
@@ -147,7 +149,7 @@ export function GalleryPanel({
                     >
                       {PET_ROLE_PACKS.map((pack) => (
                         <option key={pack.id} value={pack.id}>
-                          {pack.label}
+                          {t(`role.${pack.id}.label`)}
                         </option>
                       ))}
                     </select>
@@ -156,7 +158,7 @@ export function GalleryPanel({
                       type="button"
                       className={`gallery-card__pin-btn ${isFavorite ? 'gallery-card__pin-btn--active' : ''}`}
                       onClick={() => onPinnedAgentChange(isFavorite ? null : row.agentId)}
-                      title={isFavorite ? "Unpin companion" : "Pin companion to stage"}
+                      title={isFavorite ? t('gallery.unpin') : t('gallery.pin')}
                     >
                       {isFavorite ? '★' : '☆'}
                     </button>
