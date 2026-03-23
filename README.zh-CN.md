@@ -96,38 +96,9 @@ pnpm lint
 
 ### Gateway 认证说明
 
-由于 `openclaw 2026.3.13` 的一个已知 bug，在桌面应用无法正常连接时，你可能需要为 Control UI 打开 insecure auth。
-
-常见报错如下：
-
-```text
-Gateway handshake rejected: control ui requires device identity (use HTTPS or localhost secure context)
-```
-
-更新 Gateway 配置：
-
-```json
-{
-  "gateway": {
-    "controlUi": {
-      "allowInsecureAuth": true
-    }
-  }
-}
-```
-
-或者使用 CLI：
-
-```bash
-# 设置配置项
-openclaw config set gateway.controlUi.allowInsecureAuth true --json
-
-# 查看当前值
-openclaw config get gateway.controlUi.allowInsecureAuth
-
-# 重启 gateway
-openclaw gateway restart
-```
+桌面应用首次启动时会自动生成 Ed25519 设备身份密钥对
+（保存在 `{userData}/device-identity.json`），并在每次连接 Gateway 时自动签名握手挑战。
+无需手动修改任何 Gateway 配置。
 
 如果你需要查找 Gateway token，可以查看以下位置：
 
