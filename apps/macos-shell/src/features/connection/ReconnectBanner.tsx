@@ -13,6 +13,10 @@ export function ReconnectBanner({
   onReconnect: () => void;
 }) {
   const t = useT();
+  const resolvedErrorMessage =
+    errorMessage === 'GATEWAY_TOKEN_DETECTION_FAILED'
+      ? t('reconnect.gatewayTokenMissing')
+      : errorMessage;
 
   if (status !== 'reconnecting' && status !== 'offline' && status !== 'auth-expired') {
     return null;
@@ -27,7 +31,7 @@ export function ReconnectBanner({
       <span>
         {status === 'auth-expired'
           ? t('reconnect.authExpired')
-          : errorMessage ?? t('reconnect.offline')}
+          : resolvedErrorMessage ?? t('reconnect.offline')}
       </span>
       <button type="button" onClick={onReconnect}>
         {t('reconnect.retry')}

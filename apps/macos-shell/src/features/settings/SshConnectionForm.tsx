@@ -128,7 +128,10 @@ export function SshConnectionForm({
         />
       </label>
       <label>
-        {t('ssh.gatewayToken')}
+        <span className="gateway-profiles__label-row">
+          {t('ssh.gatewayToken')}
+          <span className="gateway-profiles__optional-tag">{t('ssh.optional')}</span>
+        </span>
         <input
           aria-label={t('ssh.gatewayToken')}
           type="password"

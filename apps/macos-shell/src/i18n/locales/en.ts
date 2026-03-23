@@ -53,6 +53,7 @@ const en: Record<string, string> = {
   'ssh.sshPassword': 'SSH Password',
   'ssh.gatewayPort': 'Gateway Port',
   'ssh.gatewayToken': 'Gateway Token',
+  'ssh.optional': 'Optional',
   'ssh.tokenAutoDetect': 'Auto-detect from remote host',
   'ssh.hint': 'Uses your system SSH config and loaded keys. Password is securely cached for reconnects. Gateway token is auto-detected if left empty.',
   'local.hint': 'Connects directly to an OpenClaw gateway running on this machine at ws://127.0.0.1:{port}.',
@@ -66,6 +67,7 @@ const en: Record<string, string> = {
 
   // ReconnectBanner
   'reconnect.authExpired': 'Gateway authentication expired. Reconnect with fresh credentials.',
+  'reconnect.gatewayTokenMissing': 'Gateway token auto-detection failed. Please edit your SSH profile and manually set "Gateway Token".',
   'reconnect.offline': 'Gateway link is unavailable. Retry to restore live agent updates.',
   'reconnect.retry': 'Retry',
 

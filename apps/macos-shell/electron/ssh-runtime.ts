@@ -18,6 +18,16 @@ interface ActiveTunnel {
   profileId: string;
   intentionalShutdown: boolean;
   ready: boolean;
+  /**
+   * Latest detected gateway auth token for this tunnel.
+   * We intentionally cache it so reconnects during tunnel reuse don't lose auth.
+   */
+  authToken?: string;
+  /**
+   * Fetches the latest gateway auth token from the remote host.
+   * Used when the UI profile doesn't provide a token (auto-detection mode).
+   */
+  fetchAuthToken?: () => Promise<string | undefined>;
 }
 
 function buildLoopbackUrl(port: number) {
@@ -84,13 +94,47 @@ async function waitForPort(port: number, timeoutMs = 8_000) {
 // Remote gateway token auto-detection
 // ---------------------------------------------------------------------------
 
-/** Shell command that reads the gateway token from the remote host. */
-const FETCH_TOKEN_COMMAND = [
-  // 1. Try openclaw.json → gateway.auth.token
-  `node -e "try{const c=JSON.parse(require('fs').readFileSync(require('path').join(require('os').homedir(),'.openclaw','openclaw.json'),'utf8'));const t=c?.gateway?.auth?.token;if(t)process.stdout.write(t)}catch{}" 2>/dev/null`,
-  // 2. Fallback: .env OPENCLAW_GATEWAY_TOKEN
-  `|| grep -m1 '^OPENCLAW_GATEWAY_TOKEN=' ~/.openclaw/.env 2>/dev/null | cut -d= -f2-`
-].join(' ');
+/**
+ * Shell script that reads the gateway token from the remote host.
+ *
+ * Tries multiple strategies because non-interactive SSH shells often have
+ * a minimal PATH (nvm, fnm, volta won't be loaded):
+ *   1. .env file — pure grep/cut, works everywhere
+ *   2. openclaw.json via jq
+ *   3. openclaw.json via node (with common PATH extensions)
+ *   4. openclaw.json via python3
+ */
+const FETCH_TOKEN_COMMAND = `
+  _oc_token=""
+
+  # 1. .env (most reliable — plain text, no special tools needed)
+  if [ -z "$_oc_token" ] && [ -f ~/.openclaw/.env ]; then
+    _oc_token=$(grep '^OPENCLAW_GATEWAY_TOKEN=' ~/.openclaw/.env 2>/dev/null | head -1 | cut -d= -f2-)
+  fi
+
+  # 2. openclaw.json via jq
+  if [ -z "$_oc_token" ] && command -v jq >/dev/null 2>&1; then
+    _oc_token=$(jq -r '.gateway.auth.token // empty' ~/.openclaw/openclaw.json 2>/dev/null)
+  fi
+
+  # 3. openclaw.json via node (extend PATH for nvm/fnm/volta)
+  if [ -z "$_oc_token" ]; then
+    export PATH="$HOME/.local/bin:$HOME/.nvm/versions/node/*/bin:$HOME/.fnm/aliases/default/bin:$HOME/.volta/bin:/usr/local/bin:$PATH"
+    if command -v node >/dev/null 2>&1; then
+      _oc_token=$(node -e 'try{process.stdout.write(JSON.parse(require("fs").readFileSync(require("os").homedir()+"/.openclaw/openclaw.json","utf8")).gateway?.auth?.token||"")}catch{}' 2>/dev/null)
+    fi
+  fi
+
+  # 4. openclaw.json via python3
+  if [ -z "$_oc_token" ] && command -v python3 >/dev/null 2>&1; then
+    _oc_token=$(python3 -c 'import json,os;print(json.load(open(os.path.expanduser("~/.openclaw/openclaw.json"))).get("gateway",{}).get("auth",{}).get("token",""),end="")' 2>/dev/null)
+  fi
+
+  printf '%s' "$_oc_token"
+`.trim();
+
+// A stable error code so UI can show a helpful, localized hint.
+const GATEWAY_TOKEN_DETECTION_FAILED = 'GATEWAY_TOKEN_DETECTION_FAILED';
 
 /**
  * Execute a command on the remote host via an already-connected ssh2 client.
@@ -265,9 +309,37 @@ export class SshTunnelRuntime {
     sessionAuth?: GatewaySessionAuth
   ): Promise<PreparedGatewayConnection> {
     if (this.activeTunnel?.profileId === profile.id) {
+      let authToken = profile.gatewayToken;
+
+      // Auto-detection mode: the profile token is empty, so refresh it from the
+      // remote host even when reusing an existing tunnel.
+      if (!authToken && this.activeTunnel.fetchAuthToken) {
+        try {
+          console.log('[ssh-tunnel] refreshing gateway token from remote host');
+          authToken = await this.activeTunnel.fetchAuthToken();
+          if (authToken) {
+            console.log('[ssh-tunnel] refreshed gateway token from remote host');
+          }
+        } catch (err) {
+          console.warn('[ssh-tunnel] failed to refresh gateway token:', err);
+          // Fall back to the last known value (if any).
+          authToken = this.activeTunnel.authToken;
+        }
+      } else if (!authToken) {
+        // Still no auth token: fall back to cached value if available.
+        authToken = this.activeTunnel.authToken;
+      }
+
+      // If auto-detection fails, stop early with a clear user hint.
+      // Note: we do not treat this as "auth expired" because the token wasn't detected at all.
+      if (!authToken && !profile.gatewayToken) {
+        await this.disconnect();
+        throw new Error(GATEWAY_TOKEN_DETECTION_FAILED);
+      }
+
       return {
         url: buildLoopbackUrl(this.activeTunnel.localPort),
-        authToken: profile.gatewayToken
+        authToken: authToken || undefined
       };
     }
 
@@ -309,7 +381,8 @@ export class SshTunnelRuntime {
       localPort,
       profileId: profile.id,
       intentionalShutdown: false,
-      ready: false
+      ready: false,
+      authToken: undefined
     };
 
     client.once('close', () => {
@@ -340,17 +413,40 @@ export class SshTunnelRuntime {
     tunnel.ready = true;
     this.activeTunnel = tunnel;
 
+    tunnel.fetchAuthToken = async () => {
+      try {
+        const token = await ssh2Exec(client, FETCH_TOKEN_COMMAND);
+        return token || undefined;
+      } catch (err) {
+        console.warn('[ssh-tunnel] failed to auto-detect gateway token:', err);
+        return undefined;
+      }
+    };
+
     // Auto-detect gateway token from the remote host if not provided.
     let authToken = profile.gatewayToken;
     if (!authToken) {
       try {
-        authToken = await ssh2Exec(client, FETCH_TOKEN_COMMAND);
+        authToken = await tunnel.fetchAuthToken();
         if (authToken) {
           console.log('[ssh-tunnel] auto-detected gateway token from remote host');
         }
       } catch (err) {
+        // fetchAuthToken already logs; keep this branch defensive.
         console.warn('[ssh-tunnel] failed to auto-detect gateway token:', err);
       }
+    }
+
+    tunnel.authToken = authToken || undefined;
+
+    if (!authToken && !profile.gatewayToken) {
+      tunnel.intentionalShutdown = true;
+      if (this.activeTunnel === tunnel) {
+        this.activeTunnel = null;
+      }
+      tunnel.teardown();
+      await new Promise((resolve) => setTimeout(resolve, 200));
+      throw new Error(GATEWAY_TOKEN_DETECTION_FAILED);
     }
 
     return {
@@ -390,7 +486,8 @@ export class SshTunnelRuntime {
       localPort,
       profileId: profile.id,
       intentionalShutdown: false,
-      ready: false
+      ready: false,
+      authToken: undefined
     };
 
     child.stderr?.on('data', (chunk) => {
@@ -432,32 +529,48 @@ export class SshTunnelRuntime {
     tunnel.ready = true;
     this.activeTunnel = tunnel;
 
+    tunnel.fetchAuthToken = async () => {
+      const result = this.spawnProcess('ssh', [
+        '-o',
+        'BatchMode=yes',
+        '-o',
+        'StrictHostKeyChecking=accept-new',
+        '-p',
+        String(profile.sshPort),
+        ...(profile.identityFile ? ['-i', profile.identityFile] : []),
+        `${profile.username}@${profile.host}`,
+        FETCH_TOKEN_COMMAND
+      ], { stdio: ['ignore', 'pipe', 'ignore'] });
+
+      const token = await new Promise<string>((resolve) => {
+        let out = '';
+        result.stdout?.on('data', (chunk: Buffer) => { out += chunk.toString(); });
+        result.on('close', () => resolve(out.trim()));
+        setTimeout(() => resolve(''), 5_000);
+      });
+
+      return token || undefined;
+    };
+
     // Auto-detect gateway token via a separate quick SSH exec if not provided.
     let authToken = profile.gatewayToken;
     if (!authToken) {
-      try {
-        const result = this.spawnProcess('ssh', [
-          '-o', 'BatchMode=yes',
-          '-o', 'StrictHostKeyChecking=accept-new',
-          '-p', String(profile.sshPort),
-          ...(profile.identityFile ? ['-i', profile.identityFile] : []),
-          `${profile.username}@${profile.host}`,
-          FETCH_TOKEN_COMMAND
-        ], { stdio: ['ignore', 'pipe', 'ignore'] });
-
-        authToken = await new Promise<string>((resolve) => {
-          let out = '';
-          result.stdout?.on('data', (chunk: Buffer) => { out += chunk.toString(); });
-          result.on('close', () => resolve(out.trim()));
-          setTimeout(() => resolve(''), 5_000);
-        });
-
-        if (authToken) {
-          console.log('[ssh-tunnel] auto-detected gateway token from remote host');
-        }
-      } catch (err) {
-        console.warn('[ssh-tunnel] failed to auto-detect gateway token:', err);
+      authToken = await tunnel.fetchAuthToken();
+      if (authToken) {
+        console.log('[ssh-tunnel] auto-detected gateway token from remote host');
       }
+    }
+
+    tunnel.authToken = authToken || undefined;
+
+    if (!authToken && !profile.gatewayToken) {
+      tunnel.intentionalShutdown = true;
+      if (this.activeTunnel === tunnel) {
+        this.activeTunnel = null;
+      }
+      tunnel.teardown();
+      await new Promise((resolve) => setTimeout(resolve, 200));
+      throw new Error(GATEWAY_TOKEN_DETECTION_FAILED);
     }
 
     return {

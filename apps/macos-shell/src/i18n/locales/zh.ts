@@ -53,6 +53,7 @@ const zh: Record<string, string> = {
   'ssh.sshPassword': 'SSH 密码',
   'ssh.gatewayPort': '网关端口',
   'ssh.gatewayToken': '网关令牌',
+  'ssh.optional': '可选',
   'ssh.tokenAutoDetect': '留空则自动从远程主机获取',
   'ssh.hint': '使用系统 SSH 配置和已加载的密钥。密码会安全缓存以便重连。网关令牌留空时会自动从远程主机读取。',
   'local.hint': '直接连接到本机运行的 OpenClaw 网关 ws://127.0.0.1:{port}。',
@@ -66,6 +67,7 @@ const zh: Record<string, string> = {
 
   // ReconnectBanner
   'reconnect.authExpired': '网关认证已过期，请使用新凭据重新连接。',
+  'reconnect.gatewayTokenMissing': '网关令牌探测失败。请在 SSH 配置中手动填写「网关令牌」。',
   'reconnect.offline': '网关连接不可用，重试以恢复实时代理更新。',
   'reconnect.retry': '重试',
 
