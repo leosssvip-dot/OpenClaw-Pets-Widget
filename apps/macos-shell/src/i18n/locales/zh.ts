@@ -53,7 +53,8 @@ const zh: Record<string, string> = {
   'ssh.sshPassword': 'SSH 密码',
   'ssh.gatewayPort': '网关端口',
   'ssh.gatewayToken': '网关令牌',
-  'ssh.hint': '使用系统 SSH 配置和已加载的密钥。密码会安全缓存以便重连。',
+  'ssh.tokenAutoDetect': '留空则自动从远程主机获取',
+  'ssh.hint': '使用系统 SSH 配置和已加载的密钥。密码会安全缓存以便重连。网关令牌留空时会自动从远程主机读取。',
   'local.hint': '直接连接到本机运行的 OpenClaw 网关 ws://127.0.0.1:{port}。',
 
   // ConnectionBadge

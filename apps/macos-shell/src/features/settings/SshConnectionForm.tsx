@@ -7,7 +7,7 @@ export interface SshConnectionInput {
   sshPort: number;
   password?: string;
   remoteGatewayPort: number;
-  gatewayToken: string;
+  gatewayToken?: string;
 }
 
 export type SshConnectionDraft = Omit<SshConnectionInput, 'password'>;
@@ -45,7 +45,7 @@ export function SshConnectionForm({
   const [error, setError] = useState<string | null>(null);
 
   const effectiveSubmitLabel = submitLabel ?? t('gateway.connect');
-  const isValid = host.trim() !== '' && username.trim() !== '' && gatewayToken.trim() !== '';
+  const isValid = host.trim() !== '' && username.trim() !== '';
   const isBusy = disabled || submitting;
 
   return (
@@ -63,7 +63,7 @@ export function SshConnectionForm({
             sshPort: Number(sshPort || '22'),
             password: password || undefined,
             remoteGatewayPort: Number(remoteGatewayPort || '18789'),
-            gatewayToken
+            gatewayToken: gatewayToken.trim() || undefined
           });
         } catch (err) {
           setError(err instanceof Error ? err.message : String(err));
@@ -134,7 +134,7 @@ export function SshConnectionForm({
           type="password"
           value={gatewayToken}
           onChange={(event) => setGatewayToken(event.target.value)}
-          required
+          placeholder={t('ssh.tokenAutoDetect')}
           disabled={isBusy}
         />
       </label>

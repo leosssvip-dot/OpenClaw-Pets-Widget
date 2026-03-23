@@ -81,6 +81,44 @@ async function waitForPort(port: number, timeoutMs = 8_000) {
 }
 
 // ---------------------------------------------------------------------------
+// Remote gateway token auto-detection
+// ---------------------------------------------------------------------------
+
+/** Shell command that reads the gateway token from the remote host. */
+const FETCH_TOKEN_COMMAND = [
+  // 1. Try openclaw.json → gateway.auth.token
+  `node -e "try{const c=JSON.parse(require('fs').readFileSync(require('path').join(require('os').homedir(),'.openclaw','openclaw.json'),'utf8'));const t=c?.gateway?.auth?.token;if(t)process.stdout.write(t)}catch{}" 2>/dev/null`,
+  // 2. Fallback: .env OPENCLAW_GATEWAY_TOKEN
+  `|| grep -m1 '^OPENCLAW_GATEWAY_TOKEN=' ~/.openclaw/.env 2>/dev/null | cut -d= -f2-`
+].join(' ');
+
+/**
+ * Execute a command on the remote host via an already-connected ssh2 client.
+ * Returns stdout as a trimmed string.
+ */
+function ssh2Exec(client: SshClient, command: string, timeoutMs = 5_000): Promise<string> {
+  return new Promise((resolve, reject) => {
+    const timer = setTimeout(() => reject(new Error('ssh exec timed out')), timeoutMs);
+
+    client.exec(command, (err, stream) => {
+      if (err) {
+        clearTimeout(timer);
+        reject(err);
+        return;
+      }
+
+      let stdout = '';
+      stream.on('data', (chunk: Buffer) => { stdout += chunk.toString(); });
+      stream.on('close', () => {
+        clearTimeout(timer);
+        resolve(stdout.trim());
+      });
+      stream.stderr.on('data', () => { /* ignore stderr */ });
+    });
+  });
+}
+
+// ---------------------------------------------------------------------------
 // ssh2-based tunnel (pure JS, cross-platform, used for password auth)
 // ---------------------------------------------------------------------------
 
@@ -302,9 +340,22 @@ export class SshTunnelRuntime {
     tunnel.ready = true;
     this.activeTunnel = tunnel;
 
+    // Auto-detect gateway token from the remote host if not provided.
+    let authToken = profile.gatewayToken;
+    if (!authToken) {
+      try {
+        authToken = await ssh2Exec(client, FETCH_TOKEN_COMMAND);
+        if (authToken) {
+          console.log('[ssh-tunnel] auto-detected gateway token from remote host');
+        }
+      } catch (err) {
+        console.warn('[ssh-tunnel] failed to auto-detect gateway token:', err);
+      }
+    }
+
     return {
       url: buildLoopbackUrl(localPort),
-      authToken: profile.gatewayToken
+      authToken: authToken || undefined
     };
   }
 
@@ -381,9 +432,37 @@ export class SshTunnelRuntime {
     tunnel.ready = true;
     this.activeTunnel = tunnel;
 
+    // Auto-detect gateway token via a separate quick SSH exec if not provided.
+    let authToken = profile.gatewayToken;
+    if (!authToken) {
+      try {
+        const result = this.spawnProcess('ssh', [
+          '-o', 'BatchMode=yes',
+          '-o', 'StrictHostKeyChecking=accept-new',
+          '-p', String(profile.sshPort),
+          ...(profile.identityFile ? ['-i', profile.identityFile] : []),
+          `${profile.username}@${profile.host}`,
+          FETCH_TOKEN_COMMAND
+        ], { stdio: ['ignore', 'pipe', 'ignore'] });
+
+        authToken = await new Promise<string>((resolve) => {
+          let out = '';
+          result.stdout?.on('data', (chunk: Buffer) => { out += chunk.toString(); });
+          result.on('close', () => resolve(out.trim()));
+          setTimeout(() => resolve(''), 5_000);
+        });
+
+        if (authToken) {
+          console.log('[ssh-tunnel] auto-detected gateway token from remote host');
+        }
+      } catch (err) {
+        console.warn('[ssh-tunnel] failed to auto-detect gateway token:', err);
+      }
+    }
+
     return {
       url: buildLoopbackUrl(localPort),
-      authToken: profile.gatewayToken
+      authToken: authToken || undefined
     };
   }
 

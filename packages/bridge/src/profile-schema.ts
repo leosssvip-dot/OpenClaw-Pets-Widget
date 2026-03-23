@@ -18,7 +18,7 @@ export const gatewayProfileSchema = z.discriminatedUnion('transport', [
     password: z.string().optional(),
     identityFile: z.string().min(1).optional(),
     remoteGatewayPort: z.number().int().positive().default(18789),
-    gatewayToken: z.string().min(1)
+    gatewayToken: z.string().optional()
   }),
   z.object({
     id: z.string(),
