@@ -1,4 +1,4 @@
-import type { GatewayProfile, PreparedGatewayConnection } from '@openclaw-habitat/bridge';
+import type { GatewayProfile, PreparedGatewayConnection, DeviceIdentityFields, DeviceSignContext } from '@openclaw-habitat/bridge';
 import type { GatewaySessionAuth } from './gateway-session-auth';
 
 export interface PrepareGatewayConnectionInput {
@@ -25,6 +25,7 @@ export interface HabitatDesktopApi {
   showPetContextMenu?: (items: Array<{ id: string; label: string; type?: 'separator' | 'normal'; enabled?: boolean; checked?: boolean }>) => Promise<string | null>;
   readSettings: () => Promise<string | null>;
   writeSettings: (data: string) => Promise<void>;
+  signDeviceChallenge?: (ctx: DeviceSignContext) => Promise<DeviceIdentityFields>;
 }
 
 export function getHabitatDesktopApi() {

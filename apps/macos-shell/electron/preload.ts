@@ -28,5 +28,20 @@ contextBridge.exposeInMainWorld('habitat', {
   readSettings: () =>
     ipcRenderer.invoke('settings:read') as Promise<string | null>,
   writeSettings: (data: string) =>
-    ipcRenderer.invoke('settings:write', { data })
+    ipcRenderer.invoke('settings:write', { data }),
+  signDeviceChallenge: (ctx: {
+    nonce?: string;
+    clientId: string;
+    clientMode: string;
+    role: string;
+    scopes: string[];
+    token?: string;
+  }) =>
+    ipcRenderer.invoke('device:signChallenge', ctx) as Promise<{
+      id: string;
+      publicKey: string;
+      signature: string;
+      signedAt: number;
+      nonce: string;
+    }>
 });

@@ -9,6 +9,7 @@ import { createPanelWindow } from './panel-window';
 import { createPetWidgetWindow } from './pet-window';
 import { resolveRuntimeSurface } from './runtime-info';
 import { SshTunnelRuntime } from './ssh-runtime';
+import { loadDeviceIdentity, signChallenge } from './device-identity-store';
 
 let petWindow: BrowserWindow | null = null;
 let panelWindow: BrowserWindow | null = null;
@@ -357,6 +358,20 @@ if (ipcMain?.handle) {
     await sshTunnelRuntime.disconnect();
   });
 
+  ipcMain.handle(
+    'device:signChallenge',
+    (_event, payload: {
+      nonce?: string;
+      clientId: string;
+      clientMode: string;
+      role: string;
+      scopes: string[];
+      token?: string;
+    }) => {
+      return signChallenge(payload);
+    }
+  );
+
 
   /* ---------- Settings file persistence (survives app restarts) ---------- */
   const settingsDir = app.isReady()
@@ -392,6 +407,13 @@ if (app?.on) {
 }
 
 if (app?.whenReady) {
+  // Load (or generate) device identity before any gateway connection.
+  try {
+    loadDeviceIdentity(app.getPath('userData'));
+  } catch {
+    // Non-fatal: connections will fall back to token-only auth.
+  }
+
   void app.whenReady().then(createWindow).catch((err) => {
     dialog.showErrorBox('OpenClaw Startup Error', String(err?.stack ?? err));
   });

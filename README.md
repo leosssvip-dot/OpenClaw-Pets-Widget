@@ -96,38 +96,9 @@ In the app:
 
 ### Gateway Auth Notes
 
-Because of a known bug in `openclaw 2026.3.13`, you may need to allow insecure auth for the Control UI before the desktop app can connect correctly.
-
-A common failure looks like this:
-
-```text
-Gateway handshake rejected: control ui requires device identity (use HTTPS or localhost secure context)
-```
-
-Update the Gateway config:
-
-```json
-{
-  "gateway": {
-    "controlUi": {
-      "allowInsecureAuth": true
-    }
-  }
-}
-```
-
-Or use the CLI:
-
-```bash
-# Set the config value
-openclaw config set gateway.controlUi.allowInsecureAuth true --json
-
-# Verify the current value
-openclaw config get gateway.controlUi.allowInsecureAuth
-
-# Restart the gateway
-openclaw gateway restart
-```
+The desktop app automatically generates an Ed25519 device identity on first launch
+(stored in `{userData}/device-identity.json`) and signs each gateway challenge with it.
+This satisfies the gateway's device-identity requirement without any manual configuration.
 
 If you need the Gateway token, check one of these locations:
 

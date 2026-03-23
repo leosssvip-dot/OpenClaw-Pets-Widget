@@ -7,6 +7,7 @@ import type {
   PreparedGatewayConnection,
   SendMessageInput
 } from './contracts';
+import type { DeviceIdentityProvider } from './device-identity';
 import type { PetStatus } from '@openclaw-habitat/domain';
 import { parseOpenClawEvent } from './openclaw-event-parser';
 import type { GatewayProfile } from './profile-schema';
@@ -367,7 +368,8 @@ export class OpenClawClient implements BridgeClient {
     private readonly teardownConnection: (
       profile: GatewayProfile | null
     ) => Promise<void> = async () => undefined,
-    private readonly options: OpenClawClientOptions = {}
+    private readonly options: OpenClawClientOptions = {},
+    private readonly deviceIdentityProvider?: DeviceIdentityProvider
   ) {}
 
   async connect(profileId: string): Promise<void> {
@@ -432,18 +434,48 @@ export class OpenClawClient implements BridgeClient {
             : undefined;
         console.log('[bridge] received challenge, nonce:', nonce);
 
-        const requestId = sendRequest(socket, 'connect', {
+        // Connect params used for both the request and device signing.
+        const clientId = 'openclaw-control-ui';
+        const clientMode = 'ui';
+        const role = 'operator';
+        const scopes = ['operator.admin', 'operator.approvals', 'operator.pairing'];
+
+        // Sign challenge with device identity if available.
+        let deviceFields: { id: string; publicKey: string; signature: string; signedAt: number; nonce: string } | undefined;
+        if (this.deviceIdentityProvider) {
+          try {
+            deviceFields = await this.deviceIdentityProvider.sign({
+              nonce,
+              clientId,
+              clientMode,
+              role,
+              scopes,
+              token: connection.authToken
+            });
+            console.log('[bridge] device identity attached, id:', deviceFields.id);
+          } catch (err) {
+            console.warn('[bridge] device identity signing failed, continuing without:', err);
+          }
+        }
+
+        const connectParams: Record<string, unknown> = {
           minProtocol: 3,
           maxProtocol: 3,
-          scopes: ['operator.admin', 'operator.approvals', 'operator.pairing'],
+          scopes,
           client: {
-            id: 'openclaw-control-ui',
+            id: clientId,
             version: '1.0.0',
             platform: 'macos',
-            mode: 'ui'
+            mode: clientMode
           },
           auth: connection.authToken ? { token: connection.authToken } : undefined
-        });
+        };
+
+        if (deviceFields) {
+          connectParams.device = deviceFields;
+        }
+
+        const requestId = sendRequest(socket, 'connect', connectParams);
 
         hello = await waitForResponse(
           socket,
