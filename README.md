@@ -8,6 +8,10 @@ The desktop pet uses Rive animations, supports multiple agent personas, and keep
 
 https://github.com/user-attachments/assets/914543c5-19ee-4100-b404-fd02b112ec19
 
+## Download
+
+Pre-built binaries for macOS and Windows are available on the [Releases](https://github.com/leosssvip-dot/openclaw-widget/releases) page.
+
 ## Highlights
 
 - Floating desktop pet with a separate chat and settings panel

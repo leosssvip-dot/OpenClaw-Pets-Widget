@@ -8,6 +8,10 @@ OpenClaw Pets Widget 是 OpenClaw agents 的桌面宠物挂件。它会以一个
 
 https://github.com/user-attachments/assets/914543c5-19ee-4100-b404-fd02b112ec19
 
+## 下载
+
+macOS 和 Windows 的预构建安装包可以在 [Releases](https://github.com/leosssvip-dot/openclaw-widget/releases) 页面下载。
+
 ## 特性
 
 - 悬浮桌宠，以及独立的聊天和设置面板
