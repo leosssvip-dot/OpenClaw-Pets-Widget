@@ -125,13 +125,15 @@ export function WidgetPanel({
                   <button
                     type="button"
                     className="dot dot--close"
-                    aria-label="Close"
+                    aria-label={t('window.close')}
+                    title={t('window.close')}
                     onClick={() => void getHabitatDesktopApi()?.togglePanel()}
                   />
                   <button
                     type="button"
                     className="dot dot--minimize"
-                    aria-label="Minimize"
+                    aria-label={t('window.minimize')}
+                    title={t('window.minimize')}
                     onClick={() => void getHabitatDesktopApi()?.togglePanel()}
                   />
                 </div>

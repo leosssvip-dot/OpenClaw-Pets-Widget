@@ -126,6 +126,10 @@ const en: Record<string, string> = {
   'role.monk.panelDescription': 'This character is for deep work. It narrows the next action, keeps momentum, and marks steady progress.',
   'role.monk.signalLabel': 'working-time tapping',
   'role.monk.quickPromptExample': 'Focus on the next task...',
+
+  // Window controls
+  'window.close': 'Close panel',
+  'window.minimize': 'Minimize panel',
 };
 
 export default en;

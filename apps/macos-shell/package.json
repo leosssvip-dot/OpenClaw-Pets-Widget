@@ -1,7 +1,7 @@
 {
   "name": "@openclaw-habitat/macos-shell",
   "private": true,
-  "version": "0.2.0",
+  "version": "0.2.2",
   "type": "module",
   "main": ".electron-build/main.cjs",
   "scripts": {
@@ -79,6 +79,7 @@
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
     "react-markdown": "^10.0.0",
+    "remark-gfm": "^4.0.1",
     "ssh2": "^1.17.0",
     "xstate": "^5.19.2",
     "zustand": "^5.0.3"

@@ -35,6 +35,7 @@ export function buildPetWidgetWindowOptions(
   return {
     width: SINGLE_PET_WIDTH,
     height: SINGLE_PET_HEIGHT,
+    title: '',
     transparent: true,
     ...(platform === 'win32' ? { backgroundColor: '#00000000' } : {}),
     frame: false,

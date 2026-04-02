@@ -1,4 +1,4 @@
-import { app, BrowserWindow, dialog, ipcMain, Menu, MenuItem, nativeImage, screen, session, Tray, type IpcMainEvent } from 'electron';
+import { app, BrowserWindow, dialog, ipcMain, Menu, MenuItem, nativeImage, screen, session, shell, Tray, type IpcMainEvent } from 'electron';
 import { existsSync } from 'node:fs';
 import { readFile, writeFile, mkdir } from 'node:fs/promises';
 import { join, dirname } from 'node:path';
@@ -228,6 +228,22 @@ async function createWindow() {
     workX + screenW - 250,
     workY + screenH - 280
   );
+
+  // Open external links (http/https) in the default browser instead of Electron
+  for (const win of [petWindow, panelWindow]) {
+    win.webContents.setWindowOpenHandler(({ url }) => {
+      if (url.startsWith('http://') || url.startsWith('https://')) {
+        void shell.openExternal(url);
+      }
+      return { action: 'deny' };
+    });
+    win.webContents.on('will-navigate', (event, url) => {
+      if (url.startsWith('http://') || url.startsWith('https://')) {
+        event.preventDefault();
+        void shell.openExternal(url);
+      }
+    });
+  }
 
   petWindowPositionController.restore();
   await loadWindow(petWindow, 'pet');

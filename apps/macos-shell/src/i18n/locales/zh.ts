@@ -126,6 +126,10 @@ const zh: Record<string, string> = {
   'role.monk.panelDescription': '这个角色适合深度工作，聚焦下一步、保持动力、标记稳步进展。',
   'role.monk.signalLabel': '敲木鱼中',
   'role.monk.quickPromptExample': '专注于下一个任务...',
+
+  // Window controls
+  'window.close': '关闭面板',
+  'window.minimize': '最小化面板',
 };
 
 export default zh;
